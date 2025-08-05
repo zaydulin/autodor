@@ -1,0 +1,438 @@
+{% extends 'site/useraccount/base.html' %}
+{% load static user_tags i18n %}
+{% block title %}{{ seo_title }}{% endblock title %}
+{% block description %}{{ seo_description }}{% endblock description %}
+{% block propertytitle %}{% if seo_previev %}{{ seo_previev.url }} {% endif %} {% endblock propertytitle %}
+{% block propertydescription %}{{ seo_propertytitle }}{% endblock propertydescription %}
+{% block propertyimage %}{{ seo_propertydescription }}{% endblock propertyimage %}
+{% block head %}
+<link href="https://cdn.jsdelivr.net/npm/suggestions-jquery@latest/dist/css/suggestions.min.css" rel="stylesheet">
+
+{% endblock head %}
+
+{% block content %}
+<!--  row -->
+<div class="row">
+    <div class="card">
+        <div class="card-header">
+            <h4 class="card-title">{% trans 'Редактирование профиля' %}</h4>
+        </div>
+        <div class="card-body">
+            <div class="d-flex">
+                <!-- Вкладки -->
+                <ul class="nav nav-tabs" id="profileTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab" aria-controls="profile" aria-selected="true">
+                            Мой профиль
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="passport-tab" data-bs-toggle="tab" data-bs-target="#passport" type="button" role="tab" aria-controls="passport" aria-selected="false">
+                            Паспортные данные
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="organization-tab" data-bs-toggle="tab" data-bs-target="#organization" type="button" role="tab" aria-controls="organization" aria-selected="false">
+                            Организация
+                        </button>
+                    </li>
+                </ul>
+                <ul class="nav nav-tabs" id="passwordTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="password-tab" data-bs-toggle="tab" data-bs-target="#password" type="button" role="tab" aria-controls="password" aria-selected="false">
+                            Сменить пароль
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <form method="post"  class="account__main-info" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="tab-content mt-4" id="profileTabsContent">
+                    <button type="submit" class="btn btn-info">
+                        {% trans 'Сохранить' %}
+                    </button>
+                    <!-- Мой профиль -->
+                    <div class="tab-pane fade show active" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+                        <div class="card-body">
+
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <h6 class="mb-0">{% trans 'Аватарка' %}</h6>
+                                </div>
+                                <div class="col-sm-9 text-secondary">
+                                    {{ form.avatar }}
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <h6 class="mb-0">{% trans 'Логин' %}</h6>
+                                </div>
+                                <div class="col-sm-9 text-secondary">
+                                    {{ form.username }}
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <h6 class="mb-0">{% trans 'Email' %}</h6>
+                                </div>
+                                <div class="col-sm-9 text-secondary">
+                                    {{ form.email }}
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <h6 class="mb-0">{% trans 'Телефон' %}</h6>
+                                </div>
+                                <div class="col-sm-9 text-secondary">
+                                    {{ form.phone }}
+                                </div>
+                            </div>
+                            <hr>
+                            {% trans 'Публичная информация' %}
+                            <hr>
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <h6 class="mb-0">{% trans 'Имя' %}</h6>
+                                </div>
+                                <div class="col-sm-9 text-secondary">
+                                    {{ form.first_name }}
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <h6 class="mb-0">{% trans 'Фамилия' %}</h6>
+                                </div>
+                                <div class="col-sm-9 text-secondary">
+                                    {{ form.last_name }}
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <h6 class="mb-0">{% trans 'Отчество' %}</h6>
+                                </div>
+                                <div class="col-sm-9 text-secondary">
+                                    {{ form.middle_name }}
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <h6 class="mb-0">{% trans 'Город' %}</h6>
+                                </div>
+                                <div class="col-sm-9 text-secondary">
+                                    {{ form.city }}
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <h6 class="mb-0">{% trans 'Дата рождения' %}</h6>
+                                </div>
+                                <div class="col-sm-9 text-secondary">
+                                    {{ form.birthday }}
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <h6 class="mb-0">{% trans 'Пол' %}</h6>
+                                </div>
+                                <div class="col-sm-9 text-secondary">
+                                    {{ form.gender }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Паспортные данные -->
+                    <div class="tab-pane fade" id="passport" role="tabpanel" aria-labelledby="passport-tab">
+                        <div class="card-body">
+                            Паспортные данные
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <h6 class="mb-0">{% trans 'Кем выдан' %}</h6>
+                                </div>
+                                <div class="col-sm-9 text-secondary">
+                                    {{ form.passport_issued_by_whom }}
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <h6 class="mb-0">{% trans 'Дата выдачи' %}</h6>
+                                </div>
+                                <div class="col-sm-9 text-secondary">
+                                    {{ form.passport_date_of_issue }}
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <h6 class="mb-0">{% trans 'Серия и номер' %}</h6>
+                                </div>
+                                <div class="col-sm-9 text-secondary">
+                                    {{ form.passport_series_and_number }}
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <h6 class="mb-0">{% trans 'Прописка' %}</h6>
+                                </div>
+                                <div class="col-sm-9 text-secondary">
+                                    {{ form.passport_registration }}
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <h6 class="mb-0">{% trans 'Лицевая часть' %}</h6>
+                                </div>
+                                <div class="col-sm-9 text-secondary">
+                                    {{ form.passport_image_1 }}
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <h6 class="mb-0">{% trans 'Место прописки' %}</h6>
+                                </div>
+                                <div class="col-sm-9 text-secondary">
+                                    {{ form.passport_image_2 }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Организация -->
+                    <div class="tab-pane fade" id="organization" role="tabpanel" aria-labelledby="organization-tab">
+                        <div class="row">
+                            <div class="col-sm-3">
+                                <h6 class="mb-0">{% trans 'Название организации' %}</h6>
+                            </div>
+                            <div class="col-sm-9 text-secondary">
+                                {{ form.company_name }}
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-sm-3">
+                                <h6 class="mb-0">{% trans 'Руководитель' %}</h6>
+                            </div>
+                            <div class="col-sm-9 text-secondary">
+                                {{ form.company_director }}
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-sm-3">
+                                <h6 class="mb-0">{% trans 'Юридический адрес' %}</h6>
+                            </div>
+                            <div class="col-sm-9 text-secondary">
+                                {{ form.company_address }}
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-sm-3">
+                                <h6 class="mb-0">{% trans 'Налоговый орган' %}</h6>
+                            </div>
+                            <div class="col-sm-9 text-secondary">
+                                {{ form.company_nalogovaya }}
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-sm-3">
+                                <h6 class="mb-0">{% trans 'ОГРН' %}</h6>
+                            </div>
+                            <div class="col-sm-9 text-secondary">
+                                {{ form.company_ogrn }}
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-sm-3">
+                                <h6 class="mb-0">{% trans 'ИНН' %}</h6>
+                            </div>
+                            <div class="col-sm-9 text-secondary">
+                                {{ form.company_inn }}
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-sm-3">
+                                <h6 class="mb-0">{% trans 'КПП' %}</h6>
+                            </div>
+                            <div class="col-sm-9 text-secondary">
+                                {{ form.company_kpp }}
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-sm-3">
+                                <h6 class="mb-0">{% trans 'Дата регистрации' %}</h6>
+                            </div>
+                            <div class="col-sm-9 text-secondary">
+                                {{ form.company_data_registration }}
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-sm-3">
+                                <h6 class="mb-0">{% trans 'Основной вид деятельности' %}</h6>
+                            </div>
+                            <div class="col-sm-9 text-secondary">
+                                {{ form.company_type_activity }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+            <div class="tab-content mt-4" id="passwordTabsContent">
+                <!-- Сменить пароль -->
+                <div class="tab-pane fade" id="password" role="tabpanel" aria-labelledby="password-tab">
+                    <div class="card-body">
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <h6 class="mb-0">{% trans 'Старый пароль' %}</h6>
+                                </div>
+                                <div class="col-sm-9 text-secondary">
+                                    {{ password_form.old_password }}
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <h6 class="mb-0">{% trans 'Новый пароль' %}</h6>
+                                </div>
+                                <div class="col-sm-9 text-secondary">
+                                    {{ password_form.new_password1 }}
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <h6 class="mb-0">{% trans 'Подтверждение нового пароля' %}</h6>
+                                </div>
+                                <div class="col-sm-9 text-secondary">
+                                    {{ password_form.new_password2 }}
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <button type="submit" class="btn btn-info">
+                                        {% trans 'Изменить пароль' %}
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+<style>
+    .form-control[type="file"]:not(:disabled):not([readonly]) {
+        --tw-border-opacity: 1;
+        border-color: rgb(226 232 240 / var(--tw-border-opacity));
+        max-width: fit-content;
+        display: block;
+        border-radius: .375rem;
+        border-width: 1px;
+        font-size: .875rem;
+        height: auto!important;
+        padding: 5px 0px 5px 10px;
+    }
+    .bootstrap-select {
+        padding: 0!important;
+        border: none!important;
+    }
+    .bootstrap-select .btn {
+        display: none;
+    }
+</style>
+
+{% endblock content %}
+{% block footertop %}
+
+<script>
+    window.addEventListener('load', function() {
+        // Инициализация маски для телефона
+        var element = document.getElementById('id_phone');
+        var maskOptions = {
+            mask: '+7(000)000-00-00',
+            lazy: false
+        }
+        var mask = new IMask(element, maskOptions);
+
+        // Инициализация маски для email
+        var maskOptions2 = {
+            mask: function (value) {
+                if(/^[a-z0-9_\.-]+$/.test(value))
+                    return true;
+                if(/^[a-z0-9_\.-]+@$/.test(value))
+                    return true;
+                if(/^[a-z0-9_\.-]+@[a-z0-9-]+$/.test(value))
+                    return true;
+                if(/^[a-z0-9_\.-]+@[a-z0-9-]+\.$/.test(value))
+                    return true;
+                if(/^[a-z0-9_\.-]+@[a-z0-9-]+\.[a-z]{1,4}$/.test(value))
+                    return true;
+                if(/^[a-z0-9_\.-]+@[a-z0-9-]+\.[a-z]{1,4}\.$/.test(value))
+                    return true;
+                if(/^[a-z0-9_\.-]+@[a-z0-9-]+\.[a-z]{1,4}\.[a-z]{1,4}$/.test(value))
+                    return true;
+                return false;
+            },
+            lazy: false
+        }
+
+        var emailElement = document.getElementById('id_email');
+        if (emailElement) {
+            var mask2 = new IMask(emailElement, maskOptions2);
+        }
+    });
+
+</script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script src="{% static 'site/js/imask.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/suggestions-jquery@latest/dist/js/jquery.suggestions.min.js"></script>
+<script>
+    var api_key = '7fd18aaabd7d53ffa4846e4521c1f736c13490eb';
+
+    function formatCity(suggestion) {
+        var address = suggestion.data;
+        if (address.city_with_type === address.region_with_type) {
+            return address.settlement_with_type || "";
+        } else {
+            return address.city_with_type || "";
+        }
+    }
+
+    var $city = $('#id_city');
+
+    // город
+    $city.suggestions({
+        token: api_key,
+        type: 'ADDRESS',
+        hint: false,
+        bounds: "city-settlement",
+        formatSelected: formatCity
+    });
+
+</script>
+
+{% endblock footertop %}

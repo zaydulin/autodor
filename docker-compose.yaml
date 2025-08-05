@@ -1,0 +1,71 @@
+version: "3.4"
+
+services:
+  cb-redis:
+    image: redis:latest
+    container_name: cb-redis
+    restart: always
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - cb-redis-data:/data
+
+  cb-db:
+    image: postgres:14-alpine
+    container_name: cb-db
+    restart: always
+    environment:
+      PD_DATA: /var/lib/postgresql/data
+    volumes:
+      - cb-db-data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
+    env_file:
+      - .env
+
+
+  cb-app:
+    build:
+      context: .
+      dockerfile: _config/app/Dockerfile
+    container_name: cb-app
+    command: bash run.sh
+    env_file:
+      - .env
+    environment:
+      WAIT-HOSTS: cb-db, cb-redis
+    volumes:
+      - ./src:/app/marketplace
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+    tty: true
+    restart: on-failure
+    depends_on:
+      - cb-db
+      - cb-redis
+
+  cb-celery:
+    build:
+      context: .
+      dockerfile: _config/app/Dockerfile
+    container_name: cb-celery
+    command: celery --app _project worker --beat -l info --concurrency=1
+    env_file:
+      - .env
+    environment:
+      WAIT-HOSTS: cb-db, cb-redis
+    volumes:
+      - ./src:/app/marketplace
+    restart: always
+    depends_on:
+      - cb-db
+      - cb-redis
+
+volumes:
+  cb-db-data:
+  cb-redis-data:
+
+networks:
+  cb-net:
+    external: false

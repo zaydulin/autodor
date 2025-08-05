@@ -1,0 +1,199 @@
+{% extends 'site/useraccount/base.html' %}
+{% load static i18n %}
+{% block title %}{{ seo_title }}{% endblock title %}
+{% block description %}{{ seo_description }}{% endblock description %}
+{% block propertytitle %}{% if seo_previev %}{{ seo_previev.url }} {% endif %} {% endblock propertytitle %}
+{% block propertydescription %}{{ seo_propertytitle }}{% endblock propertydescription %}
+{% block propertyimage %}{{ seo_propertydescription }}{% endblock propertyimage %}
+{% block head %}
+
+
+{% endblock head %}
+
+{% block content %}
+<div class="row page-titles mx-0">
+    <div class="col-sm-6 p-md-0">
+        <div class="welcome-text">
+            <h4>{{ ticket.themas }}</h4>
+            <p class="mb-0">{{description}}</p>
+        </div>
+    </div>
+    <div class="col-sm-6 p-md-0 justify-content-sm-end mt-2 mt-sm-0 d-flex">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item active"><a>{% trans 'Тикет' %}</a></li>
+        </ol>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-xl-6">
+                <div class="reviews-content">
+                    <!-- Форма для комментариев -->
+                    <form id="commentForm" method="post" enctype="multipart/form-data" action="{% url 'useraccount:add_comment' ticket.id %}">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-12">
+                                {{ form.content }}
+                            </div>
+                            <div class="col-md-8">
+                                <div class="single-form">
+                                    {{ form.files }}
+                                </div>
+                            </div>
+                            <div class="col-md-4" style="align-self: self-end;">
+                                <div class="single-form" style="float: inline-end;">
+                                    <button type="submit" class="btn btn-primary btn-hover-dark" style=" margin-top: 10px; ">
+                                        {% trans 'Отправить' %}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="col-xl-6">
+                <div  id="list-ticket">
+
+                        <div class="bootstrap-media">
+                            {% for comments in ticket_comments %}
+                            <!-- Single Comment Start  -->
+                            <div class="media mb-4">
+                                <img class="me-3 img-fluid rounded"  src="{% if comments.author.avatar %}{{comments.author.avatar.url}}{% endif %}" width="100" height="100" alt="author">
+                                <div class="media-body">
+                                    <h5 class="mt-0">{{comments.author.username}}</h5>
+                                    <p class="mb-0">
+                                        {{comments.content}}
+                                    </p>
+                                    <span class="date">{{comments.date}}</span>
+
+                                </div>
+                            </div>
+                            {% if comments.media.all %}
+                            <div class="col flex-column mb-4">
+                                {% for media in comments.media.all %}
+                                <button class="btn btn-primary btn-hover-dark" onclick="openPopup('{{ media.file.url }}')">
+                                    <i class="fa fa-file-o"></i>
+                                    {{ media.get_file_name }}
+                                </button>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            <!-- Single Comment End  -->
+                            {% endfor %}
+                            {% include 'site/useraccount/include/paginations.html' with items=ticket_comments %}
+
+                        </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="imagePopup" class="popup" style="display: none;" onclick="closePopup(event)">
+    <span class="close" onclick="closePopup(event)">&times;</span>
+    <img class="popup-content" id="popupImage" alt="" onclick="event.stopPropagation();">
+</div>
+
+<style>
+.popup {
+    display: flex;
+    position: fixed;
+    z-index: 999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    justify-content: center;
+    align-items: center;
+}
+
+.popup-content {
+    max-width: 90%;
+    max-height: 90%;
+}
+
+.close {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    color: white;
+    font-size: 40px;
+    cursor: pointer;
+}
+</style>
+
+<script>
+    function openPopup(imageUrl) {
+        document.getElementById('popupImage').src = imageUrl;
+        document.getElementById('imagePopup').style.display = 'flex';
+    }
+
+    function closePopup(event) {
+        if (event) {
+            event.stopPropagation(); // Останавливаем всплытие события для кнопки закрытия
+        }
+        document.getElementById('imagePopup').style.display = 'none';
+    }
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var commentForm = document.getElementById('commentForm');
+        if (commentForm) {
+            commentForm.addEventListener('submit', function(event) {
+                event.preventDefault(); // Предотвращение стандартной отправки формы
+
+                var formData = new FormData(this);
+
+                fetch(this.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                    },
+                    credentials: 'same-origin'
+                }).then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    return response.json().then(data => {
+                        throw new Error(JSON.stringify(data.errors));
+                    });
+                }).then(data => {
+                    console.log('Успешно отправлено:', data);
+                    this.reset();
+                    refreshTicketList(); // Вызов функции обновления списка тикетов
+                }).catch(error => {
+                    console.error('Ошибка:', error);
+                });
+            });
+
+            function refreshTicketList() {
+                $('#list-ticket').load(location.href + ' #list-ticket>*', function(response, status, xhr) {
+                    if (status == "error") {
+                        console.log("Ошибка при загрузке данных:", xhr.status, xhr.statusText);
+                    } else {
+                        console.log("Данные успешно обновлены");
+                    }
+                });
+            }
+
+            refreshTicketList(); // Пример вызова функции для тестирования
+        } else {
+            console.log('Форма комментариев не найдена');
+        }
+    });
+</script>
+<style>
+    .bootstrap-media{
+        height: 60vh;
+        overflow-x: auto;
+    }
+    input#id_files {
+        margin-top: 30px;
+    }
+</style>
+{% endblock content %}

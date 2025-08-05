@@ -1,0 +1,169 @@
+{% load static generals_tag i18n %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge" />
+    <title>{% get_settings_first as settings %}{{settings.name}} - {% block title %}{% endblock title %}</title>
+    <meta content="{% block description %}{% endblock description %}" name="description">
+    <meta property="og:title" content="{% block propertytitle %} {% endblock propertytitle %}">
+    <meta property="og:description" content="{% block propertydescription %}{% endblock propertydescription %}">
+    <meta property="og:image" content="{% block propertyimage %}{% endblock propertyimage %}">
+    <!-- Favicon -->
+    <link rel="shortcut icon" type="image/x-icon" href="{% if settings.favicon %}{{settings.favicon.url}}{% endif %}" />
+    <!-- Analitic link -->
+    {{settings.yandex_metrica}}
+    {{settings.google_analitic}}
+    <!-- Style link -->
+    <link href="{% static 'site/website/bootstrap/css/bootstrap.css' %}" rel="stylesheet">
+    <link href="{% static 'site/website/bootstrap/css/bootstrap.rtl.css' %}" rel="stylesheet">
+    <link href="{% static 'site/website/bootstrap/css/bootstrap-grid.css' %}" rel="stylesheet">
+    <link href="{% static 'site/website/bootstrap/css/bootstrap-grid.rtl.css' %}" rel="stylesheet">
+    <link href="{% static 'site/website/bootstrap/css/bootstrap-reboot.css' %}" rel="stylesheet">
+    <link href="{% static 'site/website/bootstrap/css/bootstrap-reboot.rtl.css' %}" rel="stylesheet">
+    <link href="{% static 'site/website/bootstrap/css/bootstrap-utilities.css' %}" rel="stylesheet">
+    <link href="{% static 'site/website/bootstrap/css/bootstrap-utilities.rtl.css' %}" rel="stylesheet">
+    <link href="{% static 'site/website/fontawesome-free-6.7.1-web/css/fontawesome.css' %}" rel="stylesheet" />
+    <link href="{% static 'site/website/fontawesome-free-6.7.1-web/css/brands.css' %}" rel="stylesheet" />
+    <link href="{% static 'site/website/fontawesome-free-6.7.1-web/css/solid.css' %}" rel="stylesheet" />
+    <link href="{% static 'site/website/fontawesome-free-6.7.1-web/css/sharp-thin.css' %}" rel="stylesheet" />
+    <link href="{% static 'site/website/fontawesome-free-6.7.1-web/css/duotone-thin.css' %}" rel="stylesheet" />
+    <link href="{% static 'site/website/fontawesome-free-6.7.1-web/css/sharp-duotone-thin.css' %}" rel="stylesheet" />
+
+</head>
+<body>
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light py-3">
+    <div class="container">
+        <a class="navbar-brand" href="#">
+            <img src="{% if settings.logo %}{{settings.logo.url}}{% endif %}"  width="120">
+        </a>
+        <!-- Кнопка категорий -->
+        <button class="btn btn-primary" type="button" data-bs-toggle="collapse" href="#collapseExample" role="button" aria-expanded="false" aria-controls="collapseExample">
+            Категории
+        </button>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            {% with app_name=request.resolver_match.namespace url_name=request.resolver_match.url_name %}
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link  {% if app_name == 'webmain' and url_name == 'home' %}active{% endif %}" href="{% url 'webmain:home' %}">Главная</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link  {% if app_name == 'webmain' and url_name == 'about' %}active{% endif %}" href="{% url 'webmain:about' %}">О нас</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link  {% if app_name == 'webmain' and url_name == 'faqs' %}active{% endif %}" href="{% url 'webmain:faqs' %}">ЧаВо</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link  {% if app_name == 'webmain' and url_name == 'blogs' %}active{% endif %}" href="{% url 'webmain:blogs' %}">Новости</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link  {% if app_name == 'webmain' and url_name == 'contacts' %}active{% endif %}" href="{% url 'webmain:contacts' %}">Контакты</a>
+                </li>
+
+            </ul>
+            {% endwith %}
+            <!-- Поиск -->
+            <form method="get" class="d-flex" action="{% url 'webmain:search' %}">
+                <div class="search-form position-relative">
+                    <input class="form-control me-2" id="search-input" name="q" type="text"value="{{ query }}" placeholder="Введи поисковую фразу..." aria-describedby="button-addon2">
+                    <button class="btn btn-outline-primary" type="submit" id="button-addon2"></button>
+                </div>
+            </form>
+        </div>
+    </div>
+</nav>
+<!-- Выпадающий список категорий -->
+<div class="collapse" id="collapseExample">
+    <div class="container py-3">
+        {% include 'site/website/include/category.html' %}
+    </div>
+</div>
+
+{% block content %}{% endblock content %}
+<!-- Footer -->
+<footer class="bg-primary text-white py-4">
+    <div class="container text-center">
+        <div class="row">
+            <!-- Первый раздел: Логотип и описание с контактами -->
+            <div class="col-md-4">
+                <a class="navbar-brand" href="#">
+                    <img src="{% if settings.logo %}{{settings.logo.url}}{% endif %}" alt="Logo" width="120">
+                </a>
+                <p>{{settings.description}}</p>
+                <ul class="list-unstyled">
+                    <li>Телефон: +123456789</li>
+                    <li>Email: info@example.com</li>
+                    <li>Адрес: ул. Примерная, 12, Москва</li>
+                </ul>
+            </div>
+            <!-- Второй раздел: Список пунктов меню -->
+            <div class="col-md-4">
+                <h5>Меню</h5>
+                <ul class="list-unstyled">
+                    {% get_pages as pages %}
+                    <li>
+                        {% if pages %}{% for page in pages %}{% if page.pagetype == 2 %}
+                        <a href="{% url 'webmain:page' page.slug  %}" style="color:#fff;">
+                            {% trans 'Пользовательское соглашение' %}
+                        </a>
+                        {% endif %}{% endfor %}{% endif %}
+                    </li>
+                    <li>
+                        {% if pages %}{% for page in pages %}{% if page.pagetype == 3 %}
+                        <a href="{% url 'webmain:page' page.slug  %}" style="color:#fff;">
+                            {% trans 'Политика конфедециальности' %}
+                        </a>
+                        {% endif %}{% endfor %}{% endif %}
+                    </li>
+                    <li>
+                        {% if pages %}{% for page in pages %}{% if page.pagetype == 4 %}
+                        <a href="{% url 'webmain:page' page.slug  %}"  style="color:#fff;">
+                            {% trans 'Политика Cookie - Файлов' %}
+                        </a>
+                        {% endif %}{% endfor %}{% endif %}
+                    </li>
+                    <li>
+                        {% if pages %}{% for page in pages %}{% if page.pagetype == 5 %}
+                        <a href="{% url 'webmain:page' page.slug  %}">
+                            {% trans 'Согласия на обработку персональных данных' %}
+                        </a>
+                        {% endif %}{% endfor %}{% endif %}
+                    </li>
+                </ul>
+            </div>
+            <!-- Третий раздел: Форма подписки -->
+            <div class="col-md-4">
+                <h5>Подписаться на новости</h5>
+                {% render_subscription_form as subscription_form_context %}
+                <form method="post" action="{% url 'webmain:subscribe' %}" >
+                    <div class="input-group">
+                        <input type="hidden" name="csrfmiddlewaretoken" value="{{ subscription_form_context.csrf_token }}">
+                        {{ subscription_form_context.form.email }}
+                        <button  type="submit">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <p class="mb-0">&copy; {{settings.content}}.</p>
+    </div>
+</footer>
+{% block footertop %}{% endblock footertop %}
+<script defer src="{% static 'site/website/fontawesome-free-6.7.1-web/js/brands.js' %}"></script>
+<script defer src="{% static 'site/website/fontawesome-free-6.7.1-web/js/solid.js' %}"></script>
+<script defer src="{% static 'site/website/fontawesome-free-6.7.1-web/js/fontawesome.js' %}"></script>
+<script defer src="{% static 'site/website/fontawesome-free-6.7.1-web/js/sharp-thin.js' %}"></script>
+<script defer src="{% static 'site/website/fontawesome-free-6.7.1-web/js/duotone-thin.js' %}"></script>
+<script defer src="{% static 'site/website/fontawesome-free-6.7.1-web/js/sharp-duotone-thin.js' %}"></script>
+
+<script src="{% static 'site/website/bootstrap/js/bootstrap.bundle.js' %}"></script>
+<script src="{% static 'site/website/bootstrap/js/bootstrap.esm.js' %}"></script>
+<script src="{% static 'site/website/bootstrap/js/bootstrap.js' %}"></script>
+{% block footerbottom %}{% endblock footerbottom %}
+</body>
+</html>

@@ -1,0 +1,20 @@
+{% extends 'site/website/base.html' %}
+{% load static %}
+{% block title %}{{ seo_title }}{% endblock title %}
+{% block description %}{{ seo_description }}{% endblock description %}
+{% block propertytitle %}{% if seo_previev %}{{ seo_previev.url }} {% endif %} {% endblock propertytitle %}
+{% block propertydescription %}{{ seo_propertytitle }}{% endblock propertydescription %}
+{% block propertyimage %}{{ seo_propertydescription }}{% endblock propertyimage %}
+{% block head %}{% endblock head %}
+
+{% block content %}
+
+<!-- Header Section -->
+<header class="bg-light py-5 text-center">
+    <div class="container">
+        <h1 class="display-4">{{ homepage.text }}</h1>
+    </div>
+</header>
+
+{% endblock content %}
+{% block footer %}{% endblock footer %}

@@ -1,0 +1,379 @@
+{% extends 'site/useraccount/base.html' %}
+{% load static i18n %}
+{% block title %}{{ seo_title }}{% endblock title %}
+{% block description %}{{ seo_description }}{% endblock description %}
+{% block propertytitle %}{% if seo_previev %}{{ seo_previev.url }} {% endif %} {% endblock propertytitle %}
+{% block propertydescription %}{{ seo_propertytitle }}{% endblock propertydescription %}
+{% block propertyimage %}{{ seo_propertydescription }}{% endblock propertyimage %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'profile/css/font-awesome/css/all.min.css' %}">
+{% endblock head %}
+
+{% block content %}
+<div class="col-lg-12">
+    <div class="card">
+        <div class="card-header">
+            <div class="toolbar" role="toolbar" style="text-align: -webkit-right;">
+                <div class="btn-group mb-1">
+                    <h6 class="mb-0" style="color: #3a7afe;padding: 10px 20px;border-radius: 0.5rem;font-weight: 500;background-color: #ecf2ff;">
+                        {% if cards %}
+                        <span id="card">{% trans 'Карта' %}: {{ cards.card }}</span>
+                        <button type="button" class="btn btn-primary light px-3" data-bs-toggle="modal" data-bs-target="#EditBankCard">
+                            <i class="fa fa-pencil"></i>
+                        </button>
+                        <!-- Создание банковской карты -->
+                        <div class="modal fade" id="EditBankCard" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="EditBankCardLabel" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="EditBankCardLabel">Данные банковской карты</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <form id="editCardForm" action="{% url 'useraccount:cards_update' cards.pk %}" method="post" onsubmit="submitCardForm(event, 'editCardForm')">
+                                            {% csrf_token %}
+                                            {{ edit_cards_form.as_p }}
+                                            <button type="submit" class="btn btn-primary">Сохранить</button>
+                                        </form>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                                        <button type="button" class="btn btn-primary">Understood</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <span>{% trans 'Нет карты' %}</span>
+                        <button type="button" class="btn btn-primary light px-3" data-bs-toggle="modal" data-bs-target="#AddBankCard">
+                            <i class="fa fa-plus"></i>
+                        </button>
+                        <!-- Создание банковской карты -->
+                        <div class="modal fade" id="AddBankCard" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="BankCardLabel" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="BankCardLabel">Данные банковской карты</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <form id="cardForm" action="{% url 'useraccount:cards_create' %}" method="post" onsubmit="submitCardForm(event, 'cardForm')">
+                                            {% csrf_token %}
+                                            {{ cards_form.as_p }}
+                                            <button type="submit" class="btn btn-primary">Сохранить</button>
+                                        </form>
+
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                                        <button type="button" class="btn btn-primary">Understood</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </h6>
+                </div>
+                <div class="btn-group mb-1">
+                    <h6 class="mb-0" style="color: #3a7afe;padding: 10px 20px;border-radius: 0.5rem;font-weight: 500;background-color: #ecf2ff;">{% trans 'Сумма на балансе' %}:
+                        <span id="total_amount">{{ balance }}</span>
+                    </h6>
+                </div>
+                <div class="btn-group mb-1">
+                    <button type="button" class="btn btn-primary light px-3" data-bs-toggle="modal" data-bs-target="#createWithdraw" >
+                        <i class="fa fa-plus"></i>
+                    </button>
+                    <button type="button" class="btn btn-primary light px-3" onclick="location.href=`{% url 'useraccount:withdraw' %}`">
+                        <i class="fa fa-refresh"></i>
+                    </button>
+                </div>
+                <div class="btn-group mb-1">
+                    <button type="button" class="btn btn-primary light dropdown-toggle v" data-bs-toggle="dropdown">
+                        {% trans 'Поиск по' %}
+                        <span class="caret m-l-5"></span>
+                    </button>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#searchModal" href="javascript:void(0);" onclick="openSearch('id')">{% trans 'ID' %}</a>
+                        <a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#searchModal" href="javascript:void(0);" onclick="openSearch('type')">{% trans 'Тип' %}</a>
+                        <a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#searchModal" href="javascript:void(0);" onclick="openSearch('date')">{% trans 'Дата' %}</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-sm mb-2">
+                    <thead style="text-align: center;">
+                    <tr>
+                        <th>{% trans "ID" %}</th>
+                        <th>{% trans "Дата" %}</th>
+                        <th>{% trans "Тип" %}</th>
+                        <th>{% trans "Сумма" %}</th>
+                    </tr>
+                    </thead>
+                    <tbody style="text-align: center;">
+                    {% for withdraw in withdraw_list %}
+                    <tr class="btn-reveal-trigger">
+                        <td class="py-2"><strong>
+                            {{ withdraw.pk }}
+                        </strong></td>
+                        <td class="py-2">
+                            {{ withdraw.create|date:"d/m/Y" }}
+                        </td>
+                        <td class="py-2">
+                            {{ withdraw.get_type_display }}
+                        </td>
+                        <td class="py-2">
+                            {{ withdraw.amount }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% include 'site/useraccount/include/paginations.html' with items=withdraw_list %}
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="searchModal" tabindex="-1" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="searchModalLabel">{% trans 'Поиск' %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="idSearch" style="display: none;">
+                    <input type="text" id="searchInput" class="form-control" placeholder="{% trans 'Введите ID' %}">
+                </div>
+                <div id="typeSearch" style="display: none;">
+                    <select id="typeSelect" class="form-control">
+                        <option value="">{% trans 'Выберите тип' %}</option>
+                        {% for type in types %}
+                        <option value="{{ type.0 }}">{{ type.1 }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div id="dateSearch" style="display: none;">
+                    <h5 class="mb-2" style="width: max-content">{% trans "Дата" %}</h5>
+                    <input type="date" id="searchDate" class="form-control" placeholder="{% trans 'Выберите дату' %}">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans 'Закрыть' %}</button>
+                <button type="button" class="btn btn-primary" onclick="performSearch()">{% trans 'Поиск' %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="createWithdraw" tabindex="-1" aria-labelledby="createWithdrawLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createWithdrawLabel">{% trans 'Пополнение средств' %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="withdrawForm" action="{% url 'useraccount:withdraw_create' %}" method="post" onsubmit="submitWithdrawForm(event, 'withdrawForm')">
+    {% csrf_token %}
+    <div class="form-group">
+        <label for="amount">Сумма</label>
+        <input type="number" name="amount" id="amount" class="form-control" placeholder="Введите сумму" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Создать запрос</button>
+</form>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<style>
+    .table {
+        width: 100%;
+    }
+    .card {
+        margin-top: 1.25rem;
+    }
+    .alert {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        border-radius: 5px;
+        font-size: 14px;
+        z-index: 1000;
+        animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .alert-success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .alert-error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+</style>
+<script>
+    function submitCardForm(event, formId) {
+        event.preventDefault(); // Предотвращаем стандартное поведение
+
+        const form = document.getElementById(formId);
+        const formData = new FormData(form);
+
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest', // Указывает на AJAX-запрос
+            },
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('success', data.message);
+                    setTimeout(() => location.reload(), 3000); // Перезагрузка через 3 секунды
+                } else {
+                    showAlert('error', 'Ошибка: ' + JSON.stringify(data.errors));
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка:', error);
+                showAlert('error', 'Произошла ошибка. Попробуйте снова.');
+            });
+    }
+
+    function showAlert(type, message) {
+        // Создаем элемент для алерта
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type}`;
+        alert.textContent = message;
+
+        // Добавляем в начало body (или другого родителя)
+        document.body.appendChild(alert);
+
+        // Удаляем уведомление через 3 секунды
+        setTimeout(() => {
+            alert.remove();
+        }, 3000);
+    }
+</script>
+
+<script>
+    function submitWithdrawForm(event, formId) {
+        event.preventDefault(); // Предотвращаем стандартную отправку формы
+
+        const form = document.getElementById(formId);
+        const formData = new FormData(form);
+
+        // Получаем значение из поля amount
+        const amountInput = document.getElementById('amount');
+        const maxAmount = parseFloat(amountInput.getAttribute('max'));
+        const amount = parseFloat(amountInput.value);
+
+        if (amount > maxAmount) {
+            alert("Сумма не может быть больше доступного баланса.");
+            return;
+        }
+
+        // Если значение корректно, отправляем запрос
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest', // Указывает на AJAX
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Запрос на вывод успешно создан.');
+                location.reload();
+            } else {
+                alert('Ошибка: ' + JSON.stringify(data.errors));
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка:', error);
+            alert('Произошла ошибка при выполнении запроса.');
+        });
+    }
+</script>
+
+
+
+
+
+<script>
+    function openSearch(type) {
+        const modalLabel = document.getElementById('searchModalLabel');
+        modalLabel.textContent = type === 'id' ? '{% trans "Поиск по ID" %}' :
+            type === 'type' ? '{% trans "Поиск по типу" %}' :
+                type === 'date' ? '{% trans "Поиск по дате" %}' : '';
+
+        // Скрываем все секции поиска
+        document.getElementById('idSearch').style.display = 'none';
+        document.getElementById('typeSearch').style.display = 'none';
+        document.getElementById('dateSearch').style.display = 'none';
+
+        // Показываем только соответствующую секцию
+        switch (type) {
+            case 'id':
+                document.getElementById('idSearch').style.display = 'block';
+                break;
+            case 'type':
+                document.getElementById('typeSearch').style.display = 'block';
+                break;
+            case 'date':
+                document.getElementById('dateSearch').style.display = 'block';
+                break;
+        }
+
+        $('#searchModal').modal('show');
+    }
+    function performSearch() {
+        const searchId = document.getElementById('searchInput').value;
+        const searchType = document.getElementById('typeSelect').value;
+        const searchDate = document.getElementById('searchDate').value; // Получаем выбранную дату
+
+
+        // Формируем URL для запроса
+        const url = new URL(window.location.href);
+        if (searchId) {
+            url.searchParams.set('search_id', searchId);
+        }
+        if (searchType) {
+            url.searchParams.set('search_type', searchType);
+        }
+        if (searchDate) {
+            url.searchParams.set('search_date', searchDate); // Используем только одну дату
+        }
+
+        // Перезагружаем страницу с новыми параметрами
+        window.location.href = url.toString();
+
+        // Закрыть модальное окно после выполнения поиска
+        $('#searchModal').modal('hide');
+    }
+</script>
+
+{% endblock content %}

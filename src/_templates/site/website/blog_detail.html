@@ -1,0 +1,49 @@
+{% extends 'site/website/base.html' %}
+{% load static %}
+{% block title %}{{ seo_title }}{% endblock title %}
+{% block description %}{{ seo_description }}{% endblock description %}
+{% block propertytitle %}{% if seo_previev %}{{ seo_previev.url }} {% endif %} {% endblock propertytitle %}
+{% block propertydescription %}{{ seo_propertytitle }}{% endblock propertydescription %}
+{% block propertyimage %}{{ seo_propertydescription }}{% endblock propertyimage %}
+{% block head %}{% endblock head %}
+{% block content %}
+
+<div class="container py-5">
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-md-8">
+            {{ blog.description|safe }}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-md-4">
+            <!-- Categories -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    Категории
+                </div>
+                <ul class="list-group list-group-flush">
+                    {% for category in categorys %}
+                    <li class="list-group-item ">
+                        <a href="{% url 'webmain:blogs' %}?category={{ category.id }}" class="text-decoration-none text-dark">{{ category.name }}</a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- Tags -->
+            <div class="card mb-4">
+                <div class="card-header bg-secondary text-white">
+                    Метки
+                </div>
+                <div class="card-body">
+                    {% for tag in tags %}
+                    <a href="{% url 'webmain:blogs' %}?tag={{ tag.id }}" class="btn btn-outline-primary btn-sm mb-2">{{tag.name}}</a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+{% block footer %}{% endblock footer %}

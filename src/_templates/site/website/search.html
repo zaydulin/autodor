@@ -1,0 +1,61 @@
+{% extends 'site/website/base.html' %}
+{% load static %}
+{% block title %}{{ seo_title }}{% endblock title %}
+{% block description %}{{ seo_description }}{% endblock description %}
+{% block propertytitle %}{% if seo_previev %}{{ seo_previev.url }} {% endif %} {% endblock propertytitle %}
+{% block propertydescription %}{{ seo_propertytitle }}{% endblock propertydescription %}
+{% block propertyimage %}{{ seo_propertydescription }}{% endblock propertyimage %}
+{% block head %}{% endblock head %}
+{% block content %}
+<div class="container mt-5">
+    <h2>Результаты поиска</h2>
+
+    <!-- Форма поиска -->
+    <form method="get" action="{% url 'webmain:search' %}">
+        <div class="input-group mb-4">
+            <input type="text" class="form-control" name="q" value="{{ query }}" placeholder="Поиск...">
+            <select name="filter" class="form-select">
+                <option value="all" {% if filter == 'all' %}selected{% endif %}>Все</option>
+                <option value="blogs" {% if filter == 'blogs' %}selected{% endif %}>Блоги</option>
+                <option value="pages" {% if filter == 'pages' %}selected{% endif %}>Страницы</option>
+            </select>
+            <button class="btn btn-primary" type="submit">Искать</button>
+        </div>
+    </form>
+
+    {% if results %}
+    <div class="row">
+        {% for result in results %}
+            <div class="col-md-4 mb-4">
+                <!-- Проверка типа результата -->
+                {% if result.type == 'blog' %}
+                    <!-- Карточка для блога -->
+                    <div class="card">
+                        <img src="{% if result.image %}{{ result.image.url }}{% else %}https://via.placeholder.com/150{% endif %}" class="card-img-top" alt="{{ result.name }}">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ result.name }}</h5>
+                            <p class="card-text">{{ result.description|truncatewords:20 }}</p>
+                            <a href="{% url 'webmain:blog' result.slug %}" class="btn btn-primary">Читать далее</a>
+                        </div>
+                    </div>
+                {% elif result.type == 'page' %}
+                    <!-- Карточка для страницы -->
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ result.name }}</h5>
+                            <p class="card-text">{{ result.description|truncatewords:20 }}</p>
+                            <a href="{% url 'webmain:page' result.slug %}" class="btn btn-primary">Перейти</a>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+
+    <!-- Пагинация -->
+    {% include 'site/website/include/paginations.html' with items=results %}
+</div>
+{% endblock content %}
+{% block footer %}{% endblock footer %}

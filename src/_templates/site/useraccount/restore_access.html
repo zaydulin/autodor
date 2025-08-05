@@ -1,0 +1,40 @@
+{% extends 'site/useraccount/base.html' %}
+{% load static i18n %}
+{% block title %}{{ seo_title }}{% endblock title %}
+{% block description %}{{ seo_description }}{% endblock description %}
+{% block propertytitle %}{% if seo_previev %}{{ seo_previev.url }} {% endif %} {% endblock propertytitle %}
+{% block propertydescription %}{{ seo_propertytitle }}{% endblock propertydescription %}
+{% block propertyimage %}{{ seo_propertydescription }}{% endblock propertyimage %}
+{% block head %}{% endblock head %}
+
+{% block content %}
+<div class="auth-form password-reset-form">
+    <div class="text-center mb-3">
+        <img src="{% if settings.logo %}{{settings.logo.url}}{% else %}{% static 'site/lk/images/logo-white.png' %}{% endif %}" alt="Логотип">
+    </div>
+    <h4 class="text-center mb-4">{% trans 'Сброс пароля' %}</h4>
+    <form method="post" id="login-form">
+        {% csrf_token %}
+        <div class="form-group mb-2">
+            <label class="mb-2"><strong>{% trans 'Email' %}</strong></label>
+            <input type="email" class="form-control" name="email" placeholder="{% trans 'Введите ваш' %} email">
+        </div>
+        <div class="text-center mt-4">
+            <button type="submit" class="btn btn-primary btn-block">{% trans 'Отправить' %}</button>
+        </div>
+    </form>
+    <!-- Отображение сообщения об ошибке -->
+    {% if form.errors %}
+        <div class="alert alert-danger mt-3">
+            {% for field in form %}
+                {% for error in field.errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            {% endfor %}
+            {% for error in form.non_field_errors %}
+                <p>{{ error }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endblock content %}

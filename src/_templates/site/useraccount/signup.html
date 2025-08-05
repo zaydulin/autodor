@@ -1,0 +1,84 @@
+{% extends 'site/useraccount/base.html' %}
+{% load static i18n %}
+{% block title %}{{ seo_title }}{% endblock title %}
+{% block description %}{{ seo_description }}{% endblock description %}
+{% block propertytitle %}{% if seo_previev %}{{ seo_previev.url }} {% endif %} {% endblock propertytitle %}
+{% block propertydescription %}{{ seo_propertytitle }}{% endblock propertydescription %}
+{% block propertyimage %}{{ seo_propertydescription }}{% endblock propertyimage %}
+{% block head %}{% endblock head %}
+
+{% block content %}
+<div class="auth-form">
+    <div class="text-center mb-3">
+        <img src="{% static 'images/logo-full.png' %}" alt="">
+    </div>
+    <h4 class="text-center mb-4">Зарегистрировать пользователя</h4>
+    <form method="POST" class="register-form" id="register-form">
+        {% csrf_token %}
+        <!-- Общие ошибки формы -->
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+        <!-- Поле имени пользователя -->
+        <div class="form-group">
+            <label class="mb-1"><strong>Имя пользователя</strong></label>
+            {{ form.username }}
+            {% if form.username.errors %}
+                <div class="text-danger">
+                    {% for error in form.username.errors %}
+                        <small>{{ error }}</small>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        <!-- Поле Email -->
+        <div class="form-group">
+            <label class="mb-1"><strong>Email</strong></label>
+            {{ form.email }}
+            {% if form.email.errors %}
+                <div class="text-danger">
+                    {% for error in form.email.errors %}
+                        <small>{{ error }}</small>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        <!-- Поле пароля -->
+        <div class="form-group">
+            <label class="mb-1"><strong>Пароль</strong></label>
+            {{ form.password1 }}
+            {% if form.password1.errors %}
+                <div class="text-danger">
+                    {% for error in form.password1.errors %}
+                        <small>{{ error }}</small>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        <!-- Поле подтверждения пароля -->
+        <div class="form-group">
+            <label class="mb-1"><strong>Подтверждение пароля</strong></label>
+            {{ form.password2 }}
+            {% if form.password2.errors %}
+                <div class="text-danger">
+                    {% for error in form.password2.errors %}
+                        <small>{{ error }}</small>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        <!-- Кнопка отправки -->
+        <div class="text-center mt-4">
+            <button type="submit" name="signup" id="signup" class="btn btn-primary btn-block">Зарегистрировать</button>
+        </div>
+    </form>
+        <div class="new-account mt-3">
+        <p><a class="text-primary" href="{% url 'useraccount:password_reset' %}">{% trans 'Сбросить пароль' %}?</a> <a class="text-primary" href="{% url 'useraccount:login' %}">{% trans 'Войти' %}?</a> </p>
+    </div>
+
+</div>
+{% endblock content %}
