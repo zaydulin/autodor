@@ -20,11 +20,17 @@ class Profile(AbstractUser):
         (2, 'Женский'),
     ]
     TYPE = [
-        (0, 'Сотрудник'),
-        (1, 'Обычный'),
-        (2, 'Юр лицо'),
+        (0, 'Сотрудники'),
+        (1, 'Клиент'),
     ]
     type = models.PositiveSmallIntegerField('Пол', choices=TYPE, blank=False, default=1)
+    EMPLOYEE = [
+        (0, 'Нет должности'),
+        (1, 'Водитель'),
+        (2, 'Менеджер'),
+        (3, 'Посредник'),
+    ]
+    employee = models.PositiveSmallIntegerField('сотрудник', choices=EMPLOYEE, blank=False, default=0)
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     phone = models.CharField(blank=True, verbose_name='Телефон', max_length=500, null=True)
     avatar = models.FileField(upload_to=get_user_dir, blank=True, verbose_name='Аватар', default='default/user-nophoto.png', validators=[FileExtensionValidator(allowed_extensions=['png', 'webp', 'jpeg', 'jpg', 'svg'])],)
@@ -86,6 +92,17 @@ class Notification(models.Model):
     class Meta:
         verbose_name = "Уведомление"
         verbose_name_plural = "Уведомление"
+
+
+class Dictofone(models.Model):
+    """Выплаты"""
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Пользователь', on_delete=models.CASCADE)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    files = models.FileField(upload_to=get_user_dir, blank=True, verbose_name=' Записи')
+
+    class Meta:
+        verbose_name = "Запись"
+        verbose_name_plural = "Записи"
 
 
 class Withdrawal(models.Model):
