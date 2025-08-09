@@ -7,79 +7,41 @@
 {% block propertyimage %}{{ seo_propertydescription }}{% endblock propertyimage %}
 {% block head %}{% endblock head %}
 {% block content %}
-<div class="container mt-5">
-
-
-
-    <!-- Вкладки -->
-    <ul class="nav nav-tabs" id="contactTabs" role="tablist">
-        {% for contact in contacts %}
-        <li class="nav-item" role="presentation">
-            <a class="nav-link {% if not forloop.first %}active{% endif %}" id="tabinfo{{ forloop.counter }}-tab" data-bs-toggle="tab" href="#tabinfo{{ forloop.counter }}" role="tab" aria-controls="tabinfo{{ forloop.counter }}" aria-selected="true">
-                {{ contact.title }}
-            </a>
-        </li>
-        {% endfor %}
-    </ul>
-    <!-- Контент вкладок -->
-    <div class="tab-content" id="contactTabsContent">
-        <!-- Номера телефонов -->
-        {% for contact in contacts %}
-        <div class="tab-pane fade show {% if not forloop.first %}active{% endif %}" id="tabinfo{{ forloop.counter }}" role="tabpanel" aria-labelledby="tabinfo{{ forloop.counter }}-tab">
-            <div class="mt-3">
-                <h5>Основной телефон:</h5>
-                {% if contact.address %}
-                {% for information in contact.address %}
-                <p>Заголовок: {{information.title_contact}} </p>
-                {% endfor %}
-                {% else %}
-                <p>Нет информации о адресах</p>
-                {% endif %}
-            </div>
-        </div>
-        {% endfor %}
+<section class="page_banner" style="background-image: url('assets/images/shapes/tyre_print_3.svg');">
+    <div class="container">
+        <ul class="breadcrumb_nav unordered_list">
+            <li><a href="{% url 'webmain:home' %}">Главная</a></li>
+            <li><a href="{% url 'webmain:contacts' %}">Контакты</a></li>
+        </ul>
+        <h1 class="page_title wow" data-splitting>Контакты</h1>
     </div>
-</div>
-<div class="container">
-    <!-- Contact Form Start  -->
-    <form method="post" class="contact-form input-smoke ajax-contact">
-        <h2 class="sec-title"> Связать с нами ?</h2>
-        <h6 class="title">Заполните форму и мы свяжемся с вами.</h6>
-        {% csrf_token %}
+</section>
+<section class="contact_section section_space_lg">
+    <div class="container">
         <div class="row">
-            <div class="form-group col-md-6">
-                <input type="text" name="name" required placeholder="Ваше Имя*">
-                <i class="fal fa-user"></i>
+            <div class="col-lg-4">
+                <div class="contact_info_box"><h3 class="item_title">Адрес</h3>
+                    {{settings.address|safe}}
+                </div>
             </div>
-            <div class="form-group col-md-6">
-                <input type="email" name="email" required placeholder="Электронная почта *">
-                <i class="fal fa-envelope"></i>
+            <div class="col-lg-4">
+                <div class="contact_info_box"><h3 class="item_title">График</h3>
+                    {{settings.office_hourse|safe}}
+                </div>
             </div>
-            <div class="form-group col-md-6">
-                <input type="text" name="subject" required placeholder="Предмет">
-
+            <div class="col-lg-4">
+                <div class="contact_info_box"><h3 class="item_title">Контакты</h3>
+                    {{settings.phones|safe}}
+                </div>
             </div>
-            <div class="form-group col-md-6">
-                <input type="text" name="phone" required placeholder="Номер телефона">
-                <i class="fal fa-phone"></i>
-            </div>
-            <div class="form-group col-12">
-                <textarea name="message" required placeholder="Оставь свой комментарий здесь"></textarea>
-                <i class="fal fa-pencil"></i>
-            </div>
-            <p class="form-message"></p>
-            <div class="form-btn col-12">
-                <button type="submit" class="th-btn btn-fw">
-                    Отправить<i class="fas fa-chevrons-right ms-2"></i>
-                </button>
-
+            <div class="col-12">
+                <div class="gmap_canvas">
+{{settings.map|safe}}
+                </div>
             </div>
         </div>
-    </form>
-
-    <!-- Contact Form End  -->
-</div>
-<!-- Contact Section End -->
+    </div>
+</section>
 
 {% endblock content %}
 {% block footer %}{% endblock footer %}

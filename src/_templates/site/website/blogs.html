@@ -7,66 +7,52 @@
 {% block propertyimage %}{{ seo_propertydescription }}{% endblock propertyimage %}
 {% block head %}{% endblock head %}
 {% block content %}
-
-<div class="container py-5">
-    <div class="row">
-        <!-- Main Content -->
-        <div class="col-md-8">
-            <h1 class="text-center mb-4">Новости</h1>
-            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
-                <!-- Card 1 -->
-                {% for blog in blogs %}
-                <div class="col">
-                    <div class="card h-100">
-                        <img src="{% if blog.image %}{{ blog.image.url }}{% else %}https://via.placeholder.com/300x200{% endif %}" class="card-img-top" alt="News Image">
-                        <div class="card-body">
-                            <h5 class="card-title">{{blog.name}}</h5>
-                            <p class="card-text">{{blog.description|safe|truncatechars:100}}</p>
-                            <a href="{% url 'webmain:blog' blog.slug %}" class="btn btn-primary">Подробнее..</a>
+<section class="page_banner" style="background-image: url('assets/images/shapes/tyre_print_3.svg');">
+    <div class="container">
+        <ul class="breadcrumb_nav unordered_list">
+            <li><a href="{% url 'webmain:home' %}">Главная</a></li>
+            <li><a href="{% url 'webmain:blogs' %}">Новости</a></li>
+        </ul>
+        <h1 class="page_title wow" data-splitting>Новости</h1>
+    </div>
+</section>
+<section class="blog_grid_section section_space_lg">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="row">
+                    {% for blog in blogs %}
+                    <div class="col-md-4 col-sm-6">
+                        <div class="blog_item mb-5">
+                            <a class="item_image" href="{% url 'webmain:blog' blog.slug %}">
+                                <img src="https://html.merku.love/assets/images/blogs/blog_img_10.jpg" alt="ProMotors - Blog Image">
+                            </a>
+                            <div class="item_content">
+                                <ul class="item_type_list unordered_list">
+                                    <li><a href="{% url 'webmain:blog' blog.slug %}!">{{blog.name}}</a></li>
+                                </ul>
+                                <h3 class="item_title">
+                                    <a href="{% url 'webmain:blog' blog.slug %}">{{blog.description|safe|truncatechars:100}}</a>
+                                </h3>
+                                <ul class="post_meta unordered_list">
+                                    <li>{{blog.create}}</li>
+                                </ul>
+                                <a class="btn-link" href="{% url 'webmain:blog' blog.slug %}">
+                                    <span class="btn_icon"><i class="fa-regular fa-angle-right"></i></span>
+                                    <span class="btn_text">
+                                        <small>Подробнее..</small>
+                                        <small>Подробнее..</small>
+                                    </span>
+                                </a>
+                            </div>
                         </div>
                     </div>
-                </div>
-                {% endfor %}
-            </div>
-            {% include 'site/website/include/paginations.html' with items=blogs %}
-        </div>
-        <!-- Sidebar -->
-        <div class="col-md-4">
-            <!-- Categories -->
-            <div class="card mb-4">
-                <div class="card-header bg-primary text-white">
-                    Категории
-                </div>
-                <ul class="list-group list-group-flush">
-                    {% for category in categorys %}
-                    <li class="list-group-item {% if category.id|stringformat:"s" == selected_category %}active{% endif %}">
-                    <a href="?category={{ category.id }}{% if selected_tag %}&tag={{ selected_tag }}{% endif %}" class="text-decoration-none text-dark">
-                        {% if category.id|stringformat:"s" == selected_category %}<strong>{% endif %}{{ category.name }}{% if category.id|stringformat:"s" == selected_category %}</strong>{% endif %}
-                    </a>
-                    </li>
                     {% endfor %}
-                </ul>
-            </div>
-
-            <!-- Tags -->
-            <div class="card mb-4">
-                <div class="card-header bg-secondary text-white">
-                    Метки
                 </div>
-                <div class="card-body">
-                    <ul class="list-group">
-                        {% for tag in tags %}
-                        <li class="list-group-item {% if tag.id|stringformat:"s" == selected_tag %}active{% endif %}">
-                        <a href="?tag={{ tag.id }}{% if selected_category %}&category={{ selected_category }}{% endif %}" class="text-decoration-none text-dark">
-                            {% if tag.id|stringformat:"s" == selected_tag %}<strong>{% endif %}{{ tag.name }}{% if tag.id|stringformat:"s" == selected_tag %}</strong>{% endif %}
-                        </a>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                </div>
+                {% include 'site/website/include/paginations.html' with items=blogs %}
             </div>
         </div>
     </div>
-</div>
+</section>
 {% endblock content %}
 {% block footer %}{% endblock footer %}

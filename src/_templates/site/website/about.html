@@ -8,13 +8,20 @@
 {% block head %}{% endblock head %}
 
 {% block content %}
-
-<!-- Header Section -->
-<header class="bg-light py-5 text-center">
+<section class="page_banner" style="background-image: url('assets/images/shapes/tyre_print_3.svg');">
     <div class="container">
-        <h1 class="display-4">{{ aboutpage.text }}</h1>
+        <ul class="breadcrumb_nav unordered_list">
+            <li><a href="{% url 'webmain:home' %}">Главная</a></li>
+            <li><a href="#">{{ aboutpage.title }}</a></li>
+        </ul>
+        <h1 class="page_title wow" data-splitting>{{ aboutpage.title }}</h1>
     </div>
-</header>
+</section>
+<!-- Header Section -->
+<!-- FAQ Section -->
+<section class="container my-5">
+{{ aboutpage.description|safe }}
+</section>
 
 {% endblock content %}
 {% block footer %}{% endblock footer %}

@@ -8,13 +8,6 @@
 {% block head %}{% endblock head %}
 
 {% block content %}
-
-<!-- Header Section -->
-<header class="bg-light py-5 text-center">
-    <div class="container">
-        <h1 class="display-4">{{ homepage.text }}</h1>
-    </div>
-</header>
-
+{{ aboutpage.description|safe }}
 {% endblock content %}
 {% block footer %}{% endblock footer %}

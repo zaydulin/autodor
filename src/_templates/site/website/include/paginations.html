@@ -1,10 +1,10 @@
-<div class="th-pagination text-center">
-    <ul >
+<div class="pagination_wrap">
+    <ul class="pagination_nav unordered_list">
         {% if paginator.num_pages >= 1 %}
         {% if page_obj.has_previous %}
         <li>
             <a href="?page=1" >
-                <i class="far fa-arrow-left"></i>
+                <i class="fa-regular fa-angle-left"></i>
             </a>
         </li>
         {% endif %}
@@ -22,7 +22,7 @@
         {% if page_obj.has_next %}
         <li>
             <a  href="?page={{ paginator.num_pages }}" aria-label="Next">
-                <i class="far fa-arrow-right"></i>
+                <i class="fa-regular fa-angle-right"></i>
             </a>
         </li>
         {% endif %}

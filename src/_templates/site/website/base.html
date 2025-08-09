@@ -1,6 +1,6 @@
 {% load static generals_tag i18n %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="x-ua-compatible" content="ie=edge" />
@@ -16,154 +16,258 @@
     {{settings.google_analitic}}
     <!-- Style link -->
     <link href="{% static 'site/website/bootstrap/css/bootstrap.css' %}" rel="stylesheet">
-    <link href="{% static 'site/website/bootstrap/css/bootstrap.rtl.css' %}" rel="stylesheet">
-    <link href="{% static 'site/website/bootstrap/css/bootstrap-grid.css' %}" rel="stylesheet">
-    <link href="{% static 'site/website/bootstrap/css/bootstrap-grid.rtl.css' %}" rel="stylesheet">
-    <link href="{% static 'site/website/bootstrap/css/bootstrap-reboot.css' %}" rel="stylesheet">
-    <link href="{% static 'site/website/bootstrap/css/bootstrap-reboot.rtl.css' %}" rel="stylesheet">
-    <link href="{% static 'site/website/bootstrap/css/bootstrap-utilities.css' %}" rel="stylesheet">
-    <link href="{% static 'site/website/bootstrap/css/bootstrap-utilities.rtl.css' %}" rel="stylesheet">
-    <link href="{% static 'site/website/fontawesome-free-6.7.1-web/css/fontawesome.css' %}" rel="stylesheet" />
-    <link href="{% static 'site/website/fontawesome-free-6.7.1-web/css/brands.css' %}" rel="stylesheet" />
-    <link href="{% static 'site/website/fontawesome-free-6.7.1-web/css/solid.css' %}" rel="stylesheet" />
-    <link href="{% static 'site/website/fontawesome-free-6.7.1-web/css/sharp-thin.css' %}" rel="stylesheet" />
-    <link href="{% static 'site/website/fontawesome-free-6.7.1-web/css/duotone-thin.css' %}" rel="stylesheet" />
-    <link href="{% static 'site/website/fontawesome-free-6.7.1-web/css/sharp-duotone-thin.css' %}" rel="stylesheet" />
+    <link rel="stylesheet" type="text/css" href="{% static 'site/website/site/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'site/website/site/css/fontawesome.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'site/website/site/css/animate.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'site/website/site/css/cursor.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'site/website/site/css/slick.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'site/website/site/css/slick-theme.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'site/website/site/css/magnific-popup.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'site/website/site/css/vanilla-calendar.min.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'site/website/site/css/odometer.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'site/website/site/css/jquery-ui.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'site/website/site/css/style.css' %}">
 
 </head>
 <body>
-<!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-light bg-light py-3">
-    <div class="container">
-        <a class="navbar-brand" href="#">
-            <img src="{% if settings.logo %}{{settings.logo.url}}{% endif %}"  width="120">
+<div class="page_wrapper">
+    <div class="backtotop">
+        <a href="#" class="scroll">
+            <i class="fa-solid fa-arrow-up"></i>
         </a>
-        <!-- Кнопка категорий -->
-        <button class="btn btn-primary" type="button" data-bs-toggle="collapse" href="#collapseExample" role="button" aria-expanded="false" aria-controls="collapseExample">
-            Категории
-        </button>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            {% with app_name=request.resolver_match.namespace url_name=request.resolver_match.url_name %}
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item">
-                    <a class="nav-link  {% if app_name == 'webmain' and url_name == 'home' %}active{% endif %}" href="{% url 'webmain:home' %}">Главная</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link  {% if app_name == 'webmain' and url_name == 'about' %}active{% endif %}" href="{% url 'webmain:about' %}">О нас</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link  {% if app_name == 'webmain' and url_name == 'faqs' %}active{% endif %}" href="{% url 'webmain:faqs' %}">ЧаВо</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link  {% if app_name == 'webmain' and url_name == 'blogs' %}active{% endif %}" href="{% url 'webmain:blogs' %}">Новости</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link  {% if app_name == 'webmain' and url_name == 'contacts' %}active{% endif %}" href="{% url 'webmain:contacts' %}">Контакты</a>
-                </li>
-
-            </ul>
-            {% endwith %}
-            <!-- Поиск -->
-            <form method="get" class="d-flex" action="{% url 'webmain:search' %}">
-                <div class="search-form position-relative">
-                    <input class="form-control me-2" id="search-input" name="q" type="text"value="{{ query }}" placeholder="Введи поисковую фразу..." aria-describedby="button-addon2">
-                    <button class="btn btn-outline-primary" type="submit" id="button-addon2"></button>
-                </div>
-            </form>
-        </div>
     </div>
-</nav>
-<!-- Выпадающий список категорий -->
-<div class="collapse" id="collapseExample">
-    <div class="container py-3">
-        {% include 'site/website/include/category.html' %}
-    </div>
-</div>
-
-{% block content %}{% endblock content %}
-<!-- Footer -->
-<footer class="bg-primary text-white py-4">
-    <div class="container text-center">
-        <div class="row">
-            <!-- Первый раздел: Логотип и описание с контактами -->
-            <div class="col-md-4">
-                <a class="navbar-brand" href="#">
-                    <img src="{% if settings.logo %}{{settings.logo.url}}{% endif %}" alt="Logo" width="120">
-                </a>
-                <p>{{settings.description}}</p>
-                <ul class="list-unstyled">
-                    <li>Телефон: +123456789</li>
-                    <li>Email: info@example.com</li>
-                    <li>Адрес: ул. Примерная, 12, Москва</li>
-                </ul>
-            </div>
-            <!-- Второй раздел: Список пунктов меню -->
-            <div class="col-md-4">
-                <h5>Меню</h5>
-                <ul class="list-unstyled">
-                    {% get_pages as pages %}
-                    <li>
-                        {% if pages %}{% for page in pages %}{% if page.pagetype == 2 %}
-                        <a href="{% url 'webmain:page' page.slug  %}" style="color:#fff;">
-                            {% trans 'Пользовательское соглашение' %}
-                        </a>
-                        {% endif %}{% endfor %}{% endif %}
-                    </li>
-                    <li>
-                        {% if pages %}{% for page in pages %}{% if page.pagetype == 3 %}
-                        <a href="{% url 'webmain:page' page.slug  %}" style="color:#fff;">
-                            {% trans 'Политика конфедециальности' %}
-                        </a>
-                        {% endif %}{% endfor %}{% endif %}
-                    </li>
-                    <li>
-                        {% if pages %}{% for page in pages %}{% if page.pagetype == 4 %}
-                        <a href="{% url 'webmain:page' page.slug  %}"  style="color:#fff;">
-                            {% trans 'Политика Cookie - Файлов' %}
-                        </a>
-                        {% endif %}{% endfor %}{% endif %}
-                    </li>
-                    <li>
-                        {% if pages %}{% for page in pages %}{% if page.pagetype == 5 %}
-                        <a href="{% url 'webmain:page' page.slug  %}">
-                            {% trans 'Согласия на обработку персональных данных' %}
-                        </a>
-                        {% endif %}{% endfor %}{% endif %}
-                    </li>
-                </ul>
-            </div>
-            <!-- Третий раздел: Форма подписки -->
-            <div class="col-md-4">
-                <h5>Подписаться на новости</h5>
-                {% render_subscription_form as subscription_form_context %}
-                <form method="post" action="{% url 'webmain:subscribe' %}" >
-                    <div class="input-group">
-                        <input type="hidden" name="csrfmiddlewaretoken" value="{{ subscription_form_context.csrf_token }}">
-                        {{ subscription_form_context.form.email }}
-                        <button  type="submit">
-                            <i class="fa-solid fa-paper-plane"></i>
-                        </button>
+    <header class="site_header">
+        <div class="header_bottom">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-lg-3 col-5">
+                        <div class="site_logo">
+                            <a class="site_link" href="{% url 'webmain:home' %}">
+                                <img class="dark_theme_logo" src="{% if settings.logo %}{{settings.logo.url}}{% endif %}" alt="Site Logo – ProMotors – Car Service & Detailing Template">
+                                <img class="light_theme_logo" src="{% if settings.logo_white %}{{settings.logo_white.url}}{% endif %}"  alt="Site Logo – ProMotors – Car Service & Detailing Template">
+                            </a>
+                        </div>
                     </div>
-                </form>
+                    <div class="col-lg-6 col-2">
+                        <nav class="main_menu navbar navbar-expand-lg">
+                            <div class="main_menu_inner collapse navbar-collapse justify-content-center" id="main_menu_dropdown">
+                                <ul class="main_menu_list unordered_list_center">
+                                    <li><a href="{% url 'webmain:home' %}">Главная</a></li>
+                                    <li><a href="{% url 'webmain:about' %}">О нас</a></li>
+                                    <li><a href="{% url 'webmain:blogs' %}">Новости</a></li>
+                                    <li><a href="{% url 'webmain:faqs' %}">ЧаВо</a></li>
+                                    <li><a href="{% url 'webmain:contacts' %}">Конткты</a></li>
+                                </ul>
+                            </div>
+                        </nav>
+                    </div>
+                    <div class="col-lg-3 col-5">
+                        <ul class="header_btns_group unordered_list_end">
+                            <li>
+                                <button class="mobile_menu_btn" type="button" data-bs-toggle="collapse" data-bs-target="#main_menu_dropdown" aria-expanded="false" aria-label="Toggle navigation">
+                                    <i class="far fa-bars"></i>
+                                </button>
+                            </li>
+                            <li>
+                                <div class="mode-switch" data-bs-toggle="mode" data-cursor="-opaque" data-magnetic="">
+                                    <input id="theme-mode-btn" type="checkbox">
+                                </div>
+                            </li>
+                            <li>
+                                <a class="btn_hotline" href="tel:{{settings.phone}}">
+                                    <span class="btn_text" data-text="{{settings.phone}}">{{settings.phone}}</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
-        <p class="mb-0">&copy; {{settings.content}}.</p>
-    </div>
-</footer>
-{% block footertop %}{% endblock footertop %}
-<script defer src="{% static 'site/website/fontawesome-free-6.7.1-web/js/brands.js' %}"></script>
-<script defer src="{% static 'site/website/fontawesome-free-6.7.1-web/js/solid.js' %}"></script>
-<script defer src="{% static 'site/website/fontawesome-free-6.7.1-web/js/fontawesome.js' %}"></script>
-<script defer src="{% static 'site/website/fontawesome-free-6.7.1-web/js/sharp-thin.js' %}"></script>
-<script defer src="{% static 'site/website/fontawesome-free-6.7.1-web/js/duotone-thin.js' %}"></script>
-<script defer src="{% static 'site/website/fontawesome-free-6.7.1-web/js/sharp-duotone-thin.js' %}"></script>
+    </header>
+    <main class="page_content">
 
-<script src="{% static 'site/website/bootstrap/js/bootstrap.bundle.js' %}"></script>
-<script src="{% static 'site/website/bootstrap/js/bootstrap.esm.js' %}"></script>
-<script src="{% static 'site/website/bootstrap/js/bootstrap.js' %}"></script>
+        {% block content %}{% endblock content %}
+    </main>
+    <footer class="site_footer">
+        <div class="footer_content_area section_space_lg bg_gray_dark">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-3 col-md-6 col-sm-6">
+                        <div class="footer_about pe-lg-5">
+                            <div class="site_logo">
+                                <a class="site_link" href="index.html">
+                                    <img class="dark_theme_logo" src="{% if settings.logo %}{{settings.logo.url}}{% endif %}" alt="Site Logo – ProMotors – Car Service & Detailing Template">
+                                    <img class="light_theme_logo" src="{% if settings.logo_white %}{{settings.logo_white.url}}{% endif %}" alt="Site Logo – ProMotors – Car Service & Detailing Template">
+                                </a>
+                            </div>
+                            <p>{{settings.description|safe}}</p>
+                            <div class="footer_hotline">
+                                <span>Поддержка 24/7</span>
+                                <a class="hotline_number" href="tel:{{settings.phone}}">{{settings.phone}}</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-6 col-sm-6">
+                        <div class="info_list_wrap">
+                            <h3 class="list_title">Информация о нас</h3>
+                            <ul class="info_list unordered_list_block text-uppercase">
+                                <li>
+                                    <a href="{% url 'webmain:about' %}">
+                                        <span class="info_icon">
+                                            <img src="{% static 'site/website/site/images/icon_square.svg' %}"  alt="ProMotors - Icon Square">
+                                        </span>
+                                        <span class="info_text">О нас</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{% url 'webmain:blogs' %}">
+                                        <span class="info_icon">
+                                            <img src="{% static 'site/website/site/images/icon_square.svg' %}"  alt="ProMotors - Icon Square">
+                                        </span>
+                                        <span class="info_text">Новости</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{% url 'webmain:faqs' %}">
+                                        <span class="info_icon">
+                                            <img src="{% static 'site/website/site/images/icon_square.svg' %}"  alt="ProMotors - Icon Square">
+                                        </span>
+                                        <span class="info_text">ЧаВо</span>
+                                    </a>
+                                </li>
+
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="info_list_wrap">
+                            <h3 class="list_title">Полезная информация</h3>
+                            <div class="row">
+                                                    {% get_pages as pages %}
+
+                                <div class="col-md-6 col-sm-6">
+                                    <ul class="info_list unordered_list_block text-uppercase">
+                                        {% if pages %}{% for page in pages %}{% if page.pagetype == 2 %}
+                                        <li>
+                                            <a href="{% url 'webmain:page' page.slug  %}">
+                                                <span class="info_icon">
+                                                    <img src="{% static 'site/website/site/images/icon_square.svg' %}"  alt="ProMotors - Icon Square">
+                                                </span>
+                                                <span class="info_text">{{page.name}}</span>
+                                            </a>
+                                        </li>
+                                        {% endif %}{% endfor %}{% endif %}
+                                        {% if pages %}{% for page in pages %}{% if page.pagetype == 3 %}
+                                        <li>
+                                            <a href="{% url 'webmain:page' page.slug  %}">
+                                                <span class="info_icon">
+                                                    <img src="{% static 'site/website/site/images/icon_square.svg' %}"  alt="ProMotors - Icon Square">
+                                                </span>
+                                                <span class="info_text">{{page.name}}</span>
+                                            </a>
+                                        </li>
+                                        {% endif %}{% endfor %}{% endif %}
+
+                                    </ul>
+                                </div>
+                                <div class="col-md-6 col-sm-6">
+                                    <ul class="info_list unordered_list_block text-uppercase">
+                                        {% if pages %}{% for page in pages %}{% if page.pagetype == 4 %}
+                                        <li>
+                                            <a href="{% url 'webmain:page' page.slug  %}">
+                                                <span class="info_icon">
+                                                    <img src="{% static 'site/website/site/images/icon_square.svg' %}"  alt="ProMotors - Icon Square">
+                                                </span>
+                                                <span class="info_text">{{page.name}}</span>
+                                            </a>
+                                        </li>
+                                        {% endif %}{% endfor %}{% endif %}
+                                        {% if pages %}{% for page in pages %}{% if page.pagetype == 5 %}
+                                        <li>
+                                            <a href="{% url 'webmain:page' page.slug  %}">
+                                                <span class="info_icon">
+                                                    <img src="{% static 'site/website/site/images/icon_square.svg' %}"  alt="ProMotors - Icon Square">
+                                                </span>
+                                                <span class="info_text">{{page.name}}</span>
+                                            </a>
+                                        </li>
+                                        {% endif %}{% endfor %}{% endif %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3">
+                        <div class="info_list_wrap">
+                            <h3 class="list_title">Профиль</h3>
+                            <ul class="info_list unordered_list_block text-uppercase">
+
+                                <li>
+                                    <a href="{% url 'webmain:home' %}">
+                                        <span class="info_icon">
+                                            <img src="{% static 'site/website/site/images/icon_square.svg' %}"  alt="ProMotors - Icon Square">
+                                        </span>
+                                        <span class="info_text">Объявления</span>
+                                    </a>
+                                </li>
+
+                                <li>
+                                    <a href="{% url 'webmain:home' %}">
+                                        <span class="info_icon">
+                                            <img src="{% static 'site/website/site/images/icon_square.svg' %}"  alt="ProMotors - Icon Square">
+                                        </span>
+                                        <span class="info_text">Профиль</span>
+                                    </a>
+                                </li>
+
+                                <li>
+                                    <a href="{% url 'webmain:home' %}">
+                                        <span class="info_icon">
+                                            <img src="{% static 'site/website/site/images/icon_square.svg' %}"  alt="ProMotors - Icon Square">
+                                        </span>
+                                        <span class="info_text">Лизные заявки</span>
+                                    </a>
+                                </li>
+
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="copyright_widget">
+            <div class="container">
+                <p class="copyright_text text-center mb-0">
+                    {{settings.content}}
+                </p>
+            </div>
+        </div>
+    </footer>
+</div>
+<!-- Footer -->
+{% block footertop %}{% endblock footertop %}
+
+<script src="{% static 'site/website/site/js/jquery.min.js' %}"></script>
+<script src="{% static 'site/website/site/js/popper.min.js' %}"></script>
+<script src="{% static 'site/website/site/js/bootstrap.min.js' %}"></script>
+<script src="{% static 'site/website/site/js/bootstrap-dropdown-ml-hack.js' %}"></script>
+<script src="{% static 'site/website/site/js/cursor.js' %}"></script>
+<script src="{% static 'site/website/site/js/wow.min.js' %}"></script>
+<script src="{% static 'site/website/site/js/tilt.min.js' %}"></script>
+<script src="{% static 'site/website/site/js/parallaxie.js' %}"></script>
+<script src="{% static 'site/website/site/js/parallax-scroll.js' %}"></script>
+<script src="{% static 'site/website/site/js/splitting.min.js' %}"></script>
+<script src="{% static 'site/website/site/js/slick.min.js' %}"></script>
+<script src="{% static 'site/website/site/js/magnific-popup.min.js' %}"></script>
+<script src="{% static 'site/website/site/js/appear.js' %}"></script>
+<script src="{% static 'site/website/site/js/odometer.min.js' %}"></script>
+<script src="{% static 'site/website/site/js/countdown.js' %}"></script>
+<script src="{% static 'site/website/site/js/vanilla-calendar.min.js' %}"></script>
+<script src="{% static 'site/website/site/js/imagebeforeafter.js' %}"></script>
+<script src="{% static 'site/website/site/js/jquery-ui.js' %}"></script>
+<script src="{% static 'site/website/site/js/dark-light.js' %}"></script>
+<script src="{% static 'site/website/site/js/main.js' %}"></script>
+
 {% block footerbottom %}{% endblock footerbottom %}
 </body>
 </html>

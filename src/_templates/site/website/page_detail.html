@@ -7,6 +7,19 @@
 {% block propertyimage %}{{ seo_propertydescription }}{% endblock propertyimage %}
 {% block head %}{% endblock head %}
 {% block content %}
+<section class="page_banner" style="background-image: url('assets/images/shapes/tyre_print_3.svg');">
+    <div class="container">
+        <ul class="breadcrumb_nav unordered_list">
+            <li><a href="{% url 'webmain:home' %}">Главная</a></li>
+            <li><a href="#">{{ page.name }}</a></li>
+        </ul>
+        <h1 class="page_title wow" data-splitting>{{ page.name }}</h1>
+    </div>
+</section>
+<!-- Header Section -->
+<!-- FAQ Section -->
+<section class="container my-5">
 {{ page.description|safe }}
+</section>
 {% endblock content %}
 {% block footer %}{% endblock footer %}

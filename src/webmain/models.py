@@ -46,6 +46,11 @@ class SettingsGlobale(models.Model):
     name = models.CharField("Название", max_length=500, blank=True, null=True)
     content = models.CharField("Копирайт", max_length=500, blank=True, null=True)
     description = RichTextField("Описание", blank=True, null=True)
+    phone = models.CharField("Телефон", max_length=500, blank=True, null=True)
+    map = models.CharField("Карта", max_length=500, blank=True, null=True)
+    phones = RichTextField("Телефоны", blank=True, null=True)
+    address = RichTextField("Адреса", blank=True, null=True)
+    office_hourse = RichTextField("График", blank=True, null=True)
     message_header = models.TextField("Шапка сообщения письма", blank=True, null=True)
     message_footer = models.TextField("Подвал сообщения письма", blank=True, null=True)
     yandex_metrica = models.TextField("Яндекс метрика", blank=True, null=True)
@@ -148,6 +153,7 @@ class AboutPage(models.Model):
     propertydescription = models.CharField(verbose_name="Мета-описание ссылки", max_length=255, blank=True, null=True,)
     setting = models.ForeignKey("SettingsGlobale", verbose_name='Настройки', on_delete=models.CASCADE, blank=True, null=True)
     text = models.CharField(verbose_name="текст", max_length=255, blank=True, null=True,)
+    description = RichTextField("Описание", blank=True, null=True)
 
     class Meta:
         verbose_name = "Страница О нас"
@@ -163,6 +169,7 @@ class HomePage(models.Model):
     propertydescription = models.CharField(verbose_name="Мета-описание ссылки", max_length=255, blank=True, null=True,)
     setting = models.ForeignKey("SettingsGlobale", verbose_name='Настройки', on_delete=models.CASCADE, blank=True, null=True)
     text = models.CharField(verbose_name="текст", max_length=255, blank=True, null=True,)
+    description = RichTextField("Описание", blank=True, null=True)
 
     class Meta:
         verbose_name = "Главная страница"

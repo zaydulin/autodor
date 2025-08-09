@@ -8,11 +8,18 @@
 {% block head %}{% endblock head %}
 
 {% block content %}
-
+<section class="page_banner" style="background-image: url('assets/images/shapes/tyre_print_3.svg');">
+    <div class="container">
+        <ul class="breadcrumb_nav unordered_list">
+            <li><a href="{% url 'webmain:home' %}">Главная</a></li>
+            <li><a href="{% url 'webmain:faqs' %}">Часто задаваемые вопросы</a></li>
+        </ul>
+        <h1 class="page_title wow" data-splitting>Часто задаваемые вопросы</h1>
+    </div>
+</section>
 <!-- Header Section -->
 <!-- FAQ Section -->
 <section class="container my-5">
-    <h2 class="text-center mb-4">Часто задаваемые вопросы</h2>
     <div class="accordion" id="faqAccordion">
         {% for faq in faqs %}
         <!-- Question {{ forloop.counter }} -->
