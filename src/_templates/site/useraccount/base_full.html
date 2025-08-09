@@ -1,0 +1,98 @@
+{% load static generals_tag user_tags  i18n %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge" />
+    <title>{% get_settings_first as settings %}{{settings.name}} - {% block title %}{% endblock title %}</title>
+    <meta content="{% block description %}{% endblock description %}" name="description">
+    <meta property="og:title" content="{% block propertytitle %} {% endblock propertytitle %}">
+    <meta property="og:description" content="{% block propertydescription %}{% endblock propertydescription %}">
+    <meta property="og:image" content="{% block propertyimage %}{% endblock propertyimage %}">
+    <!-- Favicon -->
+    <link rel="shortcut icon" type="image/x-icon" href="{% if settings.favicon %}{{settings.favicon.url}}{% endif %}" />
+    <!-- Analitic link -->
+    {{settings.yandex_metrica}}
+    {{settings.google_analitic}}
+    <!-- Style link -->
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="{% static 'site/website/admin/assets/css/core/libs.min.css' %}" />
+
+
+    <!-- Vrooom Design System Css -->
+    <link rel="stylesheet" href="{% static 'site/website/admin/assets/css/vrooom.min.css' %}?v=1.1.01" />
+
+    <!-- Custom Css -->
+    <link rel="stylesheet" href="{% static 'site/website/admin/assets/css/custom.min.css' %}?v=1.1.01" />
+
+    {% block head %}{% endblock head %}
+
+</head>
+<body class="  ">
+<span class="screen-darken backdrop"></span>
+<!-- loader Start -->
+<div id="loading">
+    <div class="loader simple-loader">
+        <div class="loader-body">
+            <div class="position-relative">
+                <div class="position-absolute" style="top: -20px; z-index: 1;">
+                    <img src="{% if settings.logo %}{{settings.logo.url}}{% endif %}" class="img-fluid" alt="img1">
+                </div>
+                <div class="position-relative iq-loader">
+                    <img src="{% if settings.logo %}{{settings.logo.url}}{% endif %}" class="img-fluid" alt="img1">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- loader END -->
+<div class="wrapper">
+    <div class="main-auth-page">
+        <a href="../../dashboard/index.html" class="auth-logo">
+            <img src="{% if settings.logo %}{{settings.logo.url}}{% endif %}" class="img-fluid">
+        </a>
+        <div class="clip-board">
+            <div class="container">
+                <div class="row auth-details-card">
+                    <div class="col-lg-12">
+                        <div class="card iq-auth-card mb-0 row">
+                            <img src="{% static 'site/website/admin/assets/images/auth/01.webp' %}" alt="background" class="img-fluid w-75 position-absolute" style="top: 8%;">
+                            <div class="card-body col-5 offset-7">
+                                <div class="auth-form">
+                                     {% block content %}{% endblock content %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Navbar -->
+
+<!-- Footer -->
+
+{% block footertop %}{% endblock footertop %}
+<!-- Bootstrap Bundle with Popper -->
+
+<!-- Library Bundle Script -->
+<script src="{% static 'site/website/admin/assets/js/core/libs.min.js' %}"></script>
+
+<!-- External Library Bundle Script -->
+<script src="{% static 'site/website/admin/assets/js/core/external.min.js' %}"></script>
+
+<!-- mapchart Script -->
+<script src="{% static 'site/website/admin/assets/js/charts/vectore-chart.js' %}"></script>
+<script src="{% static 'site/website/admin/assets/js/charts/dashboard.js' %}" defer></script>
+
+<!-- fslightbox Script -->
+<script src="{% static 'site/website/admin/assets/js/plugins/fslightbox.js' %}"></script>
+
+<!-- AOS Animation Plugin-->
+
+<!-- App Script -->
+<script src="{% static 'site/website/admin/assets/js/vrooom.js' %}" defer></script>
+{% block footerbottom %}{% endblock footerbottom %}
+</body>
+</html>

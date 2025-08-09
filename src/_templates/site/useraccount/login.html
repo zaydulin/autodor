@@ -1,4 +1,4 @@
-{% extends 'site/useraccount/base.html' %}
+{% extends 'site/useraccount/base_full.html' %}
 {% load static generals_tag i18n %}
 {% block title %}{{ seo_title }}{% endblock title %}
 {% block description %}{{ seo_description }}{% endblock description %}
@@ -7,6 +7,7 @@
 {% block propertyimage %}{{ seo_propertydescription }}{% endblock propertyimage %}
 {% block head %}{% endblock head %}
 {% block content %}
+
 <div class="auth-form">
     <div class="text-center mb-3">
         <img width="100px" src="{% get_settings_first as settings %}{% if settings.logo %}{{settings.logo.url}}{% else %}{% static 'site/lk/images/logo-white.png' %}{% endif %}" alt="Логотип">
