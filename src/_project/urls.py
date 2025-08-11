@@ -9,7 +9,7 @@ urlpatterns = [
     path("_nested_admin/", include("nested_admin.urls")),
     path('developer_management/', admin.site.urls),
     path('', include('webmain.urls', namespace='webmain')),
-    #path('', include('moderation.urls', namespace='moderation')),
+    path('', include('moderation.urls', namespace='moderation')),
     path('', include('useraccount.urls', namespace='useraccount')),
 ]
 

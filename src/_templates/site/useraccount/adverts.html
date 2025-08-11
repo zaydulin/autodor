@@ -1,0 +1,151 @@
+{% extends 'site/useraccount/base.html' %}
+{% load static user_tags i18n %}
+{% block title %}{{ seo_title }}{% endblock title %}
+{% block description %}{{ seo_description }}{% endblock description %}
+{% block propertytitle %}{% if seo_previev %}{{ seo_previev.url }} {% endif %} {% endblock propertytitle %}
+{% block propertydescription %}{{ seo_propertytitle }}{% endblock propertydescription %}
+{% block propertyimage %}{{ seo_propertydescription }}{% endblock propertyimage %}
+{% block head %}
+
+{% endblock head %}
+
+{% block content %}
+<div class="conatiner-fluid content-inner mt-5 py-0">
+    <div class="row">
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Compare Cars</h5>
+                </div>
+                <div class="card-body">
+                    <div class="border">
+                        <div class="d-flex align-items-center justify-content-center py-3">
+                            <img src="../assets/images/dashboard/1.png" class="img-fluid w-100" alt="img1">
+                        </div>
+                        <div class="p-3">
+                            <select class="form-select form-control choicesjs" >
+                                <option selected>Select Brand/Model</option>
+                                <option value="SEDAN">SEDAN</option>
+                                <option value="COUPE">COUPE</option>
+                                <option value="HATCHBACK">HATCHBACK</option>
+                                <option value="MINIVAN">MINIVAN</option>
+                                <option value="SPORTS CAR">SPORTS CAR</option>
+                            </select>
+                            <select class="form-select form-control choicesjs" >
+                                <option selected>Select Variant</option>
+                                <option value="Hatchback">Hatchback</option>
+                                <option value="Sedan">Sedan</option>
+                                <option value="Maruti Suzuki">Maruti Suzuki</option>
+                                <option value="Swift">Swift</option>
+                                <option value="Audi A3">Audi A3</option>
+                            </select>
+                            <select class="form-select form-control choicesjs" >
+                                <option selected>Select Make</option>
+                                <option value="Hatchback">Hatchback</option>
+                                <option value="COUPE">COUPE</option>
+                                <option value="HATCHBACK">HATCHBACK</option>
+                                <option value="Sedan">Sedan</option>
+                                <option value="Maruti Suzuki">Maruti Suzuki</option>
+                                <option value="Swift">Swift</option>
+                                <option value="Audi A3">Audi A3</option>
+                            </select>
+                            <select class="form-select form-control choicesjs" >
+                                <option selected>Select Area</option>
+                                <option value="Washington">Washington</option>
+                                <option value="Franklin">Franklin</option>
+                                <option value="Clinton">Clinton</option>
+                                <option value="Arlington">Arlington</option>
+                                <option value="Centerville">Centerville</option>
+                                <option value="Lebanon">Lebanon</option>
+                                <option value="Georgetown">Georgetown</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="border mt-5">
+                        <div class="d-flex align-items-center justify-content-center py-3">
+                            <img src="../assets/images/dashboard/1.png" class="img-fluid w-100" alt="img1">
+                        </div>
+                        <div class="p-3">
+                            <select class="form-select form-control choicesjs" >
+                                <option selected>Select Brand/Model</option>
+                                <option value="SEDAN">SEDAN</option>
+                                <option value="COUPE">COUPE</option>
+                                <option value="HATCHBACK">HATCHBACK</option>
+                                <option value="MINIVAN">MINIVAN</option>
+                                <option value="SPORTS CAR">SPORTS CAR</option>
+                            </select>
+                            <select class="form-select form-control choicesjs" >
+                                <option selected>Select Variant</option>
+                                <option value="Hatchback">Hatchback</option>
+                                <option value="Sedan">Sedan</option>
+                                <option value="Maruti Suzuki">Maruti Suzuki</option>
+                                <option value="Swift">Swift</option>
+                                <option value="Audi A3">Audi A3</option>
+                            </select>
+                            <select class="form-select form-control choicesjs" >
+                                <option selected>Select Make</option>
+                                <option value="Hatchback">Hatchback</option>
+                                <option value="COUPE">COUPE</option>
+                                <option value="HATCHBACK">HATCHBACK</option>
+                                <option value="Sedan">Sedan</option>
+                                <option value="Maruti Suzuki">Maruti Suzuki</option>
+                                <option value="Swift">Swift</option>
+                                <option value="Audi A3">Audi A3</option>
+                            </select>
+                            <select class="form-select form-control choicesjs" >
+                                <option selected>Select Area</option>
+                                <option value="Washington">Washington</option>
+                                <option value="Franklin">Franklin</option>
+                                <option value="Clinton">Clinton</option>
+                                <option value="Arlington">Arlington</option>
+                                <option value="Centerville">Centerville</option>
+                                <option value="Lebanon">Lebanon</option>
+                                <option value="Georgetown">Georgetown</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-center">
+                        <button type="button" class="btn btn-primary mt-3">Compare Now</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-8">
+            <div class="card-transparent bg-white rounded mb-4">
+                <div class="card-header swiper-container d-slider2">
+                    <div class="row">
+                        {% for advert in adverts %}
+                        <div class="col-lg-4">
+                            <div class="iq-upcoming-cars">
+                                {% if advert.images %}
+                                <img src="{{ advert.images.0 }}" class="img-fluid w-100" alt="{{ advert.name }}">
+                                {% else %}
+                                <img src="{% static 'assets/images/no-image.png' %}" class="img-fluid w-100" alt="Нет фото">
+                                {% endif %}
+                                <div class="iq-car-details">
+                                    <h6 class="text-primary">{{ advert.name }}</h6>
+                                    <div class="d-flex justify-content-end"></div>
+                                </div>
+                                <div class="iq-car-name">
+                                    <h6>Марка</h6>
+                                </div>
+                                <div class="iq-car-price d-flex justify-content-between align-items-center">
+                                    <span>Цена</span>
+                                    <h6>{{ advert.price }} {{ advert.currency }}</h6>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+{% block footertop %}
+
+{% endblock footertop %}
