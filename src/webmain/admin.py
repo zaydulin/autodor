@@ -3,6 +3,7 @@ from .models import *
 import nested_admin
 from django_ace import AceWidget
 from django import forms
+from django.http import HttpResponseRedirect
 
 class GeneralSettingsForm(forms.ModelForm):
     message_header = forms.CharField(widget=AceWidget(mode='html',readonly=False,behaviours=True,showgutter=True,  wordwrap=False, usesofttabs=True))
