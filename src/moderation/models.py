@@ -9,6 +9,8 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 class Advert(models.Model):
     # Основные
     name = models.CharField("Название", max_length=255)
+    brand = models.CharField("марка", max_length=255)
+    model_auto = models.CharField("модель", max_length=255)
     link = models.URLField("Ссылка", max_length=500)
     original_link = models.URLField("Оригинальная ссылка", max_length=500, blank=True, null=True)
     price = models.DecimalField("Стоимость", max_digits=12, decimal_places=2)

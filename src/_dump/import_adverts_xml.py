@@ -133,7 +133,7 @@ def map_drive(text):
         return Advert.DriveType.RWD
     return None
 
-def good_to_payload(good_el, images_limit=7):
+def good_to_payload(good_el, images_limit=7, is_first_url=False):
     fields = extract_fields_dict(good_el)
     images = extract_images(good_el, images_limit)
 
@@ -145,7 +145,7 @@ def good_to_payload(good_el, images_limit=7):
     if not name or not link or price is None or not currency:
         return None
 
-    return {
+    payload = {
         "name": name,
         "link": link,
         "original_link": link,
@@ -155,20 +155,25 @@ def good_to_payload(good_el, images_limit=7):
         "images": images or None,
         "subtitle": fields.get("Подзаголовок"),
         "article": fields.get("Артикул"),
-        "mileage": parse_int(fields.get("Kilometer")),  # Километраж
-        "color": fields.get("Farbe"),  # Цвет
-        "doors": parse_int(fields.get("Türen")),  # Количество дверей
-        "power": parse_power_hp(fields.get("Leistung")),  # Мощность (л.с.)
-        "engine_volume": parse_engine_volume(fields.get("Hubraum")),  # Объём двигателя (л)
-        "year": parse_int(fields.get("Erstzulassung")),  # Год выпуска
-        "transmission": map_transmission(fields.get("Getriebe")),  # Коробка передач
-        "fuel": map_fuel(fields.get("Kraftstoff")),  # Топливо
-        "drive": map_drive(fields.get("Antrieb")),  # Привод
+        "mileage": parse_int(fields.get("Kilometer")),
+        "color": fields.get("Farbe"),
+        "doors": parse_int(fields.get("Türen")),
+        "power": parse_power_hp(fields.get("Leistung")),
+        "engine_volume": parse_engine_volume(fields.get("Hubraum")),
+        "year": parse_int(fields.get("Erstzulassung")),
+        "transmission": map_transmission(fields.get("Getriebe")),
+        "fuel": map_fuel(fields.get("Kraftstoff")),
+        "drive": map_drive(fields.get("Antrieb")),
     }
 
+    # Если это первая ссылка — парсим brand и model_auto
+    if is_first_url and name:
+        parts = name.split(maxsplit=1)
+        payload["brand"] = parts[0]
+        payload["model_auto"] = parts[1] if len(parts) > 1 else ""
 
-# === Импорт с одной ссылки ===
-def import_from_url(url, update_by="article"):
+    return payload
+def import_from_url(url, update_by="article", is_first_url=False):
     print(f"\nСкачиваю: {url}")
     try:
         resp = requests.get(url, timeout=60)
@@ -188,7 +193,7 @@ def import_from_url(url, update_by="article"):
 
     created = updated = skipped = 0
     for idx, good in enumerate(goods, start=1):
-        payload = good_to_payload(good)
+        payload = good_to_payload(good, is_first_url=is_first_url)
         if not payload:
             skipped += 1
             continue
@@ -217,7 +222,9 @@ def import_from_url(url, update_by="article"):
 
     print(f"Готово. Создано: {created}, обновлено: {updated}, пропущено: {skipped}")
 
+
 # === Запуск для всех ссылок ===
 if __name__ == "__main__":
-    for url in URLS:
-        import_from_url(url)
+    for i, url in enumerate(URLS):
+        import_from_url(url, is_first_url=(i == 0))
+
