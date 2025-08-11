@@ -13,10 +13,16 @@ class GeneralSettingsForm(forms.ModelForm):
     address = forms.CharField(widget=AceWidget(mode='html',readonly=False,behaviours=True,showgutter=True,  wordwrap=False, usesofttabs=True))
     office_hourse = forms.CharField(widget=AceWidget(mode='html',readonly=False,behaviours=True,showgutter=True,  wordwrap=False, usesofttabs=True))
 
+class HomePageForm(forms.ModelForm):
+    description = forms.CharField(widget=AceWidget(mode='html',readonly=False,behaviours=True,showgutter=True,  wordwrap=False, usesofttabs=True))
+
+class AboutPageForm(forms.ModelForm):
+    description = forms.CharField(widget=AceWidget(mode='html',readonly=False,behaviours=True,showgutter=True,  wordwrap=False, usesofttabs=True))
 
 @admin.register(HomePage)
 class HomePageAdmin(admin.ModelAdmin):
     model = HomePage
+    form = HomePageForm
 
 
 @admin.register(ContactPage)
@@ -30,6 +36,8 @@ class ContactPageInformationAdmin(admin.ModelAdmin):
 @admin.register(AboutPage)
 class AboutPageAdmin(admin.ModelAdmin):
     model = AboutPage
+    form = AboutPageForm
+
 
 @admin.register(Seo)
 class SeoAdmin(admin.ModelAdmin):

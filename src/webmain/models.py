@@ -153,7 +153,7 @@ class AboutPage(models.Model):
     propertydescription = models.CharField(verbose_name="Мета-описание ссылки", max_length=255, blank=True, null=True,)
     setting = models.ForeignKey("SettingsGlobale", verbose_name='Настройки', on_delete=models.CASCADE, blank=True, null=True)
     text = models.CharField(verbose_name="текст", max_length=255, blank=True, null=True,)
-    description = RichTextField("Описание", blank=True, null=True)
+    description = models.TextField("Описание", blank=True, null=True)
 
     class Meta:
         verbose_name = "Страница О нас"
@@ -169,7 +169,7 @@ class HomePage(models.Model):
     propertydescription = models.CharField(verbose_name="Мета-описание ссылки", max_length=255, blank=True, null=True,)
     setting = models.ForeignKey("SettingsGlobale", verbose_name='Настройки', on_delete=models.CASCADE, blank=True, null=True)
     text = models.CharField(verbose_name="текст", max_length=255, blank=True, null=True,)
-    description = RichTextField("Описание", blank=True, null=True)
+    description = models.TextField("Описание", blank=True, null=True)
 
     class Meta:
         verbose_name = "Главная страница"
