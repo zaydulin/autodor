@@ -27,6 +27,7 @@ AUTH_USER_MODEL = 'useraccount.Profile'
 # Application definition
 
 INSTALLED_APPS = [
+    "jazzmin",
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -104,6 +105,11 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+JAZZMIN_SETTINGS = {
+    "site_title": "Admin",
+    "site_header": "My Admin",
+    "icons": {"auth.user": "fas fa-user", "shop.products": "fas fa-box"},
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/

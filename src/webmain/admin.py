@@ -25,14 +25,19 @@ class HomePageAdmin(admin.ModelAdmin):
     model = HomePage
     form = HomePageForm
 
+    # Запрещаем добавление, если запись уже существует
+    def has_add_permission(self, request):
+        return not HomePage.objects.exists()
 
-@admin.register(ContactPage)
-class ContactPageAdmin(admin.ModelAdmin):
-    model = ContactPage
+    # При заходе на список — сразу редирект на редактирование
+    def changelist_view(self, request, extra_context=None):
+        obj = HomePage.objects.first()
+        if obj:
+            return HttpResponseRedirect(f'./{obj.pk}/change/')
+        return super().changelist_view(request, extra_context=extra_context)
 
-@admin.register(ContactPageInformation)
-class ContactPageInformationAdmin(admin.ModelAdmin):
-    model = ContactPageInformation
+
+
 
 
 @admin.register(AboutPage)
@@ -61,8 +66,18 @@ class SeoAdmin(admin.ModelAdmin):
 @admin.register(SettingsGlobale)
 class SettingsGlobaleAdmin(admin.ModelAdmin):
     form = GeneralSettingsForm
-    list_display = ["id",  "name"]
-    list_display_links = ["id",  "name"]
+    list_display = ["id", "name"]
+    list_display_links = ["id", "name"]
+
+    def has_add_permission(self, request):
+        # Разрешаем добавление только если нет ни одной записи
+        return not SettingsGlobale.objects.exists()
+
+    def changelist_view(self, request, extra_context=None):
+        obj = SettingsGlobale.objects.first()
+        if obj:
+            return HttpResponseRedirect(f'./{obj.pk}/change/')
+        return super().changelist_view(request, extra_context=extra_context)
 
 @admin.register(CategorysBlogs)
 class CategorysBlogsAdmin(admin.ModelAdmin):
