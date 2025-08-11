@@ -1,7 +1,5 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 import os
+import django
 import sys
 import io
 import re
@@ -9,9 +7,9 @@ import decimal
 import requests
 from xml.etree import ElementTree as ET
 
-# === Настройки проекта Django ===
-PROJECT_ROOT = "/home/vagiz/Рабочий стол/Projects/autodor/src"  # путь к src, где manage.py
-SETTINGS_MODULE = "_project.settings"  # твои настройки Django
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "_project.settings")
+django.setup()
 
 # === Список ссылок на XML ===
 URLS = [
@@ -20,11 +18,6 @@ URLS = [
     # "https://example.com/feed2.xml",
 ]
 
-# === Django init ===
-sys.path.insert(0, PROJECT_ROOT)
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", SETTINGS_MODULE)
-import django
-django.setup()
 
 from moderation.models import Advert
 
