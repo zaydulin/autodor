@@ -4,6 +4,7 @@ from django.urls import reverse
 from django.conf import settings
 from django.core.validators import (FileExtensionValidator)
 import os
+from django.core.exceptions import ValidationError
 
 
 class Seo(models.Model):
