@@ -160,11 +160,6 @@ class AboutPage(models.Model):
         verbose_name = "Страница О нас"
         verbose_name_plural = "Страницы О нас"
 
-    def save(self, *args, **kwargs):
-        if not self.pk and AboutPage.objects.exists():
-            raise ValidationError("Можно создать только одну страницу 'О нас'")
-        return super().save(*args, **kwargs)
-
 
 
 class HomePage(models.Model):

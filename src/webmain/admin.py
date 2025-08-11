@@ -33,10 +33,23 @@ class ContactPageAdmin(admin.ModelAdmin):
 class ContactPageInformationAdmin(admin.ModelAdmin):
     model = ContactPageInformation
 
+
 @admin.register(AboutPage)
 class AboutPageAdmin(admin.ModelAdmin):
     model = AboutPage
     form = AboutPageForm
+
+    # убираем кнопку "Добавить" если объект уже есть
+    def has_add_permission(self, request):
+        # Разрешаем добавление только если нет ни одной записи
+        return not AboutPage.objects.exists()
+
+    # при переходе на список — сразу перекидываем на редактирование
+    def changelist_view(self, request, extra_context=None):
+        obj = AboutPage.objects.first()
+        if obj:
+            return HttpResponseRedirect(f'./{obj.pk}/change/')
+        return super().changelist_view(request, extra_context=extra_context)
 
 
 @admin.register(Seo)
