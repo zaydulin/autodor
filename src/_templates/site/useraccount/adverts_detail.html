@@ -1,0 +1,70 @@
+{% extends 'site/useraccount/base.html' %}
+{% load static user_tags i18n %}
+{% block title %}{{ seo_title }}{% endblock title %}
+{% block description %}{{ seo_description }}{% endblock description %}
+{% block propertytitle %}{% if seo_previev %}{{ seo_previev.url }} {% endif %} {% endblock propertytitle %}
+{% block propertydescription %}{{ seo_propertytitle }}{% endblock propertydescription %}
+{% block propertyimage %}{{ seo_propertydescription }}{% endblock propertyimage %}
+{% block head %}
+
+{% endblock head %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <!-- Галерея -->
+        <div class="col-lg-7">
+            {% if advert.images %}
+                <div id="advertCarousel" class="carousel slide" data-bs-ride="carousel">
+                    <div class="carousel-inner">
+                        {% for img in advert.images %}
+                            <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                                <img src="{{ img }}" class="d-block w-100 rounded shadow" alt="{{ advert.name }}">
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#advertCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon"></span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#advertCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon"></span>
+                    </button>
+                </div>
+            {% else %}
+                <img src="https://via.placeholder.com/800x500?text=Нет+изображения" class="img-fluid rounded shadow">
+            {% endif %}
+             {% if advert.description %}
+                <p>{{ advert.description|safe }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Информация -->
+        <div class="col-lg-5">
+            <h2 class="mb-3">{{ advert.brand }} {{ advert.model_auto }}</h2>
+            <h4 class="text-primary fw-bold">{{ advert.price }} {{ advert.currency }}</h4>
+
+            {% if advert.subtitle %}
+                <p class="text-muted">{{ advert.subtitle }}</p>
+            {% endif %}
+            <table class="table table-striped mt-3">
+                <tbody>
+                    {% if advert.year %}<tr><th>Год выпуска</th><td>{{ advert.year }}</td></tr>{% endif %}
+                    {% if advert.mileage %}<tr><th>Километраж</th><td>{{ advert.mileage }} км</td></tr>{% endif %}
+                    {% if advert.color %}<tr><th>Цвет</th><td>{{ advert.color }}</td></tr>{% endif %}
+                    {% if advert.doors %}<tr><th>Дверей</th><td>{{ advert.doors }}</td></tr>{% endif %}
+                    {% if advert.engine_volume %}<tr><th>Объём двигателя</th><td>{{ advert.engine_volume }} л</td></tr>{% endif %}
+                    {% if advert.power %}<tr><th>Мощность</th><td>{{ advert.power }} л.с.</td></tr>{% endif %}
+                    {% if advert.transmission %}<tr><th>Коробка</th><td>{{ advert.get_transmission_display }}</td></tr>{% endif %}
+                    {% if advert.fuel %}<tr><th>Топливо</th><td>{{ advert.get_fuel_display }}</td></tr>{% endif %}
+                    {% if advert.drive %}<tr><th>Привод</th><td>{{ advert.get_drive_display }}</td></tr>{% endif %}
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+{% block footertop %}
+
+{% endblock footertop %}

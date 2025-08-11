@@ -222,5 +222,15 @@
 
 {% endblock content %}
 {% block footertop %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll("[data-href]").forEach(function (el) {
+        el.style.cursor = "pointer";
+        el.addEventListener("click", function () {
+            window.location.href = el.getAttribute("data-href");
+        });
+    });
+});
+</script>
 
 {% endblock footertop %}
