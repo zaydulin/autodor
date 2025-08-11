@@ -33,11 +33,6 @@ class SeoAdmin(admin.ModelAdmin):
 
 @admin.register(SettingsGlobale)
 class SettingsGlobaleAdmin(admin.ModelAdmin):
-    fieldsets = [
-        ('Общие настройки', {
-            'fields': ['logo', 'doplogo', 'paymentmetod', 'favicon', 'description', 'name', 'content', 'message_header', 'message_footer', 'yandex_metrica', 'google_analitic']
-        }),
-    ]
     form = GeneralSettingsForm
     list_display = ["id",  "name"]
     list_display_links = ["id",  "name"]
