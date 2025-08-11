@@ -1,5 +1,5 @@
 {% extends 'site/website/base.html' %}
-{% load static %}
+{% load static generals_tag %}
 {% block title %}{{ seo_title }}{% endblock title %}
 {% block description %}{{ seo_description }}{% endblock description %}
 {% block propertytitle %}{% if seo_previev %}{{ seo_previev.url }} {% endif %} {% endblock propertytitle %}
