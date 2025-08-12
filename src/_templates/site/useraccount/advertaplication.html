@@ -14,16 +14,16 @@
             <div class="card">
                 <div class="card-body">
                     {% for advertaplication in advertaplications %}
-                    <div class="row d-flex align-items-center pb-3">
-                        <div class="col-lg-9">
+                    <div class="row d-flex align-items-center pb-3" data-href="{% url 'moderation:application_detail' advertaplication.id %}">
+                        <div class="col-lg-6" style="height:300px;">
                             {# Если в images хранится список ссылок #}
                             {% if advertaplication.advert.images %}
-                            <img src="{{ advertaplication.advert.images.0 }}" class="img-fluid" alt="{{ advertaplication.advert.name }}">
+                            <img src="{{ advertaplication.advert.images.0 }}"  style="height:300px;" class="img-fluid" alt="{{ advertaplication.advert.name }}">
                             {% else %}
-                            <img src="{% static 'assets/images/no-image.png' %}" class="img-fluid" alt="Нет фото">
+                            <img src="{% static 'assets/images/no-image.png' %}" style="height:300px;" class="img-fluid" alt="Нет фото">
                             {% endif %}
                         </div>
-                        <div class="col-lg-3 text-center">
+                        <div class="col-lg-6 text-center">
                             <h2>{{ advertaplication.advert.name }}</h2>
                             <h4 class="text-primary"> {{ advertaplication.advert.price }} {{ advertaplication.advert.currency }}</h4>
                         </div>
@@ -159,4 +159,16 @@
     </div>
 </div>
 {% endblock content %}
-{% block footer %}{% endblock footer %}
+{% block footertop %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll("[data-href]").forEach(function (el) {
+        el.style.cursor = "pointer";
+        el.addEventListener("click", function () {
+            window.location.href = el.getAttribute("data-href");
+        });
+    });
+});
+</script>
+
+{% endblock footertop %}

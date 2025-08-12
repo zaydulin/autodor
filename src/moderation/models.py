@@ -79,12 +79,24 @@ class AdvertAplication(models.Model):
         NEW = "new", "Новая"
         IN_PROGRESS = "in_progress", "В обработке"
         DONE = "done", "Завершена"
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     user = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
         verbose_name="Пользователь",
         related_name="advert_requests"
     )
+    user_menager = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        verbose_name="Менеджеры",
+        related_name="advert_menager"
+    )
+    user_drivers = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        verbose_name="Водители",
+        related_name="advert_drivers"
+    )
+
     advert = models.ForeignKey(
         Advert,
         on_delete=models.CASCADE,

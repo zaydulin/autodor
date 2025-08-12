@@ -23,6 +23,18 @@ class AdvertAplicationListView(LoginRequiredMixin, ListView):
             .order_by("-created_at")
         )
 
+class AdvertAplicationDetailView(LoginRequiredMixin, DetailView):
+    model = AdvertAplication
+    template_name = "site/useraccount/advertaplication-detail.html"
+    context_object_name = "application"
+
+    # Важно: показываем только те заявки, где текущий пользователь есть в M2M
+    def get_queryset(self):
+        return (super().get_queryset()
+                .filter(user=self.request.user)
+                .select_related("advert")
+                .prefetch_related("user"))
+
 
 
 
