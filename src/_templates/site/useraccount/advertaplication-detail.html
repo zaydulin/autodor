@@ -8,39 +8,37 @@
 {% block head %}{% endblock head %}
 
 {% block content %}
-
 <div class="container py-4">
     <div class="row g-4">
         <!-- Левая колонка -->
         <div class="col-lg-8">
             <div class="card">
                 <div class="card-body">
-                    <h2 class="mb-1">Audi A6</h2>
-                    <div class="text-muted mb-2">Audi A6 3.0 TDI Quattro</div>
+                    <h2 class="mb-1">{{ advert.name }}</h2>
                     <div class="d-flex">
-                        <div class="h4 text-primary fw-bold m-3 "> Стоимость 3 500 000 ₽</div>
-                        <div class="h4 text-primary fw-bold m-3"> С учетом доставки 3 600 000 ₽</div>
-                    </div>
-                    <div class="row row-cols-2 row-cols-md-3 g-2 mb-3">
-                        <div class="col"><span class="badge bg-light text-dark spec-badge">Год: 2021</span></div>
-                        <div class="col"><span class="badge bg-light text-dark spec-badge">Пробег: 25 000 км</span></div>
-                        <div class="col"><span class="badge bg-light text-dark spec-badge">Цвет: Черный</span></div>
-                        <div class="col"><span class="badge bg-light text-dark spec-badge">Дверей: 4</span></div>
-                        <div class="col"><span class="badge bg-light text-dark spec-badge">Объём: 3.0 л</span></div>
-                        <div class="col"><span class="badge bg-light text-dark spec-badge">Мощн.: 249 л.с.</span></div>
-                        <div class="col"><span class="badge bg-light text-dark spec-badge">Коробка: Автомат</span></div>
-                        <div class="col"><span class="badge bg-light text-dark spec-badge">Топливо: Дизель</span></div>
-                        <div class="col"><span class="badge bg-light text-dark spec-badge">Привод: Полный</span></div>
+                        <div class="h4 text-primary fw-bold m-3">Стоимость {{ advert.price }} {{ advert.currency }}</div>
                     </div>
 
+                    <div class="row row-cols-2 row-cols-md-3 g-2 mb-3">
+                        {% if advert.year %}<div class="col"><span class="badge bg-light text-dark spec-badge">Год: {{ advert.year }}</span></div>{% endif %}
+                        {% if advert.mileage %}<div class="col"><span class="badge bg-light text-dark spec-badge">Пробег: {{ advert.mileage }} км</span></div>{% endif %}
+                        {% if advert.color %}<div class="col"><span class="badge bg-light text-dark spec-badge">Цвет: {{ advert.color }}</span></div>{% endif %}
+                        {% if advert.doors %}<div class="col"><span class="badge bg-light text-dark spec-badge">Дверей: {{ advert.doors }}</span></div>{% endif %}
+                        {% if advert.engine_volume %}<div class="col"><span class="badge bg-light text-dark spec-badge">Объём: {{ advert.engine_volume }} л</span></div>{% endif %}
+                        {% if advert.power %}<div class="col"><span class="badge bg-light text-dark spec-badge">Мощн.: {{ advert.power }} л.с.</span></div>{% endif %}
+                        {% if advert.transmission %}<div class="col"><span class="badge bg-light text-dark spec-badge">Коробка: {{ advert.get_transmission_display }}</span></div>{% endif %}
+                        {% if advert.fuel %}<div class="col"><span class="badge bg-light text-dark spec-badge">Топливо: {{ advert.get_fuel_display }}</span></div>{% endif %}
+                        {% if advert.drive %}<div class="col"><span class="badge bg-light text-dark spec-badge">Привод: {{ advert.get_drive_display }}</span></div>{% endif %}
+                    </div>
+
+                    {% if advert.images %}
                     <div id="advCarousel" class="carousel slide gallery mb-3" data-bs-ride="carousel">
                         <div class="carousel-inner rounded">
-                            <div class="carousel-item active">
-                                <img src="https://www.webauto.de/img/vc/de/0/35/4/33134/pan/78692549x3086x4339xb364xc953f2bb66ab_1/audi-sonstige-horch-855-glaeser-spezial-roadster-cabrio-roadster.jpg" class="d-block w-100" alt="Audi A6">
+                            {% for img in advert.images %}
+                            <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                                <img src="{{ img }}" class="d-block w-100" alt="{{ advert.name }}">
                             </div>
-                            <div class="carousel-item">
-                                <img src="https://via.placeholder.com/1200x420?text=Фото+2" class="d-block w-100" alt="Фото 2">
-                            </div>
+                            {% endfor %}
                         </div>
                         <button class="carousel-control-prev" type="button" data-bs-target="#advCarousel" data-bs-slide="prev">
                             <span class="carousel-control-prev-icon"></span>
@@ -49,12 +47,12 @@
                             <span class="carousel-control-next-icon"></span>
                         </button>
                     </div>
-
-                    <p class="text-muted">Отличный автомобиль с полным приводом, автоматической коробкой и мощным дизельным двигателем.</p>
+                    {% endif %}
                 </div>
             </div>
 
-            <div class="row  mt-1">
+            <!-- Местоположение -->
+            <div class="row mt-1">
                 <div class="col-lg-12">
                     <div class="card">
                         <div class="card-header"><h5 class="mb-0">Местоположение</h5></div>
@@ -65,6 +63,7 @@
                     </div>
                 </div>
             </div>
+
         </div>
 
         <!-- Правая колонка -->
@@ -72,8 +71,10 @@
             <div class="d-grid gap-2">
                 <button class="btn btn-light border" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCalls">☎️ Звонки</button>
                 <button class="btn btn-primary" data-bs-toggle="offcanvas" data-bs-target="#offcanvasChat">💬 Групповой чат</button>
+                <button class="btn btn-primary" >Внести изменения</button>
             </div>
 
+            <!-- Заявка -->
             <div class="card mb-4">
                 <div class="card-header"><h5 class="mb-0">Заявка №12345</h5></div>
                 <div class="card-body">
@@ -87,6 +88,8 @@
                             <div><div class="fw-semibold">Иван Иванов</div><div class="small text-muted">ivan@example.com</div></div>
                         </li>
                     </ul>
+
+                    <!-- Менеджеры -->
                     <div class="mb-2"><strong>Менеджеры:</strong></div>
                     <ul class="list-unstyled mb-0">
                         <li class="d-flex align-items-center gap-2 mb-2">
@@ -98,23 +101,13 @@
                             <div><div class="fw-semibold">Петр Петров</div><div class="small text-muted">petr@example.com</div></div>
                         </li>
                     </ul>
-
-                    <div class="mb-2"><strong>Водители:</strong></div>
-                    <ul class="list-unstyled mb-0">
-                        <li class="d-flex align-items-center gap-2 mb-2">
-                            <span class="avatar">И</span>
-                            <div><div class="fw-semibold">Иван Иванов</div><div class="small text-muted">ivan@example.com</div></div>
-                        </li>
-                        <li class="d-flex align-items-center gap-2 mb-2">
-                            <span class="avatar">П</span>
-                            <div><div class="fw-semibold">Петр Петров</div><div class="small text-muted">petr@example.com</div></div>
-                        </li>
-                    </ul>
                 </div>
-                <div class="card">
+            </div>
 
-                    <!-- Список документов -->
-                    <h6 class="mb-3">Документы</h6>
+            <!-- Список документов -->
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0">Документы</h5></div>
+                <div class="card-body">
                     <ul class="list-group">
                         <li class="list-group-item d-flex align-items-center justify-content-between">
                             <div>
@@ -134,25 +127,26 @@
                         </li>
                     </ul>
                 </div>
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Расходы</h5>
-                        <span class="badge bg-primary">Итого: 50 000 ₽</span>
-                    </div>
-                    <div class="card-body">
-                        <table class="table table-sm align-middle">
-                            <thead>
-                            <tr><th>Статья</th><th class="text-end">Сумма</th><th>Дата</th></tr>
-                            </thead>
-                            <tbody>
-                            <tr><td>Страховка</td><td class="text-end">20 000 ₽</td><td>01.03.2025</td></tr>
-                            <tr><td>ТО</td><td class="text-end">30 000 ₽</td><td>15.06.2025</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
             </div>
 
+            <!-- Расходы -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Расходы</h5>
+                    <span class="badge bg-primary">Итого: 50 000 ₽</span>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm align-middle">
+                        <thead>
+                        <tr><th>Статья</th><th class="text-end">Сумма</th><th>Дата</th></tr>
+                        </thead>
+                        <tbody>
+                        <tr><td>Страховка</td><td class="text-end">20 000 ₽</td><td>01.03.2025</td></tr>
+                        <tr><td>ТО</td><td class="text-end">30 000 ₽</td><td>15.06.2025</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -167,7 +161,6 @@
         <!-- Список участников -->
         <h6 class="mb-3">Участники</h6>
         <ul class="list-group mb-4">
-            <!-- Участник -->
             <li class="list-group-item d-flex align-items-center justify-content-between">
                 <div class="d-flex align-items-center">
                     <img src="https://via.placeholder.com/40" class="rounded-circle me-2" alt="Аватар Иван">
@@ -177,17 +170,8 @@
                     <i class="bi bi-telephone-fill"></i> Позвонить
                 </button>
             </li>
-            <!-- Участник -->
-            <li class="list-group-item d-flex align-items-center justify-content-between">
-                <div class="d-flex align-items-center">
-                    <img src="https://via.placeholder.com/40" class="rounded-circle me-2" alt="Аватар Петр">
-                    <span>Петр Петров</span>
-                </div>
-                <button class="btn btn-success btn-sm">
-                    <i class="bi bi-telephone-fill"></i> Позвонить
-                </button>
-            </li>
         </ul>
+
         <!-- История звонков -->
         <h6 class="mb-3">История звонков</h6>
         <ul class="list-group">
@@ -196,6 +180,7 @@
         </ul>
     </div>
 </div>
+
 <!-- Offcanvas: Чат -->
 <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasChat">
     <div class="offcanvas-header">
@@ -205,23 +190,18 @@
     <div class="offcanvas-body d-flex flex-column">
         <!-- Сообщения -->
         <div class="flex-grow-1 overflow-auto border rounded p-2 mb-2" style="min-height:260px;">
-
-            <!-- Моё сообщение (слева) -->
             <div class="d-flex mb-2">
                 <div class="bg-primary text-white p-2 rounded" style="max-width: 75%;">
                     <div class="fw-bold small">Я</div>
                     Добрый день!
                 </div>
             </div>
-
-            <!-- Сообщение собеседника (справа) -->
             <div class="d-flex justify-content-end mb-2">
                 <div class="bg-light p-2 rounded" style="max-width: 75%;">
                     <div class="fw-bold small text-end">Петр</div>
                     Здравствуйте, интересует ли вас обмен?
                 </div>
             </div>
-
         </div>
 
         <!-- Поле ввода -->
@@ -231,5 +211,26 @@
         </form>
     </div>
 </div>
-{% endblock content %}
-{% block footer %}{% endblock footer %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+    const toggle = document.getElementById("toggle-desc");
+    if (toggle) {
+        toggle.addEventListener("click", function (e) {
+            e.preventDefault();
+            const moreText = document.getElementById("more-text");
+            const p = document.getElementById("description-text");
+
+            // Переключение видимости
+            if (moreText.style.display === "none") {
+                moreText.style.display = "inline";
+                p.innerHTML = moreText.innerHTML + ' <a href="#" id="toggle-desc">Скрыть</a>';
+            } else {
+                moreText.style.display = "none";
+                p.innerHTML = p.innerHTML.split('<a')[0] + ' <a href="#" id="toggle-desc">Показать полностью</a>';
+            }
+        });
+    }
+});
+
+</script>
+{% endblock %}

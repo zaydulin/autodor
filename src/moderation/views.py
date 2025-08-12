@@ -28,13 +28,18 @@ class AdvertAplicationDetailView(LoginRequiredMixin, DetailView):
     template_name = "site/useraccount/advertaplication-detail.html"
     context_object_name = "application"
 
-    # Важно: показываем только те заявки, где текущий пользователь есть в M2M
     def get_queryset(self):
-        return (super().get_queryset()
-                .filter(user=self.request.user)
-                .select_related("advert")
-                .prefetch_related("user"))
+        return (
+            super().get_queryset()
+            .filter(user=self.request.user)
+            .select_related("advert")
+            .prefetch_related("user")
+        )
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["advert"] = self.object.advert  # добавляем объявление
+        return context
 
 
 
