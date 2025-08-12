@@ -74,6 +74,83 @@ class Advert(models.Model):
         return self.name
 
 
+class AdvertDocument(models.Model):
+    class DocumentType(models.TextChoices):
+        INVOICE = "invoice", "Накладная"
+        CONTRACT = "contract", "Договор"
+        CUSTOMS = "customs", "Таможенная"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    advert = models.ForeignKey(
+        "Advert",
+        on_delete=models.CASCADE,
+        verbose_name="Объявление",
+        related_name="documents"
+    )
+
+    file = models.FileField(
+        "Файл документа",
+        upload_to="advert_documents/",
+        blank=False,
+        null=False
+    )
+
+    document_type = models.CharField(
+        "Тип документа",
+        max_length=20,
+        choices=DocumentType.choices
+    )
+
+    created_at = models.DateTimeField("Дата создания", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Документ заявки"
+        verbose_name_plural = "Документы заявки"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.get_document_type_display()} — {self.advert.name}"
+
+class AdvertExpense(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    advert = models.ForeignKey(
+        "Advert",
+        on_delete=models.CASCADE,
+        verbose_name="Объявление",
+        related_name="expenses"
+    )
+
+    title = models.CharField(
+        "Статья расходов",
+        max_length=255
+    )
+
+    amount = models.DecimalField(
+        "Сумма",
+        max_digits=12,
+        decimal_places=2
+    )
+
+    date = models.DateField(
+        "Дата расхода"
+    )
+
+    created_at = models.DateTimeField(
+        "Дата добавления",
+        auto_now_add=True
+    )
+
+    class Meta:
+        verbose_name = "Расход по заявке"
+        verbose_name_plural = "Расходы по заявкам"
+        ordering = ["-date"]
+
+    def __str__(self):
+        return f"{self.title} — {self.amount} ({self.advert.name})"
+
+
 class AdvertAplication(models.Model):
     class Status(models.TextChoices):
         NEW = "new", "Новая"
@@ -103,8 +180,6 @@ class AdvertAplication(models.Model):
         verbose_name="Объявление",
         related_name="requests"
     )
-    phone = models.CharField("Телефон", max_length=20)
-    message = models.TextField("Комментарий", blank=True, null=True)
     status = models.CharField(
         "Статус",
         max_length=20,
