@@ -74,10 +74,40 @@ class Advert(models.Model):
         return self.name
 
 
+class AdvertAplication(models.Model):
+    class Status(models.TextChoices):
+        NEW = "new", "Новая"
+        IN_PROGRESS = "in_progress", "В обработке"
+        DONE = "done", "Завершена"
 
+    user = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        verbose_name="Пользователь",
+        related_name="advert_requests"
+    )
+    advert = models.ForeignKey(
+        Advert,
+        on_delete=models.CASCADE,
+        verbose_name="Объявление",
+        related_name="requests"
+    )
+    phone = models.CharField("Телефон", max_length=20)
+    message = models.TextField("Комментарий", blank=True, null=True)
+    status = models.CharField(
+        "Статус",
+        max_length=20,
+        choices=Status.choices,
+        default=Status.NEW
+    )
+    created_at = models.DateTimeField("Дата создания", auto_now_add=True)
 
+    class Meta:
+        verbose_name = "Заявка на объявление"
+        verbose_name_plural = "Заявки на объявления"
+        ordering = ["-created_at"]
 
-
+    def __str__(self):
+        return f"Заявка #{self.id} от {self.user} на {self.advert}"
 
 
 

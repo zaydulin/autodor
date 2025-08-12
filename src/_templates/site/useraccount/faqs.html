@@ -1,0 +1,48 @@
+{% extends 'site/useraccount/base.html' %}
+{% load static user_tags i18n %}
+{% block title %}{{ seo_title }}{% endblock title %}
+{% block description %}{{ seo_description }}{% endblock description %}
+{% block propertytitle %}{% if seo_previev %}{{ seo_previev.url }} {% endif %} {% endblock propertytitle %}
+{% block propertydescription %}{{ seo_propertytitle }}{% endblock propertydescription %}
+{% block propertyimage %}{{ seo_propertydescription }}{% endblock propertyimage %}
+{% block head %}
+
+{% endblock head %}
+
+{% block content %}
+<!-- FAQ Section -->
+<section class="container my-5">
+    <div class="accordion" id="faqAccordion">
+        {% for faq in faqs %}
+        <!-- Question {{ forloop.counter }} -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="faqHeading{{ forloop.counter }}">
+                <button
+                        class="accordion-button {% if not forloop.first %}collapsed{% endif %}"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#faqCollapse{{ forloop.counter }}"
+                        aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}"
+                        aria-controls="faqCollapse{{ forloop.counter }}">
+                    {{ faq.question }}
+                </button>
+            </h2>
+            <div
+                    id="faqCollapse{{ forloop.counter }}"
+                    class="accordion-collapse collapse {% if forloop.first %}show{% endif %}"
+                    aria-labelledby="faqHeading{{ forloop.counter }}"
+                    data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                    {{ faq.answer }}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+{% endblock content %}
+{% block footertop %}
+
+
+{% endblock footertop %}

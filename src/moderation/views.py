@@ -1,8 +1,29 @@
 from django.shortcuts import render
 from django.views.generic import ListView, DetailView, TemplateView, FormView
 from django.db.models import Q
+from django.contrib.auth.mixins import LoginRequiredMixin
 
-from moderation.models import Advert
+from moderation.models import Advert, AdvertAplication
+
+from webmain.models import Faqs, Seo
+
+
+class AdvertAplicationListView(LoginRequiredMixin, ListView):
+    model = AdvertAplication
+    template_name = "site/useraccount/advertaplication.html"
+    context_object_name = "advertaplications"
+    paginate_by = 20
+
+    def get_queryset(self):
+        # фильтруем M2M по текущему пользователю
+        return (
+            AdvertAplication.objects.filter(user=self.request.user)
+            .select_related("advert")
+            .prefetch_related("user")
+            .order_by("-created_at")
+        )
+
+
 
 
 # Create your views here.
@@ -180,3 +201,30 @@ class AdvertDetailView(DetailView):
     slug_field = "pk"
 
 
+"""ЧаВо"""
+class FaqsModerView(ListView):
+    model = Faqs
+    template_name = 'site/useraccount/faqs.html'  # No .html extension
+    context_object_name = 'faqs'
+    paginate_by = 10
+
+    def get_queryset(self):
+        return Faqs.objects.filter(publishet=True)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        try:
+            seo_data = Seo.objects.get(pagetype=4)
+            context['seo_previev'] = seo_data.previev
+            context['seo_title'] = seo_data.title
+            context['seo_description'] = seo_data.metadescription
+            context['seo_propertytitle'] = seo_data.propertytitle
+            context['seo_propertydescription'] = seo_data.propertydescription
+        except Seo.DoesNotExist:
+            context['seo_previev'] = None
+            context['seo_title'] = None
+            context['seo_description'] = None
+            context['seo_propertytitle'] = None
+            context['seo_propertydescription'] = None
+
+        return context

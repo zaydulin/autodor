@@ -26,6 +26,25 @@ class AdvertAdmin(admin.ModelAdmin):
 
 
 
+@admin.register(AdvertAplication)
+class AdvertAplicationAdmin(admin.ModelAdmin):
+    list_display = ("id", "advert", "users_list", "phone", "status", "created_at")
+    list_filter = ("status", "created_at")
+    search_fields = ("advert__name", "phone", "user__username", "user__email")
+    date_hierarchy = "created_at"
+    filter_horizontal = ("user",)  # удобный выбор нескольких пользователей
+    autocomplete_fields = ("advert",)  # если включишь autocomplete для объявлений
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related("advert").prefetch_related("user")
+
+    def users_list(self, obj):
+        # красиво выводим M2M пользователей
+        names = [getattr(u, "get_full_name", lambda: "")() or u.username for u in obj.user.all()]
+        return ", ".join(names) or "—"
+    users_list.short_description = "Пользователи"
+
 
 
 
