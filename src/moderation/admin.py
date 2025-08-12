@@ -28,9 +28,9 @@ class AdvertAdmin(admin.ModelAdmin):
 
 @admin.register(AdvertAplication)
 class AdvertAplicationAdmin(admin.ModelAdmin):
-    list_display = ("id", "advert", "users_list", "phone", "status", "created_at")
+    list_display = ("id", "advert", "users_list", "status", "created_at")
     list_filter = ("status", "created_at")
-    search_fields = ("advert__name", "phone", "user__username", "user__email")
+    search_fields = ("advert__name", "user__username", "user__email")
     date_hierarchy = "created_at"
     filter_horizontal = ("user",)  # удобный выбор нескольких пользователей
     autocomplete_fields = ("advert",)  # если включишь autocomplete для объявлений
