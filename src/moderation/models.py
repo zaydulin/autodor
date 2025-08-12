@@ -200,8 +200,36 @@ class AdvertAplication(models.Model):
 
 
 
+class CallSession(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    application = models.ForeignKey(AdvertAplication, on_delete=models.CASCADE)
+    caller = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='calls_made', on_delete=models.CASCADE)
+    callee = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='calls_received', on_delete=models.CASCADE)
+    is_active = models.BooleanField(default=True)
+    caller_offer = models.TextField(null=True, blank=True)
+    callee_answer = models.TextField(null=True, blank=True)
+    caller_ice_candidates = models.TextField(default='[]')
+    callee_ice_candidates = models.TextField(default='[]')
+    created_at = models.DateTimeField(auto_now_add=True)
 
 
+class ChatMessage(models.Model):
+    STATUS_CHOICES = [
+        (0, 'Отправлено'),
+        (1, 'Прочитано'),
+    ]
+    status = models.SmallIntegerField(verbose_name="Статус", choices=STATUS_CHOICES, default=1,  editable=False)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    applications = models.ForeignKey(AdvertAplication, on_delete=models.CASCADE, verbose_name="Чат", related_name='chatmessage')
+    date = models.DateTimeField(auto_now_add=True, verbose_name="Дата")
+    content = models.TextField(verbose_name="Сообщение")
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name="Автор", blank=True, null=True)
+    views = models.ManyToManyField(settings.AUTH_USER_MODEL, verbose_name='Пользователи', related_name='viewsmessage')
+
+    class Meta:
+        verbose_name = "Сообщение"
+        verbose_name_plural = "Сообщения"
+        ordering = ['-date']
 
 
 
