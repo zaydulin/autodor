@@ -141,14 +141,21 @@ def good_to_payload(good_el, images_limit=7, is_first_url=False):
     link = fields.get("URL")
     price = parse_price(fields.get("Цена"))
     currency = fields.get("Валюта")
-
+    adress = ' '
     if not name or not link or price is None or not currency:
         return None
+
+    match = re.search(r'Anschrift:\s*<\/td>\s*<td>([\s\S]*?)<\/td>', fields.get("Описание"))
+    address_html = match.group(1)
+    address = address_html.replace('<br>', '\n').strip()
+
+
 
     payload = {
         "name": name,
         "link": link,
         "original_link": link,
+        'address': address,
         "price": price,
         "currency": currency,
         "description": fields.get("Описание"),

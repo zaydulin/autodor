@@ -10,6 +10,26 @@
 {% endblock head %}
 
 {% block content %}
+<style>
+    .button_take {
+     background: #ee6350 !important;
+     font-size: 24px;
+     border: 0;
+     color: white;
+     font-weight: 600;
+     width: 100%;
+     border-radius: 15px;
+     padding: 10px;
+    }
+    #price-input {
+        width: 100%;
+        padding: 8px;
+        margin-bottom: 10px;
+        font-size: 1.2em;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+    }
+</style>
 <div class="container mt-4">
     <div class="row">
         <!-- Галерея -->
@@ -60,11 +80,57 @@
                 </tbody>
             </table>
 
+            <div class="mb-3">
+                <label for="price-input" class="form-label">Укажите свою цену</label>
+                <input type="number" id="price-input" class="form-control" placeholder="Введите цену" min="0" step="1" value="0">
+            </div>
+
+            <button id="btn-take" class="button_take">создать заявку на покупку</button>
         </div>
     </div>
 </div>
 
 {% endblock content %}
 {% block footertop %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const button = document.getElementById('btn-take');
+    button.addEventListener('click', function() {
+        // Получаем значение цены из input
+        const priceInput = document.getElementById('price-input');
+        const priceValue = priceInput.value;
 
+        // Проверка, что цена введена
+        if (!priceValue || parseFloat(priceValue) <= 0) {
+            alert('Пожалуйста, укажите корректную цену.');
+            return;
+        }
+
+        // Отправляем POST-запрос на сервер
+        fetch("{% url 'moderation:create_application' advert.id %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}' // Для защиты от CSRF
+            },
+            body: JSON.stringify({
+                advert_id: {{ advert.id }},
+                price: priceValue // Передаем цену
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data.success) {
+                alert('Заявка успешно создана!');
+            } else {
+                alert('Произошла ошибка: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка:', error);
+            alert('Произошла ошибка при отправке заявки.');
+        });
+    });
+});
+</script>
 {% endblock footertop %}

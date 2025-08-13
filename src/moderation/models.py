@@ -19,6 +19,7 @@ class Advert(models.Model):
     images = models.JSONField("Список ссылок на изображения", blank=True, null=True)  # храним list[str]
     subtitle = models.CharField("Подзаголовок", max_length=255, blank=True, null=True)
     article = models.CharField("Артикул", max_length=100, blank=True, null=True)
+    address = models.CharField('Адрес', max_length=100,blank=True,null=True)
 
     # Характеристики авто
     mileage = models.PositiveIntegerField("Километраж (км)", blank=True, null=True)
@@ -115,8 +116,8 @@ class AdvertDocument(models.Model):
 class AdvertExpense(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    advert = models.ForeignKey(
-        "Advert",
+    aplication = models.ForeignKey(
+        "AdvertAplication",
         on_delete=models.CASCADE,
         verbose_name="Объявление",
         related_name="expenses"
@@ -148,7 +149,7 @@ class AdvertExpense(models.Model):
         ordering = ["-date"]
 
     def __str__(self):
-        return f"{self.title} — {self.amount} ({self.advert.name})"
+        return f"{self.title} — {self.amount} ({self.aplication.advert.name})"
 
 
 class AdvertAplication(models.Model):

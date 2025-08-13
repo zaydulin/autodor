@@ -1,11 +1,22 @@
-from django.shortcuts import render
+import json
+from decimal import Decimal
+from moderation.tasks import start_call_task, end_call_task
+
+from django.contrib.auth.decorators import login_required
+from django.db import models
+from django.http import JsonResponse
+from django.shortcuts import render, get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from django.views.generic import ListView, DetailView, TemplateView, FormView
 from django.db.models import Q
 from django.contrib.auth.mixins import LoginRequiredMixin
-
+from .models import AdvertAplication, ChatMessage, CallSession
 from moderation.models import Advert, AdvertAplication
 
 from webmain.models import Faqs, Seo
+
+from useraccount.models import Profile
 
 
 class AdvertAplicationListView(LoginRequiredMixin, ListView):
@@ -38,9 +49,78 @@ class AdvertAplicationDetailView(LoginRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["advert"] = self.object.advert  # добавляем объявление
+        application = self.object
+        advert = application.advert
+
+        # добавляем объявление
+        context["application"] = application
+        context["advert"] = advert
+        expenses = application.expenses.all()
+        context['expenses'] = expenses
+        total_expenses = sum(expense.amount for expense in expenses)
+        users_list = (
+                list(application.user.all()) +
+                list(application.user_menager.all()) +
+                list(application.user_drivers.all())
+        )
+        context['users'] = [user for user in users_list if user != self.request.user]
+        context['total_price'] = application.price + advert.price + total_expenses
+
+        user = application.user.first()
+        messages = ChatMessage.objects.filter(
+            applications=application
+        ).filter(
+            Q(author=user) |
+            Q(author__in=application.user_menager.all()) |
+            Q(author__in=application.user_drivers.all())
+        ).order_by('date')  # сортируем по времени
+        context['messages'] = messages
+
+        calls = CallSession.objects.filter(application=application)
+        context['calls'] = calls
+
+        context['all_managers'] = Profile.objects.filter(type=0,employee=2)
+        context['all_drivers'] = Profile.objects.filter(type=0,employee=1)
+
         return context
 
+
+@csrf_exempt
+def update_application(request, application_id):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        application = AdvertAplication.objects.get(id=application_id)
+        updated_fields = {}
+
+        # Обновление стоимости, статуса и т.п.
+        for key, value in data.items():
+            # Обработка обычных полей
+            if hasattr(application, key):
+                field_obj = getattr(application, key)
+                # Для строковых полей и чисел
+                if isinstance(field_obj, (str, int, float, type(None))):
+                    setattr(application, key, value)
+                    updated_fields[key] = str(getattr(application, key))
+                # Для DecimalField
+                elif isinstance(field_obj, models.DecimalField):
+                    setattr(application, key, value)
+                    updated_fields[key] = str(getattr(application, key))
+                # Для ManyToMany
+                elif isinstance(getattr(application, key), models.fields.related_descriptors.ManyToManyDescriptor):
+                    if value is None:
+                        continue  # ничего не делаем
+                    elif isinstance(value, list):
+                        # Передать список id
+                        related_manager = getattr(application, key)
+                        if len(value) > 0:
+                            related_manager.set(value)
+                        else:
+                            related_manager.clear()
+                        # Для отображения
+                        updated_fields[key] = ','.join(str(v) for v in value)
+        application.save()
+        return JsonResponse({'success': True, 'updated_fields': updated_fields})
+    return JsonResponse({'success': False})
 
 
 # Create your views here.
@@ -245,3 +325,104 @@ class FaqsModerView(ListView):
             context['seo_propertydescription'] = None
 
         return context
+
+
+def create_application(request, advert_id):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            advert = Advert.objects.get(id=advert_id)
+            svoi_price = Decimal(data.get('price'))
+
+            application = AdvertAplication.objects.create(
+                advert=advert,
+                status=AdvertAplication.Status.NEW,
+                price = svoi_price,
+            )
+
+            application.user.add(request.user)
+            application.save()
+
+            return JsonResponse({'success': True, 'application_id': str(application.id)})
+
+        except Advert.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Объявление не найдено'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+
+
+
+@login_required
+@require_POST
+def send_message(request, app_id):
+    application = get_object_or_404(AdvertAplication, id=app_id)
+    content = request.POST.get('content')
+    if content:
+        message = ChatMessage.objects.create(
+            applications=application,
+            content=content,
+            author=request.user,
+        )
+        return JsonResponse({
+            'id': str(message.id),
+            'author': message.author.username,
+            'content': message.content,
+            'date': message.date.strftime('%Y-%m-%d %H:%M:%S'),
+        })
+    return JsonResponse({'error': 'Нет содержимого'}, status=400)
+
+
+@login_required
+def get_new_messages(request, app_id):
+    application = get_object_or_404(AdvertAplication, id=app_id)
+    last_message_id = request.GET.get('last_message_id')
+    current_user = request.user
+
+    if last_message_id:
+        try:
+            last_message = ChatMessage.objects.get(id=last_message_id)
+            new_messages = ChatMessage.objects.filter(
+                applications=application,
+                date__gt=last_message.date
+            ).exclude(author=current_user).order_by('date')
+        except ChatMessage.DoesNotExist:
+            new_messages = ChatMessage.objects.filter(
+                applications=application
+            ).exclude(author=current_user).order_by('date')
+    else:
+        new_messages = ChatMessage.objects.filter(
+            applications=application
+        ).exclude(author=current_user).order_by('date')
+
+    messages_data = []
+    for msg in new_messages:
+        messages_data.append({
+            'id': str(msg.id),
+            'author': msg.author.username,
+            'content': msg.content,
+            'date': msg.date.strftime('%Y-%m-%d %H:%M:%S'),
+        })
+
+    return JsonResponse({'messages': messages_data})
+
+
+def start_call(request, application_id):
+    if request.method == 'POST':
+        try:
+            application = get_object_or_404(AdvertAplication, id=application_id)
+            call_session = CallSession.objects.create(
+                application=application,
+                caller=request.user,
+                callee=application.user.first()
+            )
+            call_id = call_session.id
+            start_call_task.delay(call_id)
+            return JsonResponse({'call_id': call_id})
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.exception("Error in start_call")
+            return JsonResponse({'error': str(e)}, status=500)
+    return JsonResponse({'error': 'Invalid request'}, status=400)
