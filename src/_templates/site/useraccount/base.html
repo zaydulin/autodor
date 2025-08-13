@@ -196,7 +196,36 @@
 </div>
 
 </main>
-<style></style>
+<style>
+    .mobile-bottom-menu {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: #fff;
+    border-top: 1px solid #ddd;
+    padding: 6px 0;
+    z-index: 9999;
+}
+
+.mobile-bottom-menu .nav-link {
+    color: #555;
+    text-align: center;
+    padding: 4px 0;
+}
+
+.mobile-bottom-menu .nav-link.active,
+.mobile-bottom-menu .nav-link:hover {
+    color: #007bff;
+}
+
+@media (min-width: 992px) {
+    .mobile-bottom-menu {
+        display: none;
+    }
+}
+
+</style>
 <!-- Wrapper End-->
 <!-- Navbar -->
 
