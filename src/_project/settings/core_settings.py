@@ -35,7 +35,8 @@ CELERY_BROKER_URL = 'redis://localhost:6379/0'
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
 
 INSTALLED_APPS = [
-    # "jazzmin",
+    'daphne',
+    "jazzmin",
     'channels',
     'django.contrib.admin',
     'django.contrib.auth',
