@@ -10,6 +10,7 @@
 {% endblock head %}
 
 {% block content %}
+
 <div class="conatiner-fluid content-inner mt-5 py-0">
     <div class="row">
         <div class="col-lg-4">
@@ -193,7 +194,7 @@
                 <div class="card-header swiper-container d-slider2">
                     <div class="row">
                         {% for advert in adverts %}
-                        <div class="col-lg-4" data-href="{% url 'moderation:advert_detail' advert.id %}">
+                        <div class="col-lg-4" data-href="{% url 'moderation:advert_detail' advert.id %}" style="margin-bottom: 7%;">
                             <div class="iq-upcoming-cars">
                                 {% if advert.images %}
                                 <img src="{{ advert.images.0 }}" class="img-fluid w-100" alt="{{ advert.name }}">

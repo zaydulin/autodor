@@ -1,0 +1,1 @@
+make manage c='loaddata _dump/users.json'

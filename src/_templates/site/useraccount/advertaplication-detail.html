@@ -128,7 +128,7 @@
 
                 <!-- Список документов -->
                 <div class="card mb-4">
-                    Документы <div class="card mb-4">
+                    <div class="card mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">Документы</h5>
                     </div>
@@ -448,66 +448,54 @@
     let callId;
 
     function startWebRTC(callId) {
-        // Получить локальный медиа поток
-        navigator.mediaDevices.getUserMedia({audio: true, video: false})
-            .then(stream => {
-                // Создать PeerConnection
-                peerConnection = new RTCPeerConnection(servers);
+    navigator.mediaDevices.getUserMedia({audio: true, video: false})
+        .then(stream => {
+            localStream = stream;
+            peerConnection = new RTCPeerConnection(servers);
 
-                if (peerConnection.signalingState === 'stable') {
-                    // Сначала нужно создать и установить локальное описание
-                    peerConnection.createAnswer()
-                        .then(answer => peerConnection.setLocalDescription(answer))
-                        .then(() => {
-                            // Теперь можно установить remote description
-                            return peerConnection.setRemoteDescription(remoteSessionDescription);
-                        });
-                } else {
-                    // Если соединение не в стабильном состоянии
-                    peerConnection.setRemoteDescription(remoteSessionDescription);
-                }
-
-
-
-
-                peerConnection.onsignalingstatechange = () => {
-                    console.log('Signaling state changed:', peerConnection.signalingState);
-                    if (peerConnection.signalingState === 'stable') {
-                        // Здесь можно выполнять дальнейшие действия
-                    }
-                };
-
-
-
-                peerConnection.onicecandidate = event => {
-                    if (event.candidate) {
-                        // Отправляем ICE-кандидат
-                        sendIceCandidate(event.candidate);
-                    } else {
-                        // Все кандидаты отправлены
-                        console.log('Все ICE-кандидаты отправлены');
-                    }
-                };
-
-                peerConnection.createOffer()
-                    .then(offer => {
-                        return peerConnection.setLocalDescription(offer);
-                    })
-                    .then(() => {
-                        sendSignal({'type': 'offer', 'sdp': peerConnection.localDescription});
+            peerConnection.onicecandidate = event => {
+                if (event.candidate) {
+                    sendSignal({
+                        type: 'ice',
+                        candidate: event.candidate
                     });
+                }
+            };
 
-            });
-    }
+            peerConnection.addStream(stream);
+
+            peerConnection.createOffer()
+                .then(offer => peerConnection.setLocalDescription(offer))
+                .then(() => {
+                    sendSignal({
+                        type: 'offer',
+                        sdp: peerConnection.localDescription
+                    });
+                });
+        })
+        .catch(error => console.error('Ошибка получения медиа:', error));
+}
+
 
 // Создание соединения
 const pc = new RTCPeerConnection(servers);
+function sendOffer(offer) {
+    if (websocket && websocket.readyState === WebSocket.OPEN) {
+        websocket.send(JSON.stringify({
+            type: 'offer',
+            sdp: offer
+        }));
+    } else {
+        console.error('WebSocket не подключен');
+    }
+}
+
+
 
 // Создание предложения
 pc.createOffer()
     .then(offer => pc.setLocalDescription(offer))
     .then(() => {
-        // Отправляем предложение удаленной стороне
         sendOffer(pc.localDescription);
     })
     .catch(error => console.error('Ошибка создания предложения:', error));
@@ -543,36 +531,26 @@ function handleAnswer(remoteSessionDescription) {
     }
 
     // Обработка входящих сообщений WebSocket
-    function handleSignal(message) {
+        function handleSignal(message) {
         const data = JSON.parse(message.data);
         if (data.type === 'offer') {
-            // Получили оффер, создаем ответ
-            peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp))
+            pc.setRemoteDescription(new RTCSessionDescription(data.sdp))
                 .then(() => navigator.mediaDevices.getUserMedia({video: true, audio: true}))
                 .then(stream => {
                     localStream = stream;
-                    return peerConnection.createAnswer();
+                    return pc.createAnswer();
                 })
-                .then(answer => {
-                    return peerConnection.setLocalDescription(answer);
-                })
+                .then(answer => pc.setLocalDescription(answer))
                 .then(() => {
-                    sendSignal({'type': 'answer', 'sdp': peerConnection.localDescription});
+                    sendSignal({
+                        type: 'answer',
+                        sdp: pc.localDescription
+                    });
                 });
         } else if (data.type === 'answer') {
-            peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
+            pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
         } else if (data.type === 'ice') {
-            peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
-        } else if (data.type === 'hangup') {
-            // Завершить звонок
-            if (peerConnection) {
-                peerConnection.close();
-            }
-            if (websocket) {
-                websocket.close();
-            }
-            alert('Звонок завершен');
-            document.getElementById('hangupButton').classList.add('d-none');
+            pc.addIceCandidate(new RTCIceCandidate(data.candidate));
         }
     }
 
@@ -587,7 +565,6 @@ function handleAnswer(remoteSessionDescription) {
 
         websocket.onclose = () => {
             console.log('WebSocket закрыт, попытка переподключения...');
-            // Попытка переподключения через 3 секунды
             setTimeout(() => {
                 connectWebSocket(callId);
             }, 3000);
