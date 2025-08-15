@@ -21,7 +21,6 @@ from django.db.models import Q
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import AdvertAplication, ChatMessage, CallSession, AdvertDocument
 from moderation.models import Advert, AdvertAplication
-from docxtpl import DocxTemplate
 from webmain.models import Faqs, Seo
 
 from useraccount.models import Profile
