@@ -1,19 +1,27 @@
+import io
 import json
+import os
+from datetime import datetime
 from decimal import Decimal
+
+from django.conf import settings
+from django.core.files.base import ContentFile
+from django.utils import timezone
+from docx import Document
 from moderation.tasks import start_call_task, end_call_task
 
 from django.contrib.auth.decorators import login_required
-from django.db import models
-from django.http import JsonResponse
+from django.db import models, transaction
+from django.http import JsonResponse, HttpResponse, HttpResponseServerError
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.generic import ListView, DetailView, TemplateView, FormView
 from django.db.models import Q
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .models import AdvertAplication, ChatMessage, CallSession
+from .models import AdvertAplication, ChatMessage, CallSession, AdvertDocument
 from moderation.models import Advert, AdvertAplication
-
+from docxtpl import DocxTemplate
 from webmain.models import Faqs, Seo
 
 from useraccount.models import Profile
@@ -77,6 +85,7 @@ class AdvertAplicationDetailView(LoginRequiredMixin, DetailView):
         context['messages'] = messages
 
         calls = CallSession.objects.filter(application=application)
+        context['documents'] = application.documents.all().order_by('-created_at')
         context['calls'] = calls
 
         context['all_managers'] = Profile.objects.filter(type=0,employee=2)
@@ -426,3 +435,63 @@ def start_call(request, application_id):
             logger.exception("Error in start_call")
             return JsonResponse({'error': str(e)}, status=500)
     return JsonResponse({'error': 'Invalid request'}, status=400)
+
+
+def generate_contract(request, application_id):
+    # Получаем данные
+    application = AdvertAplication.objects.get(id=application_id)
+    advert = application.advert
+
+    # Создаем документ с нуля
+    doc = Document()
+    doc.add_heading('ДОГОВОР КУПЛИ-ПРОДАЖИ ТОВАРА', level=0)
+
+    # Дата
+    doc.add_paragraph(f"Дата: {timezone.now().strftime('%d.%m.%Y')}")
+
+    # Описание ТС
+    doc.add_paragraph("Передаваемое транспортное средство:")
+    table = doc.add_table(rows=0, cols=2)
+    def add_row(label, value):
+        row = table.add_row()
+        row.cells[0].text = label
+        row.cells[1].text = str(value) if value is not None else ''
+
+    add_row('Марка', advert.brand or '')
+    add_row('Модель', advert.model_auto or '')
+    add_row('Год выпуска', advert.year or '')
+    add_row('Пробег', advert.mileage or '')
+    add_row('Цвет', advert.color or '')
+    add_row('Объем двигателя', advert.engine_volume or '')
+    add_row('Мощность', advert.power or '')
+    add_row('Тип КПП', advert.get_transmission_display())
+    add_row('Топливо', advert.get_fuel_display())
+    add_row('Привод', advert.get_drive_display())
+    add_row('Адрес размещения', advert.address or '')
+    add_row('Цена', application.price)
+
+    # Доп. информация может быть добавлена по желанию
+    # Примерно — можно добавить подписи, условия и т.д.
+
+    # Сохраняем в BytesIO
+    buffer = io.BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
+
+    file_name = f"contract_{application.id}.docx"
+    content = ContentFile(buffer.getvalue(), name=file_name)
+
+    with transaction.atomic():
+        advert_document = AdvertDocument.objects.create(
+            aplication=application,
+            document_type=AdvertDocument.DocumentType.CONTRACT,
+            file=content
+        )
+
+    # Возвращаем файл пользователю (или можно вернуть путь/пометить как созданный)
+    response = HttpResponse(
+        buffer.getvalue(),
+        content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    )
+    response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+    return response

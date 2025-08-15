@@ -1,793 +1,902 @@
-{% extends 'site/useraccount/base.html' %}
-{% load static %}
-{% block title %}{{ seo_title }}{% endblock title %}
-{% block description %}{{ seo_description }}{% endblock description %}
-{% block propertytitle %}{% if seo_previev %}{{ seo_previev.url }} {% endif %} {% endblock propertytitle %}
-{% block propertydescription %}{{ seo_propertytitle }}{% endblock propertydescription %}
-{% block propertyimage %}{{ seo_propertydescription }}{% endblock propertyimage %}
-{% block head %}{% endblock head %}
+    {% extends 'site/useraccount/base.html' %}
+    {% load static %}
+    {% block title %}{{ seo_title }}{% endblock title %}
+    {% block description %}{{ seo_description }}{% endblock description %}
+    {% block propertytitle %}{% if seo_previev %}{{ seo_previev.url }} {% endif %} {% endblock propertytitle %}
+    {% block propertydescription %}{{ seo_propertytitle }}{% endblock propertydescription %}
+    {% block propertyimage %}{{ seo_propertydescription }}{% endblock propertyimage %}
+    {% block head %}{% endblock head %}
 
-{% block content %}
-<style>
-    iframe {
-    height: 500px;
-    width: 100%;
-    }
-</style>
-<div class="container py-4">
-    <div class="row g-4">
-        <!-- Левая колонка -->
-        <div class="col-lg-8">
-            <div class="card">
-                <div class="card-body">
-                    <h2 class="mb-1">{{ advert.name }}</h2>
-                    <div class="d-flex">
-                        <div class="h4 text-primary fw-bold m-3">Стоимость {{ advert.price }} {{ advert.currency }}</div>
-                    </div>
-
-                    <div class="row row-cols-2 row-cols-md-3 g-2 mb-3">
-                        {% if advert.year %}<div class="col"><span class="badge bg-light text-dark spec-badge">Год: {{ advert.year }}</span></div>{% endif %}
-                        {% if advert.mileage %}<div class="col"><span class="badge bg-light text-dark spec-badge">Пробег: {{ advert.mileage }} км</span></div>{% endif %}
-                        {% if advert.color %}<div class="col"><span class="badge bg-light text-dark spec-badge">Цвет: {{ advert.color }}</span></div>{% endif %}
-                        {% if advert.doors %}<div class="col"><span class="badge bg-light text-dark spec-badge">Дверей: {{ advert.doors }}</span></div>{% endif %}
-                        {% if advert.engine_volume %}<div class="col"><span class="badge bg-light text-dark spec-badge">Объём: {{ advert.engine_volume }} л</span></div>{% endif %}
-                        {% if advert.power %}<div class="col"><span class="badge bg-light text-dark spec-badge">Мощн.: {{ advert.power }} л.с.</span></div>{% endif %}
-                        {% if advert.transmission %}<div class="col"><span class="badge bg-light text-dark spec-badge">Коробка: {{ advert.get_transmission_display }}</span></div>{% endif %}
-                        {% if advert.fuel %}<div class="col"><span class="badge bg-light text-dark spec-badge">Топливо: {{ advert.get_fuel_display }}</span></div>{% endif %}
-                        {% if advert.drive %}<div class="col"><span class="badge bg-light text-dark spec-badge">Привод: {{ advert.get_drive_display }}</span></div>{% endif %}
-                    </div>
-
-                    {% if advert.images %}
-                    <div id="advCarousel" class="carousel slide gallery mb-3" data-bs-ride="carousel">
-                        <div class="carousel-inner rounded">
-                            {% for img in advert.images %}
-                            <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                                <img src="{{ img }}" class="d-block w-100" alt="{{ advert.name }}">
-                            </div>
-                            {% endfor %}
+    {% block content %}
+    <style>
+        iframe {
+        height: 500px;
+        width: 100%;
+        }
+        .doc {
+            width: 50%;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    </style>
+    <div class="container py-4">
+        <div class="row g-4">
+            <!-- Левая колонка -->
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-body">
+                        <h2 class="mb-1">{{ advert.name }}</h2>
+                        <div class="d-flex">
+                            <div class="h4 text-primary fw-bold m-3">Стоимость {{ advert.price }} {{ advert.currency }}</div>
                         </div>
-                        <button class="carousel-control-prev" type="button" data-bs-target="#advCarousel" data-bs-slide="prev">
-                            <span class="carousel-control-prev-icon"></span>
-                        </button>
-                        <button class="carousel-control-next" type="button" data-bs-target="#advCarousel" data-bs-slide="next">
-                            <span class="carousel-control-next-icon"></span>
-                        </button>
+
+                        <div class="row row-cols-2 row-cols-md-3 g-2 mb-3">
+                            {% if advert.year %}<div class="col"><span class="badge bg-light text-dark spec-badge">Год: {{ advert.year }}</span></div>{% endif %}
+                            {% if advert.mileage %}<div class="col"><span class="badge bg-light text-dark spec-badge">Пробег: {{ advert.mileage }} км</span></div>{% endif %}
+                            {% if advert.color %}<div class="col"><span class="badge bg-light text-dark spec-badge">Цвет: {{ advert.color }}</span></div>{% endif %}
+                            {% if advert.doors %}<div class="col"><span class="badge bg-light text-dark spec-badge">Дверей: {{ advert.doors }}</span></div>{% endif %}
+                            {% if advert.engine_volume %}<div class="col"><span class="badge bg-light text-dark spec-badge">Объём: {{ advert.engine_volume }} л</span></div>{% endif %}
+                            {% if advert.power %}<div class="col"><span class="badge bg-light text-dark spec-badge">Мощн.: {{ advert.power }} л.с.</span></div>{% endif %}
+                            {% if advert.transmission %}<div class="col"><span class="badge bg-light text-dark spec-badge">Коробка: {{ advert.get_transmission_display }}</span></div>{% endif %}
+                            {% if advert.fuel %}<div class="col"><span class="badge bg-light text-dark spec-badge">Топливо: {{ advert.get_fuel_display }}</span></div>{% endif %}
+                            {% if advert.drive %}<div class="col"><span class="badge bg-light text-dark spec-badge">Привод: {{ advert.get_drive_display }}</span></div>{% endif %}
+                        </div>
+
+                        {% if advert.images %}
+                        <div id="advCarousel" class="carousel slide gallery mb-3" data-bs-ride="carousel">
+                            <div class="carousel-inner rounded">
+                                {% for img in advert.images %}
+                                <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                                    <img src="{{ img }}" class="d-block w-100" alt="{{ advert.name }}">
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <button class="carousel-control-prev" type="button" data-bs-target="#advCarousel" data-bs-slide="prev">
+                                <span class="carousel-control-prev-icon"></span>
+                            </button>
+                            <button class="carousel-control-next" type="button" data-bs-target="#advCarousel" data-bs-slide="next">
+                                <span class="carousel-control-next-icon"></span>
+                            </button>
+                        </div>
+                        {% endif %}
                     </div>
+                </div>
+
+                <!-- Местоположение -->
+                <div class="row mt-1">
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-header"><h5 class="mb-0">Местоположение</h5></div>
+                            <div class="card-body">
+                                <iframe class="osm-iframe" src="https://www.openstreetmap.org/export/embed.html?bbox=37.6173,55.7558,37.6173,55.7558&layer=mapnik&marker=55.7558,37.6173"></iframe>
+                                <div class="small text-muted mt-2">Москва, Красная площадь</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Правая колонка -->
+            <div class="col-lg-4" id="sidebar-container">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-light border" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCalls">☎️ Звонки</button>
+                    <button class="btn btn-primary" data-bs-toggle="offcanvas" data-bs-target="#offcanvasChat">💬 Групповой чат</button>
+                    {% if request.user in application.user_menager.all %}
+                    <button class="btn btn-primary" id="edit-sidebar-btn">Внести изменения</button>
                     {% endif %}
                 </div>
-            </div>
 
-            <!-- Местоположение -->
-            <div class="row mt-1">
-                <div class="col-lg-12">
-                    <div class="card">
-                        <div class="card-header"><h5 class="mb-0">Местоположение</h5></div>
-                        <div class="card-body">
-                            <iframe class="osm-iframe" src="https://www.openstreetmap.org/export/embed.html?bbox=37.6173,55.7558,37.6173,55.7558&layer=mapnik&marker=55.7558,37.6173"></iframe>
-                            <div class="small text-muted mt-2">Москва, Красная площадь</div>
-                        </div>
+                <!-- Заявка -->
+                <div class="card mb-4"  id="sidebar">
+                    <div class="card-header"><h5 class="mb-0">Заявка {{ application.id }}</h5></div>
+                    <div class="card-body">
+                        <div class="mb-2"><strong>Статус:</strong> {{ application.get_status_display }}</div>
+                        <div class="mb-2"><strong>Создана: </strong>{{ application.created_at|date:"d.m.Y H:i" }}</div>
+                        <hr>
+                        <div class="mb-2"><strong>Заказчик:</strong></div>
+                        <ul class="list-unstyled mb-0">
+                            <li class="d-flex align-items-center gap-2 mb-2">
+                                <span class="avatar">{{ application.user.first.first_name|slice:":1" }}</span>
+                                <div><div class="fw-semibold">{{ application.user.first.first_name }} {{ application.user.first.last_name }}</div><div class="small text-muted"> {{ application.user.first.email }}</div></div>
+                            </li>
+                        </ul>
+
+                        <!-- Менеджеры -->
+                        <div class="mb-2"><strong>Менеджеры:</strong></div>
+                        <ul class="list-unstyled mb-0">
+                            {% for men in application.user_menager.all %}
+                                <li class="d-flex align-items-center gap-2 mb-2">
+                                    <span class="avatar">{{ men.first_name|slice:":1" }}</span>
+                                    <div><div class="fw-semibold">{{ men.first_name }} {{ men.last_name }}</div><div class="small text-muted">{{ men.email }}</div></div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                        <div class="mb-2"><strong>Водители:</strong></div>
+                        <ul class="list-unstyled mb-0">
+                            {% for men in application.user_drivers.all %}
+                                <li class="d-flex align-items-center gap-2 mb-2">
+                                    <span class="avatar">{{ men.first_name|slice:":1" }}</span>
+                                    <div><div class="fw-semibold">{{ men.first_name }} {{ men.last_name }}</div><div class="small text-muted">{{ men.email }}</div></div>
+                                </li>
+                            {% endfor %}
+                        </ul>
                     </div>
                 </div>
-            </div>
 
-        </div>
-
-        <!-- Правая колонка -->
-        <div class="col-lg-4" id="sidebar-container">
-            <div class="d-grid gap-2">
-                <button class="btn btn-light border" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCalls">☎️ Звонки</button>
-                <button class="btn btn-primary" data-bs-toggle="offcanvas" data-bs-target="#offcanvasChat">💬 Групповой чат</button>
-                {% if request.user in application.user_menager.all %}
-                <button class="btn btn-primary" id="edit-sidebar-btn">Внести изменения</button>
-                {% endif %}
-            </div>
-
-            <!-- Заявка -->
-            <div class="card mb-4"  id="sidebar">
-                <div class="card-header"><h5 class="mb-0">Заявка {{ application.id }}</h5></div>
-                <div class="card-body">
-                    <div class="mb-2"><strong>Статус:</strong> {{ application.get_status_display }}</div>
-                    <div class="mb-2"><strong>Создана: </strong>{{ application.created_at|date:"d.m.Y H:i" }}</div>
-                    <hr>
-                    <div class="mb-2"><strong>Заказчик:</strong></div>
-                    <ul class="list-unstyled mb-0">
-                        <li class="d-flex align-items-center gap-2 mb-2">
-                            <span class="avatar">{{ application.user.first.first_name|slice:":1" }}</span>
-                            <div><div class="fw-semibold">{{ application.user.first.first_name }} {{ application.user.first.last_name }}</div><div class="small text-muted"> {{ application.user.first.email }}</div></div>
-                        </li>
-                    </ul>
-
-                    <!-- Менеджеры -->
-                    <div class="mb-2"><strong>Менеджеры:</strong></div>
-                    <ul class="list-unstyled mb-0">
-                        {% for men in application.user_menager.all %}
-                            <li class="d-flex align-items-center gap-2 mb-2">
-                                <span class="avatar">{{ men.first_name|slice:":1" }}</span>
-                                <div><div class="fw-semibold">{{ men.first_name }} {{ men.last_name }}</div><div class="small text-muted">{{ men.email }}</div></div>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                    <div class="mb-2"><strong>Водители:</strong></div>
-                    <ul class="list-unstyled mb-0">
-                        {% for men in application.user_drivers.all %}
-                            <li class="d-flex align-items-center gap-2 mb-2">
-                                <span class="avatar">{{ men.first_name|slice:":1" }}</span>
-                                <div><div class="fw-semibold">{{ men.first_name }} {{ men.last_name }}</div><div class="small text-muted">{{ men.email }}</div></div>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            </div>
-
-            <!-- Список документов -->
-            <div class="card mb-4">
-                <div class="card-header"><h5 class="mb-0">Документы</h5></div>
-                <div class="card-body">
+                <!-- Список документов -->
+                <div class="card mb-4">
+                    Документы <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Документы</h5>
+                    </div>
+                    {% if request.user in application.user_menager.all %}
+                    <button style="margin-left: 25%; width: 50%;" id="recreate-doc-btn" class="btn btn-outline-primary btn-sm" data-application-id="{{ application.id }}">
+                        <i class="bi bi-file-earmark-text"></i> Пересоздать документ
+                    </button>
+                    {% endif %}
+                    <div class="card-body">
                     <ul class="list-group">
-                        <li class="list-group-item d-flex align-items-center justify-content-between">
-                            <div>
-                                <i class="bi bi-file-earmark-text me-2 text-primary"></i> Договор.pdf
-                            </div>
-                            <a href="#" class="btn btn-outline-primary btn-sm">
-                                <i class="bi bi-download"></i>пересоздать документ
-                            </a>
-                        </li>
-                        <li class="list-group-item d-flex align-items-center justify-content-between">
-                            <div>
-                                <i class="bi bi-file-earmark-image me-2 text-success"></i> Фото_авто.jpg
-                            </div>
-                            <a href="#" class="btn btn-outline-primary btn-sm">
-                                <i class="bi bi-download"></i>пересоздать документ
-                            </a>
-                        </li>
-                    </ul>
+                        {% for document in documents %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span class="doc">
+                                <i class="bi bi-file-earmark-text me-2 text-primary"></i>
+                                {{ document.get_document_type_display }} — {{ document.file }}
+                            </span>
+                                <a href="{{ document.file.url }}" class="btn btn-outline-primary btn-sm" download>Скачать</a> </li> {% empty %}
+                        <li class="list-group-item">Документы отсутствуют</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Расходы -->
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Расходы</h5>
-                    <span style="padding: 10px;" class="badge bg-primary">Итого: {{ total_price }} ₽</span>
-                </div>
-                <div class="card-body">
-                    <table class="table table-sm align-middle">
-                        <thead>
-                        <tr><th>Статья</th><th class="text-end">Сумма</th><th>Дата</th></tr>
-                        </thead>
-                        <tbody>
-                        <tr><td>Своя Стоимость</td><td class="text-end">{{ application.price }} ₽</td><td>{{ application.created_at|date:"d.m.Y" }}</td></tr>
-                        {% for expense in expenses %}
-                            <tr><td>{{ expense.title }}</td><td class="text-end">{{ expense.amount }} ₽</td><td>{{ expense.created_at|date:"d.m.Y" }}</td></tr>
-                        {% endfor %}
-                        <form action=""></form>
-                            <tr style="display: none"><td></td><td class="text-end">{{ expense.amount }} ₽</td><td>{{ expense.created_at|date:"d.m.Y" }}</td></tr>
-                        </form>
-                        </tbody>
-                    </table>
+                <!-- Расходы -->
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Расходы</h5>
+                        <span style="padding: 10px;" class="badge bg-primary">Итого: {{ total_price }} {{ advert.currency }}</span>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm align-middle">
+                            <thead>
+                            <tr><th>Статья</th><th class="text-end">Сумма</th><th>Дата</th></tr>
+                            </thead>
+                            <tbody>
+                            <tr><td>Своя Стоимость</td><td class="text-end">{{ application.price }} {{ advert.currency }}</td><td>{{ application.created_at|date:"d.m.Y" }}</td></tr>
+                            {% for expense in expenses %}
+                                <tr><td>{{ expense.title }}</td><td class="text-end">{{ expense.amount }} {{ advert.currency }}</td><td>{{ expense.created_at|date:"d.m.Y" }}</td></tr>
+                            {% endfor %}
+                            <form action=""></form>
+                                <tr style="display: none"><td></td><td class="text-end">{{ expense.amount }} {{ advert.currency }}</td><td>{{ expense.created_at|date:"d.m.Y" }}</td></tr>
+                            </form>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Offcanvas: Звонки -->
-<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasCalls">
-    <div class="offcanvas-header">
-        <h5>Звонки</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
-    </div>
-    <div class="offcanvas-body">
-        <!-- Список участников -->
-        <h6 class="mb-3">Участники</h6>
-        <ul class="list-group mb-4">
-            {% for user in users %}
-            <li class="list-group-item d-flex align-items-center justify-content-between">
-                <div class="d-flex align-items-center">
-                    <img src="{{ user.avatar.url }}" class="rounded-circle me-2" alt="Аватар Иван" height="32px">
-                    <span>{{user.first_name}} {{user.last_name}}</span>
-                </div>
-                <button id="callButton" class="btn btn-success">
-                    <i class="bi bi-telephone-fill"></i> Позвонить
-                </button>
-                <button onclick="hangup()" class="btn btn-danger" style="display: none;" id="hangupButton">Завершить</button>
-
-            </li>
-            {% endfor %}
-        </ul>
-
-        <!-- История звонков -->
-        <h6 class="mb-3">История звонков</h6>
-        <ul class="list-group">
-            {% for call in calls %}
-            <li class="list-group-item">
-                {{ call.created_at|date:"d.m.Y H:i" }} —
-                {% if call.is_active %}Активен{% else %}Завершен{% endif %}
-            </li>
-            {% empty %}
-            <li class="list-group-item">Нет звонков</li>
-            {% endfor %}
-        </ul>
-    </div>
-</div>
-
-<!-- Offcanvas: Чат -->
-<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasChat">
-    <div class="offcanvas-header">
-        <h5>Групповой чат</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
-    </div>
-    <div class="offcanvas-body d-flex flex-column">
-        <!-- Сообщения -->
-        <div class="flex-grow-1 overflow-auto border rounded p-2 mb-2" style="min-height:260px;" id="group-chat-messages">
-            {% for message in messages %}
-                {% if message.author != request.user %}
-                <div class="d-flex mb-2" data-message-id="{{ message.id }}">
-                    <div class="bg-primary text-white p-2 rounded" style="max-width: 75%;">
-                        <div class="fw-bold small">{{ message.author.first_name }} {{ message.author.last_name }}</div>
-                        <div>{{ message.content }}</div>
-                        <div class="small text-end text-muted">{{ message.date|date:"d.m H:i" }}</div>
-                    </div>
-                </div>
-                {% else %}
-                <div class="d-flex justify-content-end mb-2" data-message-id="{{ message.id }}">
-                    <div class="bg-light p-2 rounded" style="max-width: 75%;">
-                        <div class="fw-bold small">{{ message.author.first_name }} {{ message.author.last_name }}</div>
-                        <div>{{ message.content }}</div>
-                        <div class="small text-end text-muted">{{ message.date|date:"d.m H:i" }}</div>
-                    </div>
-                </div>
-                {% endif %}
-            {% endfor %}
+    <!-- Offcanvas: Звонки -->
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasCalls">
+        <div class="offcanvas-header">
+            <h5>Звонки</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
         </div>
+        <div class="offcanvas-body">
+            <!-- Список участников -->
+            <h6 class="mb-3">Участники</h6>
+            <ul class="list-group mb-4">
+                {% for user in users %}
+                <li class="list-group-item d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <img src="{{ user.avatar.url }}" class="rounded-circle me-2" alt="Аватар Иван" height="32px">
+                        <span>{{user.first_name}} {{user.last_name}}</span>
+                    </div>
+                    <button id="callButton" class="btn btn-success">
+                        <i class="bi bi-telephone-fill"></i> Позвонить
+                    </button>
+                    <button onclick="hangup()" class="btn btn-danger" style="display: none;" id="hangupButton">Завершить</button>
 
-        <!-- Поле ввода и кнопка -->
-        <form class="d-flex gap-2" id="group-chat-form">
-            {% csrf_token %}
-            <input type="text" id="group-chat-input" class="form-control" placeholder="Написать сообщение…">
-            <button type="submit" class="btn btn-primary">Отправить</button>
-        </form>
-<input type="hidden" id="last-message-id" name="last-message-id" value="{{ last_message_id }}">
+                </li>
+                {% endfor %}
+            </ul>
 
+            <!-- История звонков -->
+            <h6 class="mb-3">История звонков</h6>
+            <ul class="list-group">
+                {% for call in calls %}
+                <li class="list-group-item">
+                    {{ call.created_at|date:"d.m.Y H:i" }} —
+                    {% if call.is_active %}Активен{% else %}Завершен{% endif %}
+                </li>
+                {% empty %}
+                <li class="list-group-item">Нет звонков</li>
+                {% endfor %}
+            </ul>
+        </div>
     </div>
-</div>
 
-
-
-<!-- Модальное окно для редактирования заявки -->
-<div class="modal fade" id="editApplicationModal" tabindex="-1" aria-labelledby="editApplicationModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="editApplicationModalLabel">Редактировать заявку</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
-      </div>
-      <div class="modal-body">
-        <form id="edit-application-form">
-          {% csrf_token %}
-
-          <!-- Поле для стоимости -->
-          <div class="mb-3">
-            <label for="edit-price" class="form-label">Своя цена</label>
-            <input type="text" class="form-control" id="edit-price" name="price">
-          </div>
-
-          <!-- Поле для статуса -->
-          <div class="mb-3">
-            <label for="edit-status" class="form-label">Статус</label>
-            <select class="form-select" id="edit-status" name="status">
-              {% for key, value in application.Status.choices %}
-                <option value="{{ key }}">{{ value }}</option>
-              {% endfor %}
-            </select>
-          </div>
-
-          <!-- Выбор менеджеров -->
-          <div class="mb-3">
-            <label for="edit-managers" class="form-label">Менеджеры</label>
-            <select multiple class="form-select" id="edit-managers" name="user_menager">
-              {% for manager in all_managers %}
-                <option value="{{ manager.id }}">{{ manager.first_name }} {{ manager.last_name }} ({{ manager.email }})</option>
-              {% endfor %}
-            </select>
-          </div>
-
-          <!-- Выбор водителей -->
-          <div class="mb-3">
-            <label for="edit-drivers" class="form-label">Водители</label>
-            <select multiple class="form-select" id="edit-drivers" name="user_drivers">
-              {% for driver in all_drivers %}
-                <option value="{{ driver.id }}">{{ driver.first_name }} {{ driver.last_name }} ({{ driver.email }})</option>
-              {% endfor %}
-            </select>
-          </div>
-
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-        <button type="button" class="btn btn-primary" id="save-changes-btn">Сохранить</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-    const toggle = document.getElementById("toggle-desc");
-    if (toggle) {
-        toggle.addEventListener("click", function (e) {
-            e.preventDefault();
-            const moreText = document.getElementById("more-text");
-            const p = document.getElementById("description-text");
-
-            // Переключение видимости
-            if (moreText.style.display === "none") {
-                moreText.style.display = "inline";
-                p.innerHTML = moreText.innerHTML + ' <a href="#" id="toggle-desc">Скрыть</a>';
-            } else {
-                moreText.style.display = "none";
-                p.innerHTML = p.innerHTML.split('<a')[0] + ' <a href="#" id="toggle-desc">Показать полностью</a>';
-            }
-        });
-    }
-});
-
-</script>
-
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-    const chatContainer = document.getElementById('group-chat-messages');
-    const messageInput = document.getElementById('group-chat-input');
-    const messageForm = document.getElementById('group-chat-form');
-
-    // Объявляем переменную lastMessageId и инициализируем значением из скрытого поля
-    let lastMessageId = document.getElementById('last-message-id') ? document.getElementById('last-message-id').value : null;
-
-    // Если у вас есть скрытое поле, добавьте его в шаблон
-    // Например, внутри формы:
-    // <input type="hidden" id="last-message-id" name="last-message-id" value="{{ last_message_id }}">
-
-    const csrfToken = document.querySelector('form#group-chat-form input[name="csrfmiddlewaretoken"]').value;
-
-    // Обработка отправки сообщения
-    messageForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        const content = messageInput.value.trim();
-        if (!content) return;
-
-        $.ajax({
-            url: "{% url 'moderation:send_message' application.id %}", // замените на ваш урл
-            type: "POST",
-            headers: {'X-CSRFToken': csrfToken},
-            data: {
-                content: content
-            },
-            success: function(data) {
-                const html = `
-                    <div class="d-flex justify-content-end mb-2" data-message-id="${data.id}">
-                        <div class="bg-light p-2 rounded" style="max-width: 75%;">
-                            <div class="fw-bold small">{{ request.user.first_name }} {{ request.user.last_name }}</div>
-                            <div>${data.content}</div>
-                            <div class="small text-end text-muted">${data.date}</div>
+    <!-- Offcanvas: Чат -->
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasChat">
+        <div class="offcanvas-header">
+            <h5>Групповой чат</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body d-flex flex-column">
+            <!-- Сообщения -->
+            <div class="flex-grow-1 overflow-auto border rounded p-2 mb-2" style="min-height:260px;" id="group-chat-messages">
+                {% for message in messages %}
+                    {% if message.author != request.user %}
+                    <div class="d-flex mb-2" data-message-id="{{ message.id }}">
+                        <div class="bg-primary text-white p-2 rounded" style="max-width: 75%;">
+                            <div class="fw-bold small">{{ message.author.first_name }} {{ message.author.last_name }}</div>
+                            <div>{{ message.content }}</div>
+                            <div class="small text-end text-muted">{{ message.date|date:"d.m H:i" }}</div>
                         </div>
                     </div>
-                `;
-                chatContainer.insertAdjacentHTML('beforeend', html);
-                messageInput.value = '';
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-                lastMessageId = data.id;
-                if (document.getElementById('last-message-id')) {
-                    document.getElementById('last-message-id').value = lastMessageId;
+                    {% else %}
+                    <div class="d-flex justify-content-end mb-2" data-message-id="{{ message.id }}">
+                        <div class="bg-light p-2 rounded" style="max-width: 75%;">
+                            <div class="fw-bold small">{{ message.author.first_name }} {{ message.author.last_name }}</div>
+                            <div>{{ message.content }}</div>
+                            <div class="small text-end text-muted">{{ message.date|date:"d.m H:i" }}</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            <!-- Поле ввода и кнопка -->
+            <form class="d-flex gap-2" id="group-chat-form">
+                {% csrf_token %}
+                <input type="text" id="group-chat-input" class="form-control" placeholder="Написать сообщение…">
+                <button type="submit" class="btn btn-primary">Отправить</button>
+            </form>
+    <input type="hidden" id="last-message-id" name="last-message-id" value="{{ last_message_id }}">
+
+        </div>
+    </div>
+
+
+
+    <!-- Модальное окно для редактирования заявки -->
+    <div class="modal fade" id="editApplicationModal" tabindex="-1" aria-labelledby="editApplicationModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="editApplicationModalLabel">Редактировать заявку</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+          </div>
+          <div class="modal-body">
+            <form id="edit-application-form">
+              {% csrf_token %}
+
+              <!-- Поле для стоимости -->
+              <div class="mb-3">
+                <label for="edit-price" class="form-label">Своя цена</label>
+                <input type="text" class="form-control" id="edit-price" name="price">
+              </div>
+
+              <!-- Поле для статуса -->
+              <div class="mb-3">
+                <label for="edit-status" class="form-label">Статус</label>
+                <select class="form-select" id="edit-status" name="status">
+                  {% for key, value in application.Status.choices %}
+                    <option value="{{ key }}">{{ value }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <!-- Выбор менеджеров -->
+              <div class="mb-3">
+                <label for="edit-managers" class="form-label">Менеджеры</label>
+                <select multiple class="form-select" id="edit-managers" name="user_menager">
+                  {% for manager in all_managers %}
+                    <option value="{{ manager.id }}">{{ manager.first_name }} {{ manager.last_name }} ({{ manager.email }})</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <!-- Выбор водителей -->
+              <div class="mb-3">
+                <label for="edit-drivers" class="form-label">Водители</label>
+                <select multiple class="form-select" id="edit-drivers" name="user_drivers">
+                  {% for driver in all_drivers %}
+                    <option value="{{ driver.id }}">{{ driver.first_name }} {{ driver.last_name }} ({{ driver.email }})</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+            <button type="button" class="btn btn-primary" id="save-changes-btn">Сохранить</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+        const toggle = document.getElementById("toggle-desc");
+        if (toggle) {
+            toggle.addEventListener("click", function (e) {
+                e.preventDefault();
+                const moreText = document.getElementById("more-text");
+                const p = document.getElementById("description-text");
+
+                // Переключение видимости
+                if (moreText.style.display === "none") {
+                    moreText.style.display = "inline";
+                    p.innerHTML = moreText.innerHTML + ' <a href="#" id="toggle-desc">Скрыть</a>';
+                } else {
+                    moreText.style.display = "none";
+                    p.innerHTML = p.innerHTML.split('<a')[0] + ' <a href="#" id="toggle-desc">Показать полностью</a>';
                 }
-            },
-            error: function() {
-                alert('Ошибка при отправке сообщения.');
-            }
-        });
+            });
+        }
     });
 
-    // Функция получения новых сообщений
-    function fetchNewMessages() {
-        $.ajax({
-            url: "{% url 'moderation:get_new_messages' application.id %}", // замените на ваш урл
-            type: "GET",
-            data: {
-                last_message_id: lastMessageId
-            },
-            success: function(data) {
-                data.messages.forEach(function(msg) {
-                    // Проверяем, что сообщение еще не добавлено
-                    if ($('#group-chat-messages div[data-message-id="' + msg.id + '"]').length === 0) {
-                        // Не показываем свои сообщения
-                        if (msg.author !== "{{ request.user.username }}") {
-                            const html = `
-                                <div class="d-flex mb-2" data-message-id="${msg.id}">
-                                    <div class="bg-primary text-white p-2 rounded" style="max-width: 75%;">
-                                        <div class="fw-bold small">${msg.author}</div>
-                                        <div>${msg.content}</div>
-                                        <div class="small text-end text-muted">${msg.date}</div>
-                                    </div>
-                                </div>
-                            `;
-                            chatContainer.insertAdjacentHTML('beforeend', html);
-                            lastMessageId = msg.id;
-                            if (document.getElementById('last-message-id')) {
-                                document.getElementById('last-message-id').value = lastMessageId;
-                            }
-                            chatContainer.scrollTop = chatContainer.scrollHeight;
-                        }
+    </script>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const chatContainer = document.getElementById('group-chat-messages');
+        const messageInput = document.getElementById('group-chat-input');
+        const messageForm = document.getElementById('group-chat-form');
+
+        // Объявляем переменную lastMessageId и инициализируем значением из скрытого поля
+        let lastMessageId = document.getElementById('last-message-id') ? document.getElementById('last-message-id').value : null;
+
+        // Если у вас есть скрытое поле, добавьте его в шаблон
+        // Например, внутри формы:
+        // <input type="hidden" id="last-message-id" name="last-message-id" value="{{ last_message_id }}">
+
+        const csrfToken = document.querySelector('form#group-chat-form input[name="csrfmiddlewaretoken"]').value;
+
+        // Обработка отправки сообщения
+        messageForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const content = messageInput.value.trim();
+            if (!content) return;
+
+            $.ajax({
+                url: "{% url 'moderation:send_message' application.id %}", // замените на ваш урл
+                type: "POST",
+                headers: {'X-CSRFToken': csrfToken},
+                data: {
+                    content: content
+                },
+                success: function(data) {
+                    const html = `
+                        <div class="d-flex justify-content-end mb-2" data-message-id="${data.id}">
+                            <div class="bg-light p-2 rounded" style="max-width: 75%;">
+                                <div class="fw-bold small">{{ request.user.first_name }} {{ request.user.last_name }}</div>
+                                <div>${data.content}</div>
+                                <div class="small text-end text-muted">${data.date}</div>
+                            </div>
+                        </div>
+                    `;
+                    chatContainer.insertAdjacentHTML('beforeend', html);
+                    messageInput.value = '';
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                    lastMessageId = data.id;
+                    if (document.getElementById('last-message-id')) {
+                        document.getElementById('last-message-id').value = lastMessageId;
                     }
-                });
-            }
+                },
+                error: function() {
+                    alert('Ошибка при отправке сообщения.');
+                }
+            });
         });
+
+        // Функция получения новых сообщений
+        function fetchNewMessages() {
+            $.ajax({
+                url: "{% url 'moderation:get_new_messages' application.id %}", // замените на ваш урл
+                type: "GET",
+                data: {
+                    last_message_id: lastMessageId
+                },
+                success: function(data) {
+                    data.messages.forEach(function(msg) {
+                        // Проверяем, что сообщение еще не добавлено
+                        if ($('#group-chat-messages div[data-message-id="' + msg.id + '"]').length === 0) {
+                            // Не показываем свои сообщения
+                            if (msg.author !== "{{ request.user.username }}") {
+                                const html = `
+                                    <div class="d-flex mb-2" data-message-id="${msg.id}">
+                                        <div class="bg-primary text-white p-2 rounded" style="max-width: 75%;">
+                                            <div class="fw-bold small">${msg.author}</div>
+                                            <div>${msg.content}</div>
+                                            <div class="small text-end text-muted">${msg.date}</div>
+                                        </div>
+                                    </div>
+                                `;
+                                chatContainer.insertAdjacentHTML('beforeend', html);
+                                lastMessageId = msg.id;
+                                if (document.getElementById('last-message-id')) {
+                                    document.getElementById('last-message-id').value = lastMessageId;
+                                }
+                                chatContainer.scrollTop = chatContainer.scrollHeight;
+                            }
+                        }
+                    });
+                }
+            });
+        }
+
+        // Запускаем периодическую проверку
+        setInterval(fetchNewMessages, 3000);
+    });
+
+    let localStream;
+    let peerConnection;
+    const servers = {
+        iceServers: [
+            {urls: 'stun:stun.l.google.com:19302'},
+            // Можно добавить TURN-серверы
+        ]
+    };
+
+    let websocket;
+    let callId;
+
+    function startWebRTC(callId) {
+        // Получить локальный медиа поток
+        navigator.mediaDevices.getUserMedia({audio: true, video: false})
+            .then(stream => {
+                // Создать PeerConnection
+                peerConnection = new RTCPeerConnection(servers);
+
+                if (peerConnection.signalingState === 'stable') {
+                    // Сначала нужно создать и установить локальное описание
+                    peerConnection.createAnswer()
+                        .then(answer => peerConnection.setLocalDescription(answer))
+                        .then(() => {
+                            // Теперь можно установить remote description
+                            return peerConnection.setRemoteDescription(remoteSessionDescription);
+                        });
+                } else {
+                    // Если соединение не в стабильном состоянии
+                    peerConnection.setRemoteDescription(remoteSessionDescription);
+                }
+
+
+
+
+                peerConnection.onsignalingstatechange = () => {
+                    console.log('Signaling state changed:', peerConnection.signalingState);
+                    if (peerConnection.signalingState === 'stable') {
+                        // Здесь можно выполнять дальнейшие действия
+                    }
+                };
+
+
+
+                peerConnection.onicecandidate = event => {
+                    if (event.candidate) {
+                        // Отправляем ICE-кандидат
+                        sendIceCandidate(event.candidate);
+                    } else {
+                        // Все кандидаты отправлены
+                        console.log('Все ICE-кандидаты отправлены');
+                    }
+                };
+
+                peerConnection.createOffer()
+                    .then(offer => {
+                        return peerConnection.setLocalDescription(offer);
+                    })
+                    .then(() => {
+                        sendSignal({'type': 'offer', 'sdp': peerConnection.localDescription});
+                    });
+
+            });
     }
 
-    // Запускаем периодическую проверку
-    setInterval(fetchNewMessages, 3000);
-});
+// Создание соединения
+const pc = new RTCPeerConnection(servers);
 
-let localStream;
-let peerConnection;
-const servers = {
-    iceServers: [
-        {urls: 'stun:stun.l.google.com:19302'},
-        // Можно добавить TURN-серверы
-    ]
-};
+// Создание предложения
+pc.createOffer()
+    .then(offer => pc.setLocalDescription(offer))
+    .then(() => {
+        // Отправляем предложение удаленной стороне
+        sendOffer(pc.localDescription);
+    })
+    .catch(error => console.error('Ошибка создания предложения:', error));
 
-let websocket;
-let callId;
+// При получении ответа
+function handleAnswer(remoteSessionDescription) {
+    if (pc.signalingState === 'stable') {
+        pc.createAnswer()
+            .then(answer => pc.setLocalDescription(answer))
+            .then(() => pc.setRemoteDescription(remoteSessionDescription))
+            .catch(error => console.error('Ошибка установки ответа:', error));
+    } else {
+        pc.setRemoteDescription(remoteSessionDescription)
+            .catch(error => console.error('Ошибка установки ответа:', error));
+    }
+}
 
-function startWebRTC(callId) {
-    // Получить локальный медиа поток
-    navigator.mediaDevices.getUserMedia({video: true, audio: true})
-        .then(stream => {
-            localStream = stream;
-            // отображение своего видео
 
-            // Создать PeerConnection
-            peerConnection = new RTCPeerConnection(servers);
-
-            // Добавить свои медиа-потоки
-            stream.getTracks().forEach(track => peerConnection.addTrack(track, stream));
-
-            // Обработчики ICE кандидатов
-            peerConnection.onicecandidate = event => {
-                if (event.candidate) {
-                    sendSignal({'type': 'ice', 'candidate': event.candidate});
+    function sendSignal(message) {
+        if (websocket && websocket.readyState === WebSocket.OPEN) {
+            websocket.send(JSON.stringify(message));
+        } else {
+            console.warn('WebSocket не подключен, повторная попытка отправки через некоторое время');
+            // Можно реализовать повторную отправку или переподключение
+            setTimeout(() => {
+                if (websocket.readyState === WebSocket.OPEN) {
+                    websocket.send(JSON.stringify(message));
+                } else {
+                    alert('Не удалось отправить сообщение: соединение закрыто.');
                 }
-            };
+            }, 1000);
+        }
+    }
 
-            // Обработка удаленных потоков
-            peerConnection.ontrack = event => {
-                document.getElementById('remoteVideo').srcObject = event.streams[0];
-            };
-
-            // Создать оффер
-            peerConnection.createOffer()
-                .then(offer => {
-                    return peerConnection.setLocalDescription(offer);
+    // Обработка входящих сообщений WebSocket
+    function handleSignal(message) {
+        const data = JSON.parse(message.data);
+        if (data.type === 'offer') {
+            // Получили оффер, создаем ответ
+            peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp))
+                .then(() => navigator.mediaDevices.getUserMedia({video: true, audio: true}))
+                .then(stream => {
+                    localStream = stream;
+                    return peerConnection.createAnswer();
+                })
+                .then(answer => {
+                    return peerConnection.setLocalDescription(answer);
                 })
                 .then(() => {
-                    sendSignal({'type': 'offer', 'sdp': peerConnection.localDescription});
+                    sendSignal({'type': 'answer', 'sdp': peerConnection.localDescription});
                 });
-
-        });
-}
-
-function sendSignal(message) {
-    if (websocket && websocket.readyState === WebSocket.OPEN) {
-        websocket.send(JSON.stringify(message));
-    } else {
-        console.warn('WebSocket не подключен, повторная попытка отправки через некоторое время');
-        // Можно реализовать повторную отправку или переподключение
-        setTimeout(() => {
-            if (websocket.readyState === WebSocket.OPEN) {
-                websocket.send(JSON.stringify(message));
-            } else {
-                alert('Не удалось отправить сообщение: соединение закрыто.');
+        } else if (data.type === 'answer') {
+            peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
+        } else if (data.type === 'ice') {
+            peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+        } else if (data.type === 'hangup') {
+            // Завершить звонок
+            if (peerConnection) {
+                peerConnection.close();
             }
-        }, 1000);
+            if (websocket) {
+                websocket.close();
+            }
+            alert('Звонок завершен');
+            document.getElementById('hangupButton').classList.add('d-none');
+        }
     }
-}
 
-// Обработка входящих сообщений WebSocket
-function handleSignal(message) {
-    const data = JSON.parse(message.data);
-    if (data.type === 'offer') {
-        // Получили оффер, создаем ответ
-        peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp))
-            .then(() => navigator.mediaDevices.getUserMedia({video: true, audio: true}))
-            .then(stream => {
-                localStream = stream;
-                return peerConnection.createAnswer();
-            })
-            .then(answer => {
-                return peerConnection.setLocalDescription(answer);
-            })
-            .then(() => {
-                sendSignal({'type': 'answer', 'sdp': peerConnection.localDescription});
-            });
-    } else if (data.type === 'answer') {
-        peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
-    } else if (data.type === 'ice') {
-        peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
-    } else if (data.type === 'hangup') {
-        // Завершить звонок
+    function connectWebSocket(callId) {
+        const wsUrl = `ws://${location.host}/ws/call/${callId}/`;
+        websocket = new WebSocket(wsUrl);
+
+        websocket.onopen = () => {
+            console.log('WebSocket подключен');
+            startWebRTC(callId);
+        };
+
+        websocket.onclose = () => {
+            console.log('WebSocket закрыт, попытка переподключения...');
+            // Попытка переподключения через 3 секунды
+            setTimeout(() => {
+                connectWebSocket(callId);
+            }, 3000);
+        };
+
+        websocket.onmessage = handleSignal;
+        websocket.onerror = (err) => {
+            console.error('WebSocket ошибка:', err);
+        };
+    }
+
+    // Инициировать звонок
+    function initiateCall(callId) {
+        connectWebSocket(callId);
+    }
+
+    // Завершить звонок
+    function hangup() {
+        sendSignal({'type': 'hangup'});
         if (peerConnection) {
             peerConnection.close();
         }
         if (websocket) {
             websocket.close();
         }
-        alert('Звонок завершен');
-        document.getElementById('hangupButton').classList.add('d-none');
+        // Скрываем кнопку завершения
+        document.getElementById('hangupButton').style.display = "none";
+        document.getElementById("callButton").style.display = "inline";
+
     }
-}
 
-function connectWebSocket(callId) {
-    const wsUrl = `ws://${location.host}/ws/call/${callId}/`;
-    websocket = new WebSocket(wsUrl);
-
-    websocket.onopen = () => {
-        console.log('WebSocket подключен');
-        startWebRTC(callId);
-    };
-
-    websocket.onclose = () => {
-        console.log('WebSocket закрыт, попытка переподключения...');
-        // Попытка переподключения через 3 секунды
-        setTimeout(() => {
-            connectWebSocket(callId);
-        }, 3000);
-    };
-
-    websocket.onmessage = handleSignal;
-    websocket.onerror = (err) => {
-        console.error('WebSocket ошибка:', err);
-    };
-}
-
-// Инициировать звонок
-function initiateCall(callId) {
-    connectWebSocket(callId);
-}
-
-// Завершить звонок
-function hangup() {
-    sendSignal({'type': 'hangup'});
-    if (peerConnection) {
-        peerConnection.close();
-    }
-    if (websocket) {
-        websocket.close();
-    }
-    // Скрываем кнопку завершения
-    document.getElementById('hangupButton').style.display = "none";
-    document.getElementById("callButton").style.display = "inline";
-
-}
-
-// Обработчик кнопки "Позвонить"
-document.addEventListener("DOMContentLoaded", () => {
-    const callBtn = document.getElementById("callButton");
-    if (callBtn) {
-        callBtn.addEventListener("click", () => {
-            fetch("{% url 'moderation:start_call' application.id %}", {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': '{{ csrf_token }}',
-                    'Content-Type': 'application/json'
-                },
-                body: '{}'
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.call_id) {
-                    callId = data.call_id;
-                    initiateCall(callId);
-                    // Можно скрыть кнопку после вызова
-                    callBtn.style.display = 'none';
-                    document.getElementById('hangupButton').style.display = "inline";
-                } else {
-                    alert('Ошибка при создании звонка');
-                }
+    // Обработчик кнопки "Позвонить"
+    document.addEventListener("DOMContentLoaded", () => {
+        const callBtn = document.getElementById("callButton");
+        if (callBtn) {
+            callBtn.addEventListener("click", () => {
+                fetch("{% url 'moderation:start_call' application.id %}", {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/json'
+                    },
+                    body: '{}'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.call_id) {
+                        callId = data.call_id;
+                        initiateCall(callId);
+                        // Можно скрыть кнопку после вызова
+                        callBtn.style.display = 'none';
+                        document.getElementById('hangupButton').style.display = "inline";
+                    } else {
+                        alert('Ошибка при создании звонка');
+                    }
+                });
             });
-        });
-    }
-    // Можно добавить обработку завершения звонка
-});
-
-</script>
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  let isEditing = false;
-  const sidebar = document.getElementById('sidebar');
-  const editBtn = document.getElementById('edit-sidebar-btn');
-
-  // Переключение в режим редактирования
-  document.querySelectorAll('.edit-toggle').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const fieldDiv = btn.closest('.card');
-      const fieldName = fieldDiv.dataset.field;
-      toggleEditMode(fieldDiv, true);
+        }
+        // Можно добавить обработку завершения звонка
     });
-  });
 
-  // Внесение изменений при клике вне
-  document.addEventListener('click', (e) => {
-    if (isEditing && !sidebar.contains(e.target) && !e.target.closest('.edit-toggle')) {
-      // собираем данные
-      const data = {};
-      document.querySelectorAll('#sidebar .card').forEach(card => {
-        const field = card.dataset.field;
+    </script>
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      let isEditing = false;
+      const sidebar = document.getElementById('sidebar');
+      const editBtn = document.getElementById('edit-sidebar-btn');
+
+      // Переключение в режим редактирования
+      document.querySelectorAll('.edit-toggle').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const fieldDiv = btn.closest('.card');
+          const fieldName = fieldDiv.dataset.field;
+          toggleEditMode(fieldDiv, true);
+        });
+      });
+
+      // Внесение изменений при клике вне
+      document.addEventListener('click', (e) => {
+        if (isEditing && !sidebar.contains(e.target) && !e.target.closest('.edit-toggle')) {
+          // собираем данные
+          const data = {};
+          document.querySelectorAll('#sidebar .card').forEach(card => {
+            const field = card.dataset.field;
+            const viewSpan = card.querySelector('.view-mode');
+            const select = card.querySelector('select');
+            data[field] = select.classList.contains('d-none') ? viewSpan.innerText : select.value;
+          });
+          // отправка AJAX
+          saveChanges(data);
+          toggleEditModeOff();
+        }
+      });
+
+      function toggleEditMode(card, enable) {
         const viewSpan = card.querySelector('.view-mode');
         const select = card.querySelector('select');
-        data[field] = select.classList.contains('d-none') ? viewSpan.innerText : select.value;
-      });
-      // отправка AJAX
-      saveChanges(data);
-      toggleEditModeOff();
-    }
-  });
-
-  function toggleEditMode(card, enable) {
-    const viewSpan = card.querySelector('.view-mode');
-    const select = card.querySelector('select');
-    if (enable) {
-      viewSpan.classList.add('d-none');
-      select.classList.remove('d-none');
-      // Можно менять кнопку "Редактировать" на "Сохранить"
-      card.querySelector('.edit-toggle').innerText = 'Готово';
-    } else {
-      viewSpan.classList.remove('d-none');
-      select.classList.add('d-none');
-      card.querySelector('.edit-toggle').innerText = 'Редактировать';
-    }
-  }
-
-  function toggleEditModeOff() {
-    document.querySelectorAll('.card').forEach(card => {
-      toggleEditMode(card, false);
-    });
-    isEditing = false;
-  }
-
-  // AJAX-сохранение
-  function saveChanges(data) {
-    fetch("{% url 'moderation:update_application' application.id %}", {
-      method: 'POST',
-      headers: {
-        'X-CSRFToken': '{{ csrf_token }}',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
-    })
-    .then(response => response.json())
-    .then(result => {
-      if (result.success) {
-        // Обновляем отображение
-        for (const field in result.updated_fields) {
-          const card = document.querySelector(`.card[data-field="${field}"]`);
-          if (card) {
-            const viewSpan = card.querySelector('.view-mode');
-            viewSpan.innerText = result.updated_fields[field];
-            toggleEditMode(card, false);
-          }
-        }
-      } else {
-        alert('Ошибка сохранения');
-      }
-    })
-    .catch(() => {
-      alert('Ошибка сервера');
-    });
-  }
-});
-</script>
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const modal = new bootstrap.Modal(document.getElementById('editApplicationModal'));
-    const form = document.getElementById('edit-application-form');
-    const saveBtn = document.getElementById('save-changes-btn');
-
-    // Переменная для хранения ID заявки
-    let currentApplicationId = "{{ application.id }}";
-
-    // Обработчик кнопки "Внести изменения"
-    document.getElementById('edit-sidebar-btn')?.addEventListener('click', () => {
-      // Заполняем форму текущими данными
-      // Предполагаем, что есть текущие значения, можно их вставить сюда
-      document.getElementById('edit-price').value = "{{ application.price }}";
-
-      // Заполняем выбранный статус
-      document.getElementById('edit-status').value = "{{ application.status }}";
-
-      // Заполняем менеджеров (выбираем только тех, что есть у заявки)
-      const managerIds = [{% for m in application.user_menager.all %}'{{ m.id }}',{% endfor %}];
-      const managerSelect = document.getElementById('edit-managers');
-      Array.from(managerSelect.options).forEach(option => {
-        option.selected = managerIds.includes(option.value);
-      });
-
-      // Заполняем водителей
-      const driverIds = [{% for d in application.user_drivers.all %}'{{ d.id }}',{% endfor %}];
-      const driverSelect = document.getElementById('edit-drivers');
-      Array.from(driverSelect.options).forEach(option => {
-        option.selected = driverIds.includes(option.value);
-      });
-
-      // Открываем модальное окно
-      modal.show();
-    });
-
-    // Обработчик кнопки "Сохранить"
-    saveBtn?.addEventListener('click', () => {
-      // Собираем данные
-      const data = {
-        price: document.getElementById('edit-price').value,
-        status: document.getElementById('edit-status').value,
-        user_menager: Array.from(document.getElementById('edit-managers').selectedOptions).map(opt => opt.value),
-        user_drivers: Array.from(document.getElementById('edit-drivers').selectedOptions).map(opt => opt.value),
-      };
-
-      fetch("{% url 'moderation:update_application' application.id %}", {
-        method: 'POST',
-        headers: {
-          'X-CSRFToken': '{{ csrf_token }}',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-      })
-      .then(res => res.json())
-      .then(result => {
-        if (result.success) {
-          // Обновляем отображение (например, стоимость)
-          // Можно добавить обновление других полей при необходимости
-          alert('Заявка успешно обновлена');
-          // Обновите отображение стоимости или других данных, если нужно
-          // Например:
-          // document.querySelector('.cost-display').innerText = data.price;
-
-          modal.hide();
+        if (enable) {
+          viewSpan.classList.add('d-none');
+          select.classList.remove('d-none');
+          // Можно менять кнопку "Редактировать" на "Сохранить"
+          card.querySelector('.edit-toggle').innerText = 'Готово';
         } else {
-          alert('Ошибка при сохранении: ' + result.error);
+          viewSpan.classList.remove('d-none');
+          select.classList.add('d-none');
+          card.querySelector('.edit-toggle').innerText = 'Редактировать';
         }
-      })
-      .catch(() => {
-        alert('Ошибка сервера');
-      });
-    });
-  });
-</script>
-<script>
-  document.addEventListener("DOMContentLoaded", function() {
-    const address = "{{ advert.address|escapejs }}"; // Получаем адрес из контекста
-    const iframe = document.querySelector('.osm-iframe');
+      }
 
-    if (address && iframe) {
-      // Используем API Nominatim для геокодирования
-      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`)
+      function toggleEditModeOff() {
+        document.querySelectorAll('.card').forEach(card => {
+          toggleEditMode(card, false);
+        });
+        isEditing = false;
+      }
+
+      // AJAX-сохранение
+      function saveChanges(data) {
+        fetch("{% url 'moderation:update_application' application.id %}", {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        })
         .then(response => response.json())
-        .then(data => {
-          if (data && data.length > 0) {
-            const lat = data[0].lat;
-            const lon = data[0].lon;
-            // Обновляем src iframe с новыми координатами
-            iframe.src = `https://www.openstreetmap.org/export/embed.html?bbox=${lon},${lat},${lon},${lat}&layer=mapnik&marker=${lat},${lon}`;
-
-            // Также можно обновить подпись
-            document.querySelector('.card-body .small.text-muted').innerText = address;
+        .then(result => {
+          if (result.success) {
+            // Обновляем отображение
+            for (const field in result.updated_fields) {
+              const card = document.querySelector(`.card[data-field="${field}"]`);
+              if (card) {
+                const viewSpan = card.querySelector('.view-mode');
+                viewSpan.innerText = result.updated_fields[field];
+                toggleEditMode(card, false);
+              }
+            }
           } else {
-            console.warn('Координаты по адресу не найдены');
+            alert('Ошибка сохранения');
           }
         })
-        .catch(error => {
-          console.error('Ошибка геокодирования:', error);
+        .catch(() => {
+          alert('Ошибка сервера');
         });
-    }
-  });
-</script>
+      }
+    });
+    </script>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const modal = new bootstrap.Modal(document.getElementById('editApplicationModal'));
+        const form = document.getElementById('edit-application-form');
+        const saveBtn = document.getElementById('save-changes-btn');
 
-{% endblock %}
+        // Переменная для хранения ID заявки
+        let currentApplicationId = "{{ application.id }}";
+
+        // Обработчик кнопки "Внести изменения"
+        document.getElementById('edit-sidebar-btn')?.addEventListener('click', () => {
+          // Заполняем форму текущими данными
+          // Предполагаем, что есть текущие значения, можно их вставить сюда
+          document.getElementById('edit-price').value = "{{ application.price }}";
+
+          // Заполняем выбранный статус
+          document.getElementById('edit-status').value = "{{ application.status }}";
+
+          // Заполняем менеджеров (выбираем только тех, что есть у заявки)
+          const managerIds = [{% for m in application.user_menager.all %}'{{ m.id }}',{% endfor %}];
+          const managerSelect = document.getElementById('edit-managers');
+          Array.from(managerSelect.options).forEach(option => {
+            option.selected = managerIds.includes(option.value);
+          });
+
+          // Заполняем водителей
+          const driverIds = [{% for d in application.user_drivers.all %}'{{ d.id }}',{% endfor %}];
+          const driverSelect = document.getElementById('edit-drivers');
+          Array.from(driverSelect.options).forEach(option => {
+            option.selected = driverIds.includes(option.value);
+          });
+
+          // Открываем модальное окно
+          modal.show();
+        });
+
+        // Обработчик кнопки "Сохранить"
+        saveBtn?.addEventListener('click', () => {
+          // Собираем данные
+          const data = {
+            price: document.getElementById('edit-price').value,
+            status: document.getElementById('edit-status').value,
+            user_menager: Array.from(document.getElementById('edit-managers').selectedOptions).map(opt => opt.value),
+            user_drivers: Array.from(document.getElementById('edit-drivers').selectedOptions).map(opt => opt.value),
+          };
+
+          fetch("{% url 'moderation:update_application' application.id %}", {
+            method: 'POST',
+            headers: {
+              'X-CSRFToken': '{{ csrf_token }}',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+          })
+          .then(res => res.json())
+          .then(result => {
+            if (result.success) {
+              // Обновляем отображение (например, стоимость)
+              // Можно добавить обновление других полей при необходимости
+              alert('Заявка успешно обновлена');
+              // Обновите отображение стоимости или других данных, если нужно
+              // Например:
+              // document.querySelector('.cost-display').innerText = data.price;
+
+              modal.hide();
+            } else {
+              alert('Ошибка при сохранении: ' + result.error);
+            }
+          })
+          .catch(() => {
+            alert('Ошибка сервера');
+          });
+        });
+      });
+    </script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function() {
+        const address = "{{ advert.address|escapejs }}"; // Получаем адрес из контекста
+        const iframe = document.querySelector('.osm-iframe');
+
+        if (address && iframe) {
+          // Используем API Nominatim для геокодирования
+          fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`)
+            .then(response => response.json())
+            .then(data => {
+              if (data && data.length > 0) {
+                const lat = data[0].lat;
+                const lon = data[0].lon;
+                // Обновляем src iframe с новыми координатами
+                iframe.src = `https://www.openstreetmap.org/export/embed.html?bbox=${lon},${lat},${lon},${lat}&layer=mapnik&marker=${lat},${lon}`;
+
+                // Также можно обновить подпись
+                document.querySelector('.card-body .small.text-muted').innerText = address;
+              } else {
+                console.warn('Координаты по адресу не найдены');
+              }
+            })
+            .catch(error => {
+              console.error('Ошибка геокодирования:', error);
+            });
+        }
+      });
+    </script>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Получаем кнопку по ID
+        const btn = document.getElementById('recreate-doc-btn');
+
+        // Проверка существования кнопки
+        if (!btn) return;
+
+        // Добавляем обработчик клика на кнопку
+        btn.addEventListener('click', async function() {
+            // Получаем ID приложения из data-атрибута
+            const appId = this.dataset.applicationId;
+
+            // Проверка наличия ID
+            if (!appId) {
+                console.warn('Не указан applicationId.');
+                return;
+            }
+
+            try {
+                // Отправляем GET-запрос для генерации контракта
+                const res = await fetch(`/generate_contract/${encodeURIComponent(appId)}`, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                // Проверка успешности запроса
+                if (!res.ok) {
+                    throw new Error(`Ошибка загрузки контракта: ${res.status} ${res.statusText}`);
+                }
+
+                // Получаем данные в формате blob
+                const blob = await res.blob();
+
+                // Создаем URL для скачивания
+                const url = window.URL.createObjectURL(blob);
+
+                // Создаем элемент для скачивания
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `contract_${appId}.docx`;
+
+                // Добавляем элемент в DOM
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+
+                // Освобождаем URL
+                window.URL.revokeObjectURL(url);
+
+            } catch (err) {
+                // Обработка ошибок
+                console.error('Не удалось сгенерировать контракт:', err);
+                // Здесь можно добавить отображение сообщения пользователю
+            }
+        });
+    });
+    </script>
+    {% endblock %}

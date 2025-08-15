@@ -13,5 +13,6 @@ urlpatterns = [
     path('chat/<uuid:app_id>/send/', views.send_message, name='send_message'),
     path('chat/<uuid:app_id>/get_new_messages/', views.get_new_messages, name='get_new_messages'),
     path('start_call/<uuid:application_id>/', views.start_call, name='start_call'),
-    path('application/<uuid:application_id>/update/', views.update_application, name='update_application')
+    path('application/<uuid:application_id>/update/', views.update_application, name='update_application'),
+    path('generate_contract/<uuid:application_id>/', views.generate_contract,name='generate_contract'),
 ]

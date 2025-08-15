@@ -83,10 +83,10 @@ class AdvertDocument(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    advert = models.ForeignKey(
-        "Advert",
+    aplication = models.ForeignKey(
+        "AdvertAplication",
         on_delete=models.CASCADE,
-        verbose_name="Объявление",
+        verbose_name="заявка",
         related_name="documents"
     )
 
@@ -111,7 +111,7 @@ class AdvertDocument(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self):
-        return f"{self.get_document_type_display()} — {self.advert.name}"
+        return f"{self.get_document_type_display()} — {self.aplication.advert}"
 
 class AdvertExpense(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
