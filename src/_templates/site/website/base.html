@@ -12,8 +12,8 @@
     <!-- Favicon -->
     <link rel="shortcut icon" type="image/x-icon" href="{% if settings.favicon %}{{settings.favicon.url}}{% endif %}" />
     <!-- Analitic link -->
-    {{settings.yandex_metrica}}
-    {{settings.google_analitic}}
+    {{settings.yandex_metrica|safe}}
+    {{settings.google_analitic|safe}}
     <!-- Style link -->
     <link href="{% static 'site/website/bootstrap/css/bootstrap.css' %}" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="{% static 'site/website/site/css/bootstrap.min.css' %}">
