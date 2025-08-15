@@ -19,6 +19,7 @@ SECRET_KEY = 'django-insecure-zf_so_v)9wojzr_lzj^e6-_3jxfe$oc2%6wx#25mkc5^65513t
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+CSRF_COOKIE_SECURE = True
 
 ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", ["*"])
 
@@ -35,7 +36,8 @@ CELERY_BROKER_URL = 'redis://localhost:6379/0'
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
 
 INSTALLED_APPS = [
-    # "jazzmin",
+    'daphne',
+    "jazzmin",
     'channels',
     'django.contrib.admin',
     'django.contrib.auth',
