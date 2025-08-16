@@ -10,7 +10,7 @@
 {% block content %}
 <div class="auth-form password-reset-form">
     <div class="text-center mb-3">
-        <img src="{% if settings.logo %}{{settings.logo.url}}{% else %}{% static 'site/lk/images/logo-white.png' %}{% endif %}" alt="Логотип">
+        <img width="100px" src="{% if settings.logo %}{{settings.logo.url}}{% else %}{% static 'site/lk/images/logo-white.png' %}{% endif %}" alt="Логотип">
     </div>
     <h4 class="text-center mb-4">{% trans 'Сброс пароля' %}</h4>
     <form method="post" id="login-form">
@@ -37,11 +37,14 @@
         </div>
     {% endif %}
 </div>
+    <div class="new-account mt-3">
+        <p><a class="text-primary" href="{% url 'useraccount:login' %}">{% trans 'Войти' %}?</a> <a class="text-primary" href="{% url 'useraccount:signup' %}">{% trans 'Зарегистрироваться' %}?</a> </p>
+    </div>
 {% endblock content %}
 {% block content_mobile %}
 <div class="auth-form password-reset-form">
     <div class="text-center mb-3">
-        <img src="{% if settings.logo %}{{settings.logo.url}}{% else %}{% static 'site/lk/images/logo-white.png' %}{% endif %}" alt="Логотип">
+        <img width="100px"  src="{% if settings.logo %}{{settings.logo.url}}{% else %}{% static 'site/lk/images/logo-white.png' %}{% endif %}" alt="Логотип">
     </div>
     <h4 class="text-center mb-4">{% trans 'Сброс пароля' %}</h4>
     <form method="post" id="login-form">
@@ -67,5 +70,6 @@
             {% endfor %}
         </div>
     {% endif %}
+
 </div>
 {% endblock content_mobile %}

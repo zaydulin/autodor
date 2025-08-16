@@ -373,10 +373,12 @@ def create_application(request, advert_id):
                 status=AdvertAplication.Status.NEW,
                 price = svoi_price,
             )
-            docunments_base = BaseDocument.objects.all().count()
-            for document in range(docunments_base):
+            bda = BaseDocument.objects.all()
+            documents_base = BaseDocument.objects.all().count()
+            for document in range(documents_base):
                 AdvertDocument.objects.create(
                     aplication=application,
+                    file = bda[document].document,
                     document_type=2,
                 )
 
@@ -395,8 +397,6 @@ def create_application(request, advert_id):
 def application_list(request):
     # Получаем все заявки с документами
     applications = AdvertAplication.objects.all().prefetch_related(
-        'advertdocument_set',
-        'user',
         'user_menager',
         'user_drivers'
     )
