@@ -24,28 +24,28 @@
 
     <!-- Custom Css -->
     <link rel="stylesheet" href="{% static 'site/website/admin/assets/css/custom.min.css' %}?v=1.1.01" />
-<style>
-    .main-auth-page::before {
-    background: #f1fefe!important;
+    <style>
+        .main-auth-page::before {
+        background: #f1fefe!important;
+        }
+        .card-body.col-5.offset-7:before {
+        background: #f1fefe9e!important;
+        }
+        .card-body.col-5.offset-7:before {
+        background: #f1fefe9e!important;
+        }
+        .main-auth-page .clip-board .auth-details-card .iq-auth-card {
+    background-color: #f1fefe9e!important;
+        }
+        .btn-primary {
+        background-color: #4093cb!important;
+        border-color: #677a89!important;
+        }
+        .text-primary {
+        --bs-text-opacity: 1;
+        color: #677a89!important;
     }
-    .card-body.col-5.offset-7:before {
-    background: #f1fefe9e!important;
-    }
-    .card-body.col-5.offset-7:before {
-    background: #f1fefe9e!important;
-    }
-    .main-auth-page .clip-board .auth-details-card .iq-auth-card {
-background-color: #f1fefe9e!important;
-    }
-    .btn-primary {
-    background-color: #4093cb!important;
-    border-color: #677a89!important;
-    }
-    .text-primary {
-    --bs-text-opacity: 1;
-    color: #677a89!important;
-}
-</style>
+    </style>
     {% block head %}{% endblock head %}
 
 </head>
@@ -67,6 +67,7 @@ background-color: #f1fefe9e!important;
     </div>
 </div>
 <!-- loader END -->
+
 <div class="wrapper">
     <div class="main-auth-page">
         <a href="../../dashboard/index.html" class="auth-logo">
@@ -80,12 +81,24 @@ background-color: #f1fefe9e!important;
                             <img src="/_static/site/website/site/images/login_auto.png" alt="background" class="img-fluid w-75 position-absolute" style="top: 8%;left: -15%;">
                             <div class="card-body col-5 offset-7">
                                 <div class="auth-form">
-                                     {% block content %}{% endblock content %}
+                                    <div class="auth-form">
+                                        {% block content %}{% endblock content %}
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="responsive-card auth-small">
+    <div class="card">
+        <div class="card-body">
+            <div class="auth-form">
+                {% block content_mobile %}
+                {% endblock content_mobile %}
             </div>
         </div>
     </div>
