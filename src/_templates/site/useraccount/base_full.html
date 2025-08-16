@@ -24,7 +24,28 @@
 
     <!-- Custom Css -->
     <link rel="stylesheet" href="{% static 'site/website/admin/assets/css/custom.min.css' %}?v=1.1.01" />
-
+<style>
+    .main-auth-page::before {
+    background: #f1fefe!important;
+    }
+    .card-body.col-5.offset-7:before {
+    background: #f1fefe9e!important;
+    }
+    .card-body.col-5.offset-7:before {
+    background: #f1fefe9e!important;
+    }
+    .main-auth-page .clip-board .auth-details-card .iq-auth-card {
+background-color: #f1fefe9e!important;
+    }
+    .btn-primary {
+    background-color: #4093cb!important;
+    border-color: #677a89!important;
+    }
+    .text-primary {
+    --bs-text-opacity: 1;
+    color: #677a89!important;
+}
+</style>
     {% block head %}{% endblock head %}
 
 </head>
@@ -56,7 +77,7 @@
                 <div class="row auth-details-card">
                     <div class="col-lg-12">
                         <div class="card iq-auth-card mb-0 row">
-                            <img src="/_static/site/website/site/images/hero_image_1.png" alt="background" class="img-fluid w-75 position-absolute" style="top: 8%;left: -15%;">
+                            <img src="/_static/site/website/site/images/login_auto.png" alt="background" class="img-fluid w-75 position-absolute" style="top: 8%;left: -15%;">
                             <div class="card-body col-5 offset-7">
                                 <div class="auth-form">
                                      {% block content %}{% endblock content %}
