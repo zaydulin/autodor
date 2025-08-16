@@ -5,8 +5,11 @@ from datetime import datetime
 from decimal import Decimal
 
 from django.conf import settings
+from django.core.exceptions import PermissionDenied
 from django.core.files.base import ContentFile
 from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.views import View
 from docx import Document
 from moderation.tasks import start_call_task, end_call_task
 
@@ -19,7 +22,7 @@ from django.views.decorators.http import require_POST
 from django.views.generic import ListView, DetailView, TemplateView, FormView
 from django.db.models import Q
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .models import AdvertAplication, ChatMessage, CallSession, AdvertDocument
+from .models import AdvertAplication, ChatMessage, CallSession, AdvertDocument, AdvertExpense, BaseDocument
 from moderation.models import Advert, AdvertAplication
 from webmain.models import Faqs, Seo
 
@@ -96,38 +99,60 @@ class AdvertAplicationDetailView(LoginRequiredMixin, DetailView):
 @csrf_exempt
 def update_application(request, application_id):
     if request.method == 'POST':
-        data = json.loads(request.body)
-        application = AdvertAplication.objects.get(id=application_id)
-        updated_fields = {}
+        try:
+            data = json.loads(request.body)
+            application = AdvertAplication.objects.get(id=application_id)
+            updated_fields = {}
 
-        # Обновление стоимости, статуса и т.п.
-        for key, value in data.items():
-            # Обработка обычных полей
-            if hasattr(application, key):
-                field_obj = getattr(application, key)
-                # Для строковых полей и чисел
-                if isinstance(field_obj, (str, int, float, type(None))):
-                    setattr(application, key, value)
-                    updated_fields[key] = str(getattr(application, key))
-                # Для DecimalField
-                elif isinstance(field_obj, models.DecimalField):
-                    setattr(application, key, value)
-                    updated_fields[key] = str(getattr(application, key))
-                # Для ManyToMany
-                elif isinstance(getattr(application, key), models.fields.related_descriptors.ManyToManyDescriptor):
-                    if value is None:
-                        continue  # ничего не делаем
-                    elif isinstance(value, list):
-                        # Передать список id
-                        related_manager = getattr(application, key)
-                        if len(value) > 0:
-                            related_manager.set(value)
-                        else:
-                            related_manager.clear()
-                        # Для отображения
-                        updated_fields[key] = ','.join(str(v) for v in value)
-        application.save()
-        return JsonResponse({'success': True, 'updated_fields': updated_fields})
+            # Получаем текущих пользователей
+            current_users = set(application.user.all())
+
+            # Обработка полей
+            for key, value in data.items():
+                if hasattr(application, key):
+                    field_obj = getattr(application, key)
+
+                    # Для обычных полей
+                    if isinstance(field_obj, (str, int, float, type(None))):
+                        setattr(application, key, value)
+                        updated_fields[key] = str(getattr(application, key))
+
+                    # Для DecimalField
+                    elif isinstance(field_obj, models.DecimalField):
+                        setattr(application, key, value)
+                        updated_fields[key] = str(getattr(application, key))
+
+                    # Для ManyToMany полей
+                    elif isinstance(getattr(application, key), models.fields.related_descriptors.ManyToManyDescriptor):
+                        if value is None:
+                            continue
+
+                        if isinstance(value, list):
+                            related_manager = getattr(application, key)
+
+                            if len(value) > 0:
+                                related_manager.set(value)
+
+                                # Добавляем новых пользователей в общий список
+                                if key == 'user_menager' or key == 'user_drivers':
+                                    new_users = User.objects.filter(id__in=value)
+                                    current_users.update(new_users)
+                            else:
+                                related_manager.clear()
+
+                            updated_fields[key] = ','.join(str(v) for v in value)
+
+            # Обновляем общий список пользователей
+            application.user.set(current_users)
+            application.save()
+
+            return JsonResponse({'success': True, 'updated_fields': updated_fields})
+
+        except AdvertAplication.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Заявка не найдена'}, status=404)
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
     return JsonResponse({'success': False})
 
 
@@ -347,6 +372,12 @@ def create_application(request, advert_id):
                 status=AdvertAplication.Status.NEW,
                 price = svoi_price,
             )
+            docunments_base = BaseDocument.objects.all().count()
+            for document in range(docunments_base):
+                AdvertDocument.objects.create(
+                    aplication=application,
+                    document_type=2,
+                )
 
             application.user.add(request.user)
             application.save()
@@ -494,3 +525,71 @@ def generate_contract(request, application_id):
     )
     response['Content-Disposition'] = f'attachment; filename="{file_name}"'
     return response
+
+
+
+@login_required
+def call_page(request, application_id,calle_id):
+    application = get_object_or_404(AdvertAplication, id=application_id)
+    calle = Profile.objects.get(id=calle_id)
+    call, created = CallSession.objects.get_or_create(
+        application=application,
+        defaults={
+            'caller': request.user,
+            'callee': calle
+        }
+    )
+
+    if not call.callee:
+        return HttpResponse("Нет пользователя для звонка", status=400)
+
+    other_user = call.callee if request.user == call.caller else call.caller
+
+
+    return render(request, 'site/useraccount/call_page.html', {
+        'application_id': application_id,
+        'call_id': str(call.id),
+        'user': request.user,
+        'other_user': other_user,
+    })
+
+
+@method_decorator(login_required, name='dispatch')
+class CreateExpenseView(View):
+    def post(self, request):
+        try:
+            # Парсим JSON данные
+            data = json.loads(request.body)
+
+            # Получаем данные из запроса
+            application_id = data.get('application')
+            title = data.get('title')
+            amount = data.get('amount')
+            date = datetime.now()
+
+            # Проверяем права доступа
+            application = AdvertAplication.objects.get(id=application_id)
+            if request.user not in application.user_menager.all():
+                raise PermissionDenied("У вас нет прав на добавление расходов")
+
+            # Создаем новый расход
+            expense = AdvertExpense.objects.create(
+                aplication=application,
+                title=title,
+                amount=amount,
+                date=date
+            )
+
+            return JsonResponse({
+                'success': True,
+                'message': 'Расход успешно добавлен',
+                'expense_id': expense.id
+            }, status=201)
+
+
+        except PermissionDenied as e:
+            return JsonResponse({
+                'success': False,
+                'message': str(e)
+            }, status=403)
+

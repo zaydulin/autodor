@@ -128,7 +128,7 @@
 
                 <!-- Список документов -->
                 <div class="card mb-4">
-                    Документы <div class="card mb-4">
+                    <div class="card mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">Документы</h5>
                     </div>
@@ -157,6 +157,11 @@
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Расходы</h5>
                         <span style="padding: 10px;" class="badge bg-primary">Итого: {{ total_price }} {{ advert.currency }}</span>
+                        {% if request.user in application.user_menager.all %}
+                            <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addExpenseModal">
+                                <i class="bi bi-plus"></i> Добавить расход
+                            </button>
+                        {% endif %}
                     </div>
                     <div class="card-body">
                         <table class="table table-sm align-middle">
@@ -195,11 +200,9 @@
                         <img src="{{ user.avatar.url }}" class="rounded-circle me-2" alt="Аватар Иван" height="32px">
                         <span>{{user.first_name}} {{user.last_name}}</span>
                     </div>
-                    <button id="callButton" class="btn btn-success">
+                    <a href="{% url 'moderation:call_page' application_id=application.id calle_id=user.id %}" id="callButton" value='{{ user.id }}' class="btn btn-success">
                         <i class="bi bi-telephone-fill"></i> Позвонить
-                    </button>
-                    <button onclick="hangup()" class="btn btn-danger" style="display: none;" id="hangupButton">Завершить</button>
-
+                    </a>
                 </li>
                 {% endfor %}
             </ul>
@@ -260,7 +263,33 @@
         </div>
     </div>
 
-
+<div class="modal fade" id="addExpenseModal" tabindex="-1" aria-labelledby="addExpenseModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addExpenseModalLabel">Добавить расход</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <div class="modal-body">
+                <form id="add-expense-form">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="expenseTitle" class="form-label">Статья расходов</label>
+                        <input type="text" class="form-control" id="expenseTitle" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="expenseAmount" class="form-label">Сумма</label>
+                        <input type="number" step="0.01" class="form-control" id="expenseAmount" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                <button type="button" class="btn btn-primary" id="saveExpenseBtn">Сохранить</button>
+            </div>
+        </div>
+    </div>
+</div>
 
     <!-- Модальное окно для редактирования заявки -->
     <div class="modal fade" id="editApplicationModal" tabindex="-1" aria-labelledby="editApplicationModalLabel" aria-hidden="true">
@@ -435,219 +464,6 @@
         setInterval(fetchNewMessages, 3000);
     });
 
-    let localStream;
-    let peerConnection;
-    const servers = {
-        iceServers: [
-            {urls: 'stun:stun.l.google.com:19302'},
-            // Можно добавить TURN-серверы
-        ]
-    };
-
-    let websocket;
-    let callId;
-
-    function startWebRTC(callId) {
-        // Получить локальный медиа поток
-        navigator.mediaDevices.getUserMedia({audio: true, video: false})
-            .then(stream => {
-                // Создать PeerConnection
-                peerConnection = new RTCPeerConnection(servers);
-
-                if (peerConnection.signalingState === 'stable') {
-                    // Сначала нужно создать и установить локальное описание
-                    peerConnection.createAnswer()
-                        .then(answer => peerConnection.setLocalDescription(answer))
-                        .then(() => {
-                            // Теперь можно установить remote description
-                            return peerConnection.setRemoteDescription(remoteSessionDescription);
-                        });
-                } else {
-                    // Если соединение не в стабильном состоянии
-                    peerConnection.setRemoteDescription(remoteSessionDescription);
-                }
-
-
-
-
-                peerConnection.onsignalingstatechange = () => {
-                    console.log('Signaling state changed:', peerConnection.signalingState);
-                    if (peerConnection.signalingState === 'stable') {
-                        // Здесь можно выполнять дальнейшие действия
-                    }
-                };
-
-
-
-                peerConnection.onicecandidate = event => {
-                    if (event.candidate) {
-                        // Отправляем ICE-кандидат
-                        sendIceCandidate(event.candidate);
-                    } else {
-                        // Все кандидаты отправлены
-                        console.log('Все ICE-кандидаты отправлены');
-                    }
-                };
-
-                peerConnection.createOffer()
-                    .then(offer => {
-                        return peerConnection.setLocalDescription(offer);
-                    })
-                    .then(() => {
-                        sendSignal({'type': 'offer', 'sdp': peerConnection.localDescription});
-                    });
-
-            });
-    }
-
-// Создание соединения
-const pc = new RTCPeerConnection(servers);
-
-// Создание предложения
-pc.createOffer()
-    .then(offer => pc.setLocalDescription(offer))
-    .then(() => {
-        // Отправляем предложение удаленной стороне
-        sendOffer(pc.localDescription);
-    })
-    .catch(error => console.error('Ошибка создания предложения:', error));
-
-// При получении ответа
-function handleAnswer(remoteSessionDescription) {
-    if (pc.signalingState === 'stable') {
-        pc.createAnswer()
-            .then(answer => pc.setLocalDescription(answer))
-            .then(() => pc.setRemoteDescription(remoteSessionDescription))
-            .catch(error => console.error('Ошибка установки ответа:', error));
-    } else {
-        pc.setRemoteDescription(remoteSessionDescription)
-            .catch(error => console.error('Ошибка установки ответа:', error));
-    }
-}
-
-
-    function sendSignal(message) {
-        if (websocket && websocket.readyState === WebSocket.OPEN) {
-            websocket.send(JSON.stringify(message));
-        } else {
-            console.warn('WebSocket не подключен, повторная попытка отправки через некоторое время');
-            // Можно реализовать повторную отправку или переподключение
-            setTimeout(() => {
-                if (websocket.readyState === WebSocket.OPEN) {
-                    websocket.send(JSON.stringify(message));
-                } else {
-                    alert('Не удалось отправить сообщение: соединение закрыто.');
-                }
-            }, 1000);
-        }
-    }
-
-    // Обработка входящих сообщений WebSocket
-    function handleSignal(message) {
-        const data = JSON.parse(message.data);
-        if (data.type === 'offer') {
-            // Получили оффер, создаем ответ
-            peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp))
-                .then(() => navigator.mediaDevices.getUserMedia({video: true, audio: true}))
-                .then(stream => {
-                    localStream = stream;
-                    return peerConnection.createAnswer();
-                })
-                .then(answer => {
-                    return peerConnection.setLocalDescription(answer);
-                })
-                .then(() => {
-                    sendSignal({'type': 'answer', 'sdp': peerConnection.localDescription});
-                });
-        } else if (data.type === 'answer') {
-            peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
-        } else if (data.type === 'ice') {
-            peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
-        } else if (data.type === 'hangup') {
-            // Завершить звонок
-            if (peerConnection) {
-                peerConnection.close();
-            }
-            if (websocket) {
-                websocket.close();
-            }
-            alert('Звонок завершен');
-            document.getElementById('hangupButton').classList.add('d-none');
-        }
-    }
-
-    function connectWebSocket(callId) {
-        const wsUrl = `ws://${location.host}/ws/call/${callId}/`;
-        websocket = new WebSocket(wsUrl);
-
-        websocket.onopen = () => {
-            console.log('WebSocket подключен');
-            startWebRTC(callId);
-        };
-
-        websocket.onclose = () => {
-            console.log('WebSocket закрыт, попытка переподключения...');
-            // Попытка переподключения через 3 секунды
-            setTimeout(() => {
-                connectWebSocket(callId);
-            }, 3000);
-        };
-
-        websocket.onmessage = handleSignal;
-        websocket.onerror = (err) => {
-            console.error('WebSocket ошибка:', err);
-        };
-    }
-
-    // Инициировать звонок
-    function initiateCall(callId) {
-        connectWebSocket(callId);
-    }
-
-    // Завершить звонок
-    function hangup() {
-        sendSignal({'type': 'hangup'});
-        if (peerConnection) {
-            peerConnection.close();
-        }
-        if (websocket) {
-            websocket.close();
-        }
-        // Скрываем кнопку завершения
-        document.getElementById('hangupButton').style.display = "none";
-        document.getElementById("callButton").style.display = "inline";
-
-    }
-
-    // Обработчик кнопки "Позвонить"
-    document.addEventListener("DOMContentLoaded", () => {
-        const callBtn = document.getElementById("callButton");
-        if (callBtn) {
-            callBtn.addEventListener("click", () => {
-                fetch("{% url 'moderation:start_call' application.id %}", {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': '{{ csrf_token }}',
-                        'Content-Type': 'application/json'
-                    },
-                    body: '{}'
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.call_id) {
-                        callId = data.call_id;
-                        initiateCall(callId);
-                        // Можно скрыть кнопку после вызова
-                        callBtn.style.display = 'none';
-                        document.getElementById('hangupButton').style.display = "inline";
-                    } else {
-                        alert('Ошибка при создании звонка');
-                    }
-                });
-            });
-        }
-        // Можно добавить обработку завершения звонка
-    });
 
     </script>
     <script>
@@ -707,34 +523,39 @@ function handleAnswer(remoteSessionDescription) {
       // AJAX-сохранение
       function saveChanges(data) {
         fetch("{% url 'moderation:update_application' application.id %}", {
-          method: 'POST',
-          headers: {
-            'X-CSRFToken': '{{ csrf_token }}',
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(data)
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
         })
         .then(response => response.json())
         .then(result => {
-          if (result.success) {
-            // Обновляем отображение
-            for (const field in result.updated_fields) {
-              const card = document.querySelector(`.card[data-field="${field}"]`);
-              if (card) {
-                const viewSpan = card.querySelector('.view-mode');
-                viewSpan.innerText = result.updated_fields[field];
-                toggleEditMode(card, false);
-              }
+            if (result.success) {
+                // Обновляем отображение
+                for (const field in result.updated_fields) {
+                    const card = document.querySelector(`.card[data-field="${field}"]`);
+                    if (card) {
+                        const viewSpan = card.querySelector('.view-mode');
+                        viewSpan.innerText = result.updated_fields[field];
+                        toggleEditMode(card, false);
+                    }
+                }
+
+                // Дополнительно обновляем список пользователей
+                if (result.updated_fields.user_menager || result.updated_fields.user_drivers) {
+                    updateUserList(); // функция для обновления отображения пользователей
+                }
+            } else {
+                alert('Ошибка сохранения');
             }
-          } else {
-            alert('Ошибка сохранения');
-          }
         })
         .catch(() => {
-          alert('Ошибка сервера');
+            alert('Ошибка сервера');
         });
-      }
-    });
+    }
+
     </script>
     <script>
       document.addEventListener("DOMContentLoaded", () => {
@@ -899,4 +720,51 @@ function handleAnswer(remoteSessionDescription) {
         });
     });
     </script>
+
+        <script>
+document.addEventListener('DOMContentLoaded', () => {
+    const modal = new bootstrap.Modal(document.getElementById('addExpenseModal'));
+    const saveBtn = document.getElementById('saveExpenseBtn');
+    const applicationId = "{{ application.id }}"; // Передаем ID заявки
+
+    saveBtn.addEventListener('click', (event) => {
+        event.preventDefault();
+
+        const title = document.getElementById('expenseTitle').value;
+        const amount = document.getElementById('expenseAmount').value;
+
+        if (!title || !amount) {
+            alert('Заполните все поля');
+            return;
+        }
+
+        fetch("{% url 'moderation:create_expense' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                application: applicationId,
+                title: title,
+                amount: amount,
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                modal.hide();
+                location.reload(); // Обновляем страницу
+            } else {
+                alert('Ошибка при сохранении');
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка:', error);
+            alert('Произошла ошибка');
+        });
+    });
+});
+</script>
+
     {% endblock %}

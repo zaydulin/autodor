@@ -269,7 +269,7 @@
 .bd-aside .active {
   font-weight: 600;
   background-color: rgba(245, 65, 20, 0.1);
-  color: #F54114; }
+  color: #50A0CC; }
 
 .bd-aside .btn {
   padding: .25rem .5rem;
@@ -278,7 +278,7 @@
   border: 0; }
   .bd-aside .btn:hover, .bd-aside .btn:focus {
     background-color: rgba(245, 65, 20, 0.1);
-    color: #F54114; }
+    color: #50A0CC; }
   .bd-aside .btn:focus {
     -webkit-box-shadow: 0 0 0 0.063rem rgba(245, 65, 20, 0.7);
             box-shadow: 0 0 0 0.063rem rgba(245, 65, 20, 0.7); }
@@ -477,7 +477,7 @@ body.uikit .nav.navbar-expand-lg {
     z-index: 999;
     text-align: center;
     cursor: pointer;
-    background: #F54114;
+    background: #50A0CC;
     color: #fff;
     padding: 0.2rem;
     -webkit-border-radius: 0 1rem 1rem 0;

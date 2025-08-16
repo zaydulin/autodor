@@ -26,6 +26,7 @@ class Seo(models.Model):
     pagetype = models.PositiveSmallIntegerField('Странца', unique=True, choices=PAGE_CHOICE, blank=False, default=1)
     previev = models.FileField(upload_to='settings/%Y/%m/%d/', blank=True, null=True, verbose_name="Превью", default='default/imagegallery/imagegellery_images.png', validators=[FileExtensionValidator(allowed_extensions=['png', 'webp', 'jpeg', 'jpg', 'svg'])],)
     title = models.CharField(verbose_name="Мета-заголовок", max_length=150, blank=True, null=True,)
+    description = models.CharField(verbose_name="Описание", max_length=350, blank=True, null=True,)
     metadescription = models.CharField(verbose_name="Мета-описание", max_length=255, blank=True, null=True,)
     propertytitle = models.CharField(verbose_name="Мета-заголовок ссылки", max_length=150, blank=True, null=True,)
     propertydescription = models.CharField(verbose_name="Мета-описание ссылки", max_length=255, blank=True, null=True,)

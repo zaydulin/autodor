@@ -51,6 +51,7 @@ admin.site.register(AdvertExpense)
 admin.site.register(CallSession)
 admin.site.register(ChatMessage)
 admin.site.register(AdvertDocument)
+admin.site.register(BaseDocument)
 
 
 
