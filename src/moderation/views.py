@@ -22,7 +22,7 @@ from django.views.decorators.http import require_POST
 from django.views.generic import ListView, DetailView, TemplateView, FormView
 from django.db.models import Q
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .models import AdvertAplication, ChatMessage, CallSession, AdvertDocument, AdvertExpense
+from .models import AdvertAplication, ChatMessage, CallSession, AdvertDocument, AdvertExpense, BaseDocument
 from moderation.models import Advert, AdvertAplication
 from webmain.models import Faqs, Seo
 
@@ -372,6 +372,12 @@ def create_application(request, advert_id):
                 status=AdvertAplication.Status.NEW,
                 price = svoi_price,
             )
+            docunments_base = BaseDocument.objects.all().count()
+            for document in range(docunments_base):
+                AdvertDocument.objects.create(
+                    aplication=application,
+                    document_type=2,
+                )
 
             application.user.add(request.user)
             application.save()
