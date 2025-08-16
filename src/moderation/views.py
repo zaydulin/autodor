@@ -380,6 +380,7 @@ def create_application(request, advert_id):
                     aplication=application,
                     file = bda[document].document,
                     document_type=2,
+                    name=bda[document].name
                 )
 
             application.user.add(request.user)
@@ -509,18 +510,18 @@ def generate_contract(request, application_id):
         row.cells[0].text = label
         row.cells[1].text = str(value) if value is not None else ''
 
-    add_row('Марка', advert.brand or '')
-    add_row('Модель', advert.model_auto or '')
-    add_row('Год выпуска', advert.year or '')
-    add_row('Пробег', advert.mileage or '')
-    add_row('Цвет', advert.color or '')
-    add_row('Объем двигателя', advert.engine_volume or '')
-    add_row('Мощность', advert.power or '')
-    add_row('Тип КПП', advert.get_transmission_display())
-    add_row('Топливо', advert.get_fuel_display())
-    add_row('Привод', advert.get_drive_display())
-    add_row('Адрес размещения', advert.address or '')
-    add_row('Цена', application.price)
+        add_row('Марка', advert.brand or '')
+        add_row('Модель', advert.model_auto or '')
+        add_row('Год выпуска', advert.year or '')
+        add_row('Пробег', advert.mileage or '')
+        add_row('Цвет', advert.color or '')
+        add_row('Объем двигателя', advert.engine_volume or '')
+        add_row('Мощность', advert.power or '')
+        add_row('Тип КПП', advert.get_transmission_display())
+        add_row('Топливо', advert.get_fuel_display())
+        add_row('Привод', advert.get_drive_display())
+        add_row('Адрес размещения', advert.address or '')
+        add_row('Цена', application.price)
 
     # Доп. информация может быть добавлена по желанию
     # Примерно — можно добавить подписи, условия и т.д.

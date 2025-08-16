@@ -53,7 +53,7 @@
                 <ul>
                     {% for document in application.documents.all %}
                     <li>
-                        {{ document.get_document_type_display}} -
+                        {{ document.name}} -
                         {% if document.file %}
                             <a href="{{ document.file.url }}">Скачать</a>
                         {% else %}

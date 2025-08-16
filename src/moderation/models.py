@@ -102,7 +102,7 @@ class AdvertDocument(models.Model):
         max_length=20,
         choices=DocumentType.choices
     )
-
+    name = models.CharField(max_length=50,verbose_name='имя')
     created_at = models.DateTimeField("Дата создания", auto_now_add=True)
 
     class Meta:
