@@ -15,4 +15,6 @@ urlpatterns = [
     path('start_call/<uuid:application_id>/', views.start_call, name='start_call'),
     path('application/<uuid:application_id>/update/', views.update_application, name='update_application'),
     path('generate_contract/<uuid:application_id>/', views.generate_contract,name='generate_contract'),
+    path('call/<uuid:application_id>/<uuid:calle_id>/', views.call_page, name='call_page'),
+    path('/expenses/create/', views.CreateExpenseView.as_view(), name='create_expense'),
 ]
