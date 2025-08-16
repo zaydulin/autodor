@@ -7,6 +7,7 @@ from decimal import Decimal
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.core.files.base import ContentFile
+from django.core.paginator import Paginator
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
@@ -391,6 +392,27 @@ def create_application(request, advert_id):
     return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
 
+def application_list(request):
+    # Получаем все заявки с документами
+    applications = AdvertAplication.objects.all().prefetch_related(
+        'advertdocument_set',
+        'user',
+        'user_menager',
+        'user_drivers'
+    )
+
+    # Добавляем пагинацию
+    paginator = Paginator(applications, 10)  # 10 заявок на страницу
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(
+        request,
+        'site/useraccount/documents.html',
+        {
+            'page_obj': page_obj
+        }
+    )
 
 
 @login_required
