@@ -67,8 +67,28 @@
         --bs-text-opacity: 1;
         color: #677a89!important;
     }
+
+    .form-control:focus {
+        border-color: black !important;
+    }
     </style>
 <div class="wrapper">
+    <span class="screen-darken backdrop"></span>
+
+    <div id="loading">
+    <div class="loader simple-loader">
+        <div class="loader-body">
+            <div class="position-relative">
+                <div class="position-absolute" style="top: -20px; z-index: 1;">
+                    <img src="{% if settings.favicon %}{{settings.favicon.url}}{% endif %}" class="img-fluid" alt="img1">
+                </div>
+                <div class="position-relative iq-loader">
+                    <img src="{% if settings.favicon %}{{settings.favicon.url}}{% endif %}" class="img-fluid" alt="img1">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
     <div class="main-auth-page">
         <a href="/" class="auth-logo">
             <img width="360px" height="360px" src="{% if settings.logo %}{{settings.logo.url}}{% endif %}" class="img-fluid">

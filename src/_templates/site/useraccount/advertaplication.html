@@ -21,7 +21,8 @@
             <div class="card">
                 <div class="card-body">
                     {% for advertaplication in advertaplications %}
-                    <div class="row d-flex align-items-center pb-3" data-href="{% url 'moderation:application_detail' advertaplication.id %}">
+                    <div style="margin-bottom: 10%">
+                    <div class="row d-flex align-items-center pb-3"  data-href="{% url 'moderation:application_detail' advertaplication.id %}">
                         <div class="col-lg-6" style="height:300px;">
                             {# Если в images хранится список ссылок #}
                             {% if advertaplication.advert.images %}
@@ -158,6 +159,7 @@
 <!--                                </div>-->
 <!--                            </div>-->
                         </div>
+                    </div>
                     </div>
                     {% endfor %}
                 </div>

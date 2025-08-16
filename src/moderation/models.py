@@ -113,7 +113,6 @@ class AdvertDocument(models.Model):
     def __str__(self):
         return f"{self.get_document_type_display()} — {self.aplication.advert}"
 
-
 # class DocumentInfo(models.Model):
 #     advert = models.ForeignKey('Advert',on_delete=models.CASCADE)
 #     aplication = models.ForeignKey('AdvertAplication',on_delete=models.CASCADE)

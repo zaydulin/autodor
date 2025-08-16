@@ -143,7 +143,7 @@
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             <span class="doc">
                                 <i class="bi bi-file-earmark-text me-2 text-primary"></i>
-                                {{ document.get_document_type_display }} — {{ document.file }}
+                                 {{ document.get_document_type_display }} — {{ document.file.name }}
                             </span>
                                 <a href="{{ document.file.url }}" class="btn btn-outline-primary btn-sm" download>Скачать</a> </li> {% empty %}
                         <li class="list-group-item">Документы отсутствуют</li>
