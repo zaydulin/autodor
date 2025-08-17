@@ -48,7 +48,7 @@ class CustomLoginView(auth_views.LoginView):
     def get_success_url(self):
         type = self.request.user.type
         if type == 0:
-            success_url = reverse('moderation:edit_profile')
+            success_url = reverse('useraccount:edit_profile')
         else:
             success_url = reverse('useraccount:edit_profile')
 

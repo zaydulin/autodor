@@ -7,26 +7,28 @@ from decimal import Decimal
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.core.files.base import ContentFile
+from django.core.paginator import Paginator
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
-from docx import Document
 from moderation.tasks import start_call_task, end_call_task
 
 from django.contrib.auth.decorators import login_required
 from django.db import models, transaction
-from django.http import JsonResponse, HttpResponse, HttpResponseServerError
+from django.http import JsonResponse, HttpResponse, HttpResponseServerError, FileResponse
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.generic import ListView, DetailView, TemplateView, FormView
 from django.db.models import Q
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .models import AdvertAplication, ChatMessage, CallSession, AdvertDocument, AdvertExpense, BaseDocument
+
+from .models import AdvertAplication, ChatMessage, CallSession, AdvertDocument, AdvertExpense
 from moderation.models import Advert, AdvertAplication
 from webmain.models import Faqs, Seo
-
 from useraccount.models import Profile
+
+from webmain.models import SettingsGlobale
 
 
 class AdvertAplicationListView(LoginRequiredMixin, ListView):
@@ -94,6 +96,10 @@ class AdvertAplicationDetailView(LoginRequiredMixin, DetailView):
         context['all_drivers'] = Profile.objects.filter(type=0,employee=1)
 
         return context
+
+
+def document_editor(request,document_id):
+    return render(request,'site/useraccount/document_editor.html')
 
 
 @csrf_exempt
@@ -372,11 +378,15 @@ def create_application(request, advert_id):
                 status=AdvertAplication.Status.NEW,
                 price = svoi_price,
             )
-            docunments_base = BaseDocument.objects.all().count()
-            for document in range(docunments_base):
+
+            documents_base = BaseDocument.objects.all().count()
+            for document in range(1,8):
                 AdvertDocument.objects.create(
                     aplication=application,
+                    file = SettingsGlobale.document_file_1,
                     document_type=2,
+                    type=document,
+                    name=SettingsGlobale.document_file_1.name,
                 )
 
             application.user.add(request.user)
@@ -391,6 +401,25 @@ def create_application(request, advert_id):
     return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
 
+def application_list(request):
+    # Получаем все заявки с документами
+    applications = AdvertAplication.objects.all().prefetch_related(
+        'user_menager',
+        'user_drivers'
+    )
+
+    # Добавляем пагинацию
+    paginator = Paginator(applications, 10)  # 10 заявок на страницу
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(
+        request,
+        'site/useraccount/documents.html',
+        {
+            'page_obj': page_obj
+        }
+    )
 
 
 @login_required
@@ -466,66 +495,75 @@ def start_call(request, application_id):
             return JsonResponse({'error': str(e)}, status=500)
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
-
-def generate_contract(request, application_id):
-    # Получаем данные
-    application = AdvertAplication.objects.get(id=application_id)
-    advert = application.advert
-
-    # Создаем документ с нуля
-    doc = Document()
-    doc.add_heading('ДОГОВОР КУПЛИ-ПРОДАЖИ ТОВАРА', level=0)
-
-    # Дата
-    doc.add_paragraph(f"Дата: {timezone.now().strftime('%d.%m.%Y')}")
-
-    # Описание ТС
-    doc.add_paragraph("Передаваемое транспортное средство:")
-    table = doc.add_table(rows=0, cols=2)
-    def add_row(label, value):
-        row = table.add_row()
-        row.cells[0].text = label
-        row.cells[1].text = str(value) if value is not None else ''
-
-    add_row('Марка', advert.brand or '')
-    add_row('Модель', advert.model_auto or '')
-    add_row('Год выпуска', advert.year or '')
-    add_row('Пробег', advert.mileage or '')
-    add_row('Цвет', advert.color or '')
-    add_row('Объем двигателя', advert.engine_volume or '')
-    add_row('Мощность', advert.power or '')
-    add_row('Тип КПП', advert.get_transmission_display())
-    add_row('Топливо', advert.get_fuel_display())
-    add_row('Привод', advert.get_drive_display())
-    add_row('Адрес размещения', advert.address or '')
-    add_row('Цена', application.price)
-
-    # Доп. информация может быть добавлена по желанию
-    # Примерно — можно добавить подписи, условия и т.д.
-
-    # Сохраняем в BytesIO
-    buffer = io.BytesIO()
-    doc.save(buffer)
-    buffer.seek(0)
-
-    file_name = f"contract_{application.id}.docx"
-    content = ContentFile(buffer.getvalue(), name=file_name)
-
-    with transaction.atomic():
-        advert_document = AdvertDocument.objects.create(
-            aplication=application,
-            document_type=AdvertDocument.DocumentType.CONTRACT,
-            file=content
-        )
-
-    # Возвращаем файл пользователю (или можно вернуть путь/пометить как созданный)
-    response = HttpResponse(
-        buffer.getvalue(),
-        content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    )
-    response['Content-Disposition'] = f'attachment; filename="{file_name}"'
-    return response
-
+def generate_contract(request,application_id):
+    pass
+    # buffer = io.BytesIO()
+    # c = canvas.Canvas(buffer, pagesize=A4)
+    # width, height = A4
+    #
+    # doc_type = 1  # замените на ваш реальный тип документа
+    # application = get_object_or_404(AdvertAplication, id=application_id)
+    # advert = application.advert
+    #
+    # # Попытка загрузить файл-изображение для фона (если есть)
+    # photo_path = None
+    # print(application.documents.get(type=doc_type))
+    #
+    # try:
+    #     photo_doc = application.documents.get(type=doc_type)
+    #     photo_path = getattr(photo_doc, 'file', None)
+    #     # если файл хранится как путь на диск
+    #     if photo_path and hasattr(photo_path, 'path'):
+    #         photo_path = photo_path.path
+    # except Exception:
+    #     photo_path = None
+    #
+    # if photo_path:
+    #     c.drawImage(photo_path, 0, 0, width=width, height=height)
+    #
+    # y = height - 60
+    # c.setFont("Helvetica-Bold", 18)
+    # c.setFillColorRGB(0, 0, 0)
+    # c.drawString(50, y, "ДОГОВОР КУПЛЛИ-ПРОДАЖИ ТОВАРА")
+    # y -= 30
+    #
+    # c.setFont("Helvetica", 12)
+    # c.drawString(50, y, f"Дата: {timezone.now().strftime('%d.%m.%Y')}")
+    # y -= 40
+    #
+    # c.drawString(50, y, "Передаваемое транспортное средство:")
+    # y -= 20
+    #
+    # data = [
+    #     ("Марка", getattr(advert, 'brand', '')),
+    #     ("Модель", getattr(advert, 'model_auto', '')),
+    #     ("Год выпуска", getattr(advert, 'year', '')),
+    #     ("Пробег", getattr(advert, 'mileage', '')),
+    #     ("Цвет", getattr(advert, 'color', '')),
+    #     ("Объем двигателя", getattr(advert, 'engine_volume', '')),
+    #     ("Мощность", getattr(advert, 'power', '')),
+    #     ("Тип КПП", advert.get_transmission_display() if hasattr(advert, 'get_transmission_display') else ''),
+    #     ("Топливо", advert.get_fuel_display() if hasattr(advert, 'get_fuel_display') else ''),
+    #     ("Привод", advert.get_drive_display() if hasattr(advert, 'get_drive_display') else ''),
+    #     ("Адрес размещения", getattr(advert, 'address', '')),
+    #     ("Цена", getattr(application, 'price', '')),
+    # ]
+    #
+    # for label, value in data:
+    #     if y < 40:
+    #         c.showPage()
+    #         y = height - 60
+    #         if photo_path:
+    #             c.drawImage(photo_path, 0, 0, width=width, height=height)
+    #     c.drawString(60, y, f"{label}: {value}")
+    #     y -= 16
+    #
+    # c.save()
+    # buffer.seek(0)
+    #
+    # response = FileResponse(buffer, as_attachment=True, filename=f"contract_{application_id}.pdf")
+    # response['Content-Type'] = 'application/pdf'
+    # return response
 
 
 @login_required

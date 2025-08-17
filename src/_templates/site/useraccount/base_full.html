@@ -12,8 +12,8 @@
     <!-- Favicon -->
     <link rel="shortcut icon" type="image/x-icon" href="{% if settings.favicon %}{{settings.favicon.url}}{% endif %}" />
     <!-- Analitic link -->
-    {{settings.yandex_metrica}}
-    {{settings.google_analitic}}
+    {{settings.yandex_metrica|safe}}
+    {{settings.google_analitic}}|safe}}
     <!-- Style link -->
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="{% static 'site/website/admin/assets/css/core/libs.min.css' %}" />
@@ -24,7 +24,29 @@
 
     <!-- Custom Css -->
     <link rel="stylesheet" href="{% static 'site/website/admin/assets/css/custom.min.css' %}?v=1.1.01" />
-    <style>
+
+    {% block head %}{% endblock head %}
+
+</head>
+<body class="  ">
+<!--<span class="screen-darken backdrop"></span>-->
+<!-- loader Start -->
+<!--<div id="loading">-->
+<!--    <div class="loader simple-loader">-->
+<!--        <div class="loader-body">-->
+<!--            <div class="position-relative">-->
+<!--                <div class="position-absolute" style="top: -20px; z-index: 1;">-->
+<!--                    <img src="{% if settings.logo %}{{settings.logo.url}}{% endif %}" class="img-fluid" alt="img1">-->
+<!--                </div>-->
+<!--                <div class="position-relative iq-loader">-->
+<!--                    <img src="{% if settings.logo %}{{settings.logo.url}}{% endif %}" class="img-fluid" alt="img1">-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
+<!-- loader END -->
+<style>
         .main-auth-page::before {
         background: #f1fefe!important;
         }
@@ -45,33 +67,31 @@
         --bs-text-opacity: 1;
         color: #677a89!important;
     }
-    </style>
-    {% block head %}{% endblock head %}
 
-</head>
-<body class="  ">
-<span class="screen-darken backdrop"></span>
-<!-- loader Start -->
-<div id="loading">
+    .form-control:focus {
+        border-color: black !important;
+    }
+    </style>
+<div class="wrapper">
+    <span class="screen-darken backdrop"></span>
+
+    <div id="loading">
     <div class="loader simple-loader">
         <div class="loader-body">
             <div class="position-relative">
                 <div class="position-absolute" style="top: -20px; z-index: 1;">
-                    <img src="{% if settings.logo %}{{settings.logo.url}}{% endif %}" class="img-fluid" alt="img1">
+                    <img src="{% if settings.favicon %}{{settings.favicon.url}}{% endif %}" class="img-fluid" alt="img1">
                 </div>
                 <div class="position-relative iq-loader">
-                    <img src="{% if settings.logo %}{{settings.logo.url}}{% endif %}" class="img-fluid" alt="img1">
+                    <img src="{% if settings.favicon %}{{settings.favicon.url}}{% endif %}" class="img-fluid" alt="img1">
                 </div>
             </div>
         </div>
     </div>
 </div>
-<!-- loader END -->
-
-<div class="wrapper">
     <div class="main-auth-page">
-        <a href="../../dashboard/index.html" class="auth-logo">
-            <img src="{% if settings.logo %}{{settings.logo.url}}{% endif %}" class="img-fluid">
+        <a href="/" class="auth-logo">
+            <img width="360px" height="360px" src="{% if settings.logo %}{{settings.logo.url}}{% endif %}" class="img-fluid">
         </a>
         <div class="clip-board">
             <div class="container">

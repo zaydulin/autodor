@@ -116,6 +116,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+X_FRAME_OPTIONS = 'SAMEORIGIN'
+
+
 JAZZMIN_SETTINGS = {
     "site_title": "Admin",
     "site_header": "My Admin",

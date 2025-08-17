@@ -1,0 +1,91 @@
+{% extends 'site/useraccount/base.html' %}
+{% load i18n %}
+{% load static  %}
+{% block title %}{{ seo_title }}{% endblock title %}
+{% block description %}{{ seo_description }}{% endblock description %}
+{% block propertytitle %}{% if seo_previev %}{{ seo_previev.url }} {% endif %} {% endblock propertytitle %}
+{% block propertydescription %}{{ seo_propertytitle }}{% endblock propertydescription %}
+{% block propertyimage %}{{ seo_propertydescription }}{% endblock propertyimage %}
+{% block head %}{% endblock head %}
+{% block content %}
+
+<style>
+    .table {
+        width: 100%;
+        margin-bottom: 1rem;
+        border-collapse: collapse;
+    }
+
+    .table th,
+    .table td {
+        padding: 0.75rem;
+        vertical-align: top;
+        border-top: 1px solid #dee2e6;
+    }
+
+    .table-striped tbody tr:nth-of-type(odd) {
+        background-color: #f8f9fa;
+    }
+
+    .pagination {
+        margin-top: 1rem;
+    }
+</style>
+<h2>Список заявок</h2>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Номер заявки</th>
+            <th>Документы</th>
+            <th>Статус</th>
+            <th>Стоимость</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if page_obj %}
+        {% for application in page_obj %}
+        <tr>
+            <td>
+                {{ application.id }}
+            </td>
+            <td>
+                <ul>
+                    {% for document in application.documents.all %}
+                    <li>
+                        {{ document.name}} -
+                        {% if document.file %}
+                            <a href="{{ document.file.url }}">Скачать</a>
+                        {% else %}
+                            Без файла
+                        {% endif %}
+                    </li>
+                    {% empty %}
+                        Нет документов
+                    {% endfor %}
+                </ul>
+            </td>
+            <td>
+                {{ application.get_status_display }}
+            </td>
+            <td>
+                {{ application.price }} {{application.advert.currency}}
+            </td>
+        </tr>
+        {% endfor %}
+    {%endif %}
+    </tbody>
+</table>
+
+<!-- Пагинация -->
+<div class="pagination">
+    {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}">Предыдущая</a>
+    {% endif %}
+    Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}
+    {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}">Следующая</a>
+    {% endif %}
+</div>
+
+{% endblock %}

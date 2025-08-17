@@ -1,8 +1,10 @@
 {% load static generals_tag user_tags  i18n %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8" />
+    {{settings.yandex_metrica|safe}}
     <meta http-equiv="x-ua-compatible" content="ie=edge" />
     <title>{% get_settings_first as settings %}{{settings.name}} - {% block title %}{% endblock title %}</title>
     <meta content="{% block description %}{% endblock description %}" name="description">
@@ -12,7 +14,6 @@
     <!-- Favicon -->
     <link rel="shortcut icon" type="image/x-icon" href="{% if settings.favicon %}{{settings.favicon.url}}{% endif %}" />
     <!-- Analitic link -->
-    {{settings.yandex_metrica|safe}}
     {{settings.google_analitic|safe}}
     <!-- Style link -->
     <!-- Bootstrap CSS -->
@@ -118,7 +119,7 @@
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link "href="{% url 'moderation:faqs_moder'%}" data-sidebar-toggle="tooltip" data-bs-placement="right" data-bs-target="#sidebar-icons" aria-selected="false" title="Icons">
+                    <a class="nav-link " href="{% url 'moderation:faqs_moder'%}" data-sidebar-toggle="tooltip" data-bs-placement="right" data-bs-target="#sidebar-icons" aria-selected="false" title="Icons">
                         <i class="icon">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M8 10.5378C8 9.43327 8.89543 8.53784 10 8.53784H11.3333C12.4379 8.53784 13.3333 9.43327 13.3333 10.5378V19.8285C13.3333 20.9331 14.2288 21.8285 15.3333 21.8285H16C16 21.8285 12.7624 23.323 10.6667 22.9361C10.1372 22.8384 9.52234 22.5913 9.01654 22.3553C8.37357 22.0553 8 21.3927 8 20.6832V10.5378Z" fill="currentColor"/>
@@ -129,7 +130,7 @@
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link" href="https://templates.iqonic.design/lite/vroom/documentation/html/dist/main/" data-sidebar-toggle="tooltip" data-bs-placement="right" title="Documentation">
+                    <a class="nav-link" href="{% url 'moderation:application_list' %}" data-sidebar-toggle="tooltip" data-bs-placement="right" title="Documentation">
                         <i class="icon">
                             <svg width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path opacity="0.4" d="M16.191 2H7.81C4.77 2 3 3.78 3 6.83V17.16C3 20.26 4.77 22 7.81 22H16.191C19.28 22 21 20.26 21 17.16V6.83C21 3.78 19.28 2 16.191 2Z" fill="currentColor"></path>

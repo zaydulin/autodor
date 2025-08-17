@@ -132,20 +132,21 @@
                     <div class="card-header">
                         <h5 class="mb-0">Документы</h5>
                     </div>
-                    {% if request.user in application.user_menager.all %}
-                    <button style="margin-left: 25%; width: 50%;" id="recreate-doc-btn" class="btn btn-outline-primary btn-sm" data-application-id="{{ application.id }}">
-                        <i class="bi bi-file-earmark-text"></i> Пересоздать документ
-                    </button>
-                    {% endif %}
+
                     <div class="card-body">
                     <ul class="list-group">
                         {% for document in documents %}
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             <span class="doc">
                                 <i class="bi bi-file-earmark-text me-2 text-primary"></i>
-                                {{ document.get_document_type_display }} — {{ document.file }}
+                                 {{ document.name }} — {{ document.file.name }}
                             </span>
-                                <a href="{{ document.file.url }}" class="btn btn-outline-primary btn-sm" download>Скачать</a> </li> {% empty %}
+                                <a href="{{ document.file.url }}" class="btn btn-outline-primary btn-sm" download>Скачать</a>
+                                {% if request.user in application.user_menager.all %}
+                                    <a href="{% url 'moderation:document_editor' document.id %} " class="btn btn-outline-primary btn-sm">пересоздать</a>
+                                {% endif %}
+                        </li> {% empty %}
+
                         <li class="list-group-item">Документы отсутствуют</li>
                             {% endfor %}
                         </ul>
@@ -664,6 +665,7 @@
     document.addEventListener('DOMContentLoaded', () => {
         // Получаем кнопку по ID
         const btn = document.getElementById('recreate-doc-btn');
+        let currentApplicationId = "{{ application.id }}";
 
         // Проверка существования кнопки
         if (!btn) return;
@@ -681,7 +683,7 @@
 
             try {
                 // Отправляем GET-запрос для генерации контракта
-                const res = await fetch(`/generate_contract/${encodeURIComponent(appId)}`, {
+                const res = await fetch(`/generate_contract/${currentApplicationId}`, {
                     method: 'GET',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'
@@ -722,49 +724,49 @@
     </script>
 
         <script>
-document.addEventListener('DOMContentLoaded', () => {
-    const modal = new bootstrap.Modal(document.getElementById('addExpenseModal'));
-    const saveBtn = document.getElementById('saveExpenseBtn');
-    const applicationId = "{{ application.id }}"; // Передаем ID заявки
+    document.addEventListener('DOMContentLoaded', () => {
+        const modal = new bootstrap.Modal(document.getElementById('addExpenseModal'));
+        const saveBtn = document.getElementById('saveExpenseBtn');
+        const applicationId = "{{ application.id }}"; // Передаем ID заявки
 
-    saveBtn.addEventListener('click', (event) => {
-        event.preventDefault();
+        saveBtn.addEventListener('click', (event) => {
+            event.preventDefault();
 
-        const title = document.getElementById('expenseTitle').value;
-        const amount = document.getElementById('expenseAmount').value;
+            const title = document.getElementById('expenseTitle').value;
+            const amount = document.getElementById('expenseAmount').value;
 
-        if (!title || !amount) {
-            alert('Заполните все поля');
-            return;
-        }
-
-        fetch("{% url 'moderation:create_expense' %}", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token }}'
-            },
-            body: JSON.stringify({
-                application: applicationId,
-                title: title,
-                amount: amount,
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                modal.hide();
-                location.reload(); // Обновляем страницу
-            } else {
-                alert('Ошибка при сохранении');
+            if (!title || !amount) {
+                alert('Заполните все поля');
+                return;
             }
-        })
-        .catch(error => {
-            console.error('Ошибка:', error);
-            alert('Произошла ошибка');
+
+            fetch("{% url 'moderation:create_expense' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    application: applicationId,
+                    title: title,
+                    amount: amount,
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    modal.hide();
+                    location.reload(); // Обновляем страницу
+                } else {
+                    alert('Ошибка при сохранении');
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка:', error);
+                alert('Произошла ошибка');
+            });
         });
     });
-});
 </script>
 
     {% endblock %}

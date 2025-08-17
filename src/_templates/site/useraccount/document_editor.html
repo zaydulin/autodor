@@ -1,0 +1,16 @@
+{% extends 'site/useraccount/base.html' %}
+  {% load static  %}
+  {% load i18n %}
+  {% block title %}редактировать документ - {{ other_user.username }}{% endblock title %}
+  {% block description %}{{ seo_description }}{% endblock description %}
+  {% block propertytitle %}{% if seo_previev %}{{ seo_previev.url }} {% endif %} {% endblock propertytitle %}
+  {% block propertydescription %}{{ seo_propertytitle }}{% endblock propertydescription %}
+  {% block propertyimage %}{{ seo_propertydescription }}{% endblock propertyimage %}
+  {% block head %}
+
+
+{% endblock head %}
+{% block content %}
+    <iframe style="width:100%; height: 100%" src="https://www.lunuc.com/system/pdf_edit"></iframe>
+{% endblock content %}
+

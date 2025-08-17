@@ -64,6 +64,15 @@ class SettingsGlobale(models.Model):
     email_host_password = models.TextField("Email Site Password", blank=True, null=True)
     email_use_tls = models.BooleanField("Use TLS", default=False, blank=True, null=True)
     email_use_ssl = models.BooleanField("Use SSL", default=False, blank=True, null=True)
+    document_file_1 = models.FileField("файл 1",  upload_to='documents/%Y/%m/%d/', blank=True, null=True)
+    document_file_2 = models.FileField("файл 2",  upload_to='documents/%Y/%m/%d/', blank=True, null=True)
+    document_file_3 = models.FileField("файл 3",  upload_to='documents/%Y/%m/%d/', blank=True, null=True)
+    document_file_4 = models.FileField("файл 4",  upload_to='documents/%Y/%m/%d/', blank=True, null=True)
+    document_file_5 = models.FileField("файл 5",  upload_to='documents/%Y/%m/%d/', blank=True, null=True)
+    document_file_6 = models.FileField("файл 6",  upload_to='documents/%Y/%m/%d/', blank=True, null=True)
+    document_file_7 = models.FileField("файл 7",  upload_to='documents/%Y/%m/%d/', blank=True, null=True)
+    document_file_8 = models.FileField("файл 8",  upload_to='documents/%Y/%m/%d/', blank=True, null=True)
+
 
     def __str__(self):
         return self.name
