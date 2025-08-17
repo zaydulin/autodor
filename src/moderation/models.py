@@ -1,3 +1,4 @@
+from django.core.files.base import ContentFile
 from django.db import models
 from django.conf import settings
 import os
@@ -97,12 +98,16 @@ class AdvertDocument(models.Model):
         null=False
     )
 
+    type = models.IntegerField(blank=True, null=True)
+
     document_type = models.CharField(
         "Тип документа",
         max_length=20,
         choices=DocumentType.choices
     )
-    name = models.CharField(max_length=50,verbose_name='имя')
+
+    update_data = models.DateTimeField(verbose_name='Дата обновления', auto_now=True)
+    name = models.CharField(max_length=50, verbose_name='имя')
     created_at = models.DateTimeField("Дата создания", auto_now_add=True)
 
     class Meta:
@@ -113,13 +118,37 @@ class AdvertDocument(models.Model):
     def __str__(self):
         return f"{self.get_document_type_display()} — {self.aplication.advert}"
 
-# class DocumentInfo(models.Model):
-#     advert = models.ForeignKey('Advert',on_delete=models.CASCADE)
-#     aplication = models.ForeignKey('AdvertAplication',on_delete=models.CASCADE)
-#
-class BaseDocument(models.Model):
-    name = models.CharField(max_length=100)
-    document = models.FileField(upload_to='base_documents')
+    def save(self, *args, **kwargs):
+        # Если файла нет, заполнить его из SettingsGlobale
+        if not self.file or not self.file.name:
+            try:
+                from webmain.models import SettingsGlobale  # скорректируйте путь, если нужно
+            except Exception:
+                SettingsGlobale = None
+
+            if SettingsGlobale:
+                settings = SettingsGlobale.objects.first()
+                if settings:
+                    # найти первый непустой файл в document_file_1..document_file_8
+                    default_file = None
+                    for idx in range(1, 9):
+                        f = getattr(settings, f"document_file_{idx}", None)
+                        if f and getattr(f, "name", ""):
+                            default_file = f
+                            break
+
+                    if default_file:
+                        # считать содержимое и записать в поле file
+                        try:
+                            with default_file.open("rb") as fp:
+                                content = fp.read()
+                                self.file.save(os.path.basename(default_file.name), ContentFile(content), save=False)
+                        except Exception:
+                            pass  # тут можно добавить логирование
+
+        super().save(*args, **kwargs)
+
+
 
 
 class AdvertExpense(models.Model):

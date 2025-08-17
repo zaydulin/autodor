@@ -132,11 +132,7 @@
                     <div class="card-header">
                         <h5 class="mb-0">Документы</h5>
                     </div>
-                    {% if request.user in application.user_menager.all %}
-                    <button style="margin-left: 25%; width: 50%;" id="recreate-doc-btn" class="btn btn-outline-primary btn-sm" data-application-id="{{ application.id }}">
-                        <i class="bi bi-file-earmark-text"></i> Пересоздать документ
-                    </button>
-                    {% endif %}
+
                     <div class="card-body">
                     <ul class="list-group">
                         {% for document in documents %}
@@ -145,7 +141,12 @@
                                 <i class="bi bi-file-earmark-text me-2 text-primary"></i>
                                  {{ document.name }} — {{ document.file.name }}
                             </span>
-                                <a href="{{ document.file.url }}" class="btn btn-outline-primary btn-sm" download>Скачать</a> </li> {% empty %}
+                                <a href="{{ document.file.url }}" class="btn btn-outline-primary btn-sm" download>Скачать</a>
+                                {% if request.user in application.user_menager.all %}
+                                    <a href="{% url 'moderation:document_editor' document.id %} " class="btn btn-outline-primary btn-sm">пересоздать</a>
+                                {% endif %}
+                        </li> {% empty %}
+
                         <li class="list-group-item">Документы отсутствуют</li>
                             {% endfor %}
                         </ul>
@@ -664,6 +665,7 @@
     document.addEventListener('DOMContentLoaded', () => {
         // Получаем кнопку по ID
         const btn = document.getElementById('recreate-doc-btn');
+        let currentApplicationId = "{{ application.id }}";
 
         // Проверка существования кнопки
         if (!btn) return;
@@ -681,7 +683,7 @@
 
             try {
                 // Отправляем GET-запрос для генерации контракта
-                const res = await fetch(`/generate_contract/${encodeURIComponent(appId)}`, {
+                const res = await fetch(`/generate_contract/${currentApplicationId}`, {
                     method: 'GET',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'
