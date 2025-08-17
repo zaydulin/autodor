@@ -11,7 +11,6 @@ from django.core.paginator import Paginator
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
-from docx import Document
 from moderation.tasks import start_call_task, end_call_task
 
 from django.contrib.auth.decorators import login_required
@@ -23,12 +22,12 @@ from django.views.decorators.http import require_POST
 from django.views.generic import ListView, DetailView, TemplateView, FormView
 from django.db.models import Q
 from django.contrib.auth.mixins import LoginRequiredMixin
-from reportlab.pdfgen import canvas
+# from reportlab.pdfgen import canvas
 
 from .models import AdvertAplication, ChatMessage, CallSession, AdvertDocument, AdvertExpense
 from moderation.models import Advert, AdvertAplication
 from webmain.models import Faqs, Seo
-from reportlab.lib.pagesizes import A4
+# from reportlab.lib.pagesizes import A4
 from useraccount.models import Profile
 
 from webmain.models import SettingsGlobale
@@ -499,73 +498,74 @@ def start_call(request, application_id):
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
 def generate_contract(request,application_id):
-    buffer = io.BytesIO()
-    c = canvas.Canvas(buffer, pagesize=A4)
-    width, height = A4
-
-    doc_type = 1  # замените на ваш реальный тип документа
-    application = get_object_or_404(AdvertAplication, id=application_id)
-    advert = application.advert
-
-    # Попытка загрузить файл-изображение для фона (если есть)
-    photo_path = None
-    print(application.documents.get(type=doc_type))
-
-    try:
-        photo_doc = application.documents.get(type=doc_type)
-        photo_path = getattr(photo_doc, 'file', None)
-        # если файл хранится как путь на диск
-        if photo_path and hasattr(photo_path, 'path'):
-            photo_path = photo_path.path
-    except Exception:
-        photo_path = None
-
-    if photo_path:
-        c.drawImage(photo_path, 0, 0, width=width, height=height)
-
-    y = height - 60
-    c.setFont("Helvetica-Bold", 18)
-    c.setFillColorRGB(0, 0, 0)
-    c.drawString(50, y, "ДОГОВОР КУПЛЛИ-ПРОДАЖИ ТОВАРА")
-    y -= 30
-
-    c.setFont("Helvetica", 12)
-    c.drawString(50, y, f"Дата: {timezone.now().strftime('%d.%m.%Y')}")
-    y -= 40
-
-    c.drawString(50, y, "Передаваемое транспортное средство:")
-    y -= 20
-
-    data = [
-        ("Марка", getattr(advert, 'brand', '')),
-        ("Модель", getattr(advert, 'model_auto', '')),
-        ("Год выпуска", getattr(advert, 'year', '')),
-        ("Пробег", getattr(advert, 'mileage', '')),
-        ("Цвет", getattr(advert, 'color', '')),
-        ("Объем двигателя", getattr(advert, 'engine_volume', '')),
-        ("Мощность", getattr(advert, 'power', '')),
-        ("Тип КПП", advert.get_transmission_display() if hasattr(advert, 'get_transmission_display') else ''),
-        ("Топливо", advert.get_fuel_display() if hasattr(advert, 'get_fuel_display') else ''),
-        ("Привод", advert.get_drive_display() if hasattr(advert, 'get_drive_display') else ''),
-        ("Адрес размещения", getattr(advert, 'address', '')),
-        ("Цена", getattr(application, 'price', '')),
-    ]
-
-    for label, value in data:
-        if y < 40:
-            c.showPage()
-            y = height - 60
-            if photo_path:
-                c.drawImage(photo_path, 0, 0, width=width, height=height)
-        c.drawString(60, y, f"{label}: {value}")
-        y -= 16
-
-    c.save()
-    buffer.seek(0)
-
-    response = FileResponse(buffer, as_attachment=True, filename=f"contract_{application_id}.pdf")
-    response['Content-Type'] = 'application/pdf'
-    return response
+    pass
+    # buffer = io.BytesIO()
+    # c = canvas.Canvas(buffer, pagesize=A4)
+    # width, height = A4
+    #
+    # doc_type = 1  # замените на ваш реальный тип документа
+    # application = get_object_or_404(AdvertAplication, id=application_id)
+    # advert = application.advert
+    #
+    # # Попытка загрузить файл-изображение для фона (если есть)
+    # photo_path = None
+    # print(application.documents.get(type=doc_type))
+    #
+    # try:
+    #     photo_doc = application.documents.get(type=doc_type)
+    #     photo_path = getattr(photo_doc, 'file', None)
+    #     # если файл хранится как путь на диск
+    #     if photo_path and hasattr(photo_path, 'path'):
+    #         photo_path = photo_path.path
+    # except Exception:
+    #     photo_path = None
+    #
+    # if photo_path:
+    #     c.drawImage(photo_path, 0, 0, width=width, height=height)
+    #
+    # y = height - 60
+    # c.setFont("Helvetica-Bold", 18)
+    # c.setFillColorRGB(0, 0, 0)
+    # c.drawString(50, y, "ДОГОВОР КУПЛЛИ-ПРОДАЖИ ТОВАРА")
+    # y -= 30
+    #
+    # c.setFont("Helvetica", 12)
+    # c.drawString(50, y, f"Дата: {timezone.now().strftime('%d.%m.%Y')}")
+    # y -= 40
+    #
+    # c.drawString(50, y, "Передаваемое транспортное средство:")
+    # y -= 20
+    #
+    # data = [
+    #     ("Марка", getattr(advert, 'brand', '')),
+    #     ("Модель", getattr(advert, 'model_auto', '')),
+    #     ("Год выпуска", getattr(advert, 'year', '')),
+    #     ("Пробег", getattr(advert, 'mileage', '')),
+    #     ("Цвет", getattr(advert, 'color', '')),
+    #     ("Объем двигателя", getattr(advert, 'engine_volume', '')),
+    #     ("Мощность", getattr(advert, 'power', '')),
+    #     ("Тип КПП", advert.get_transmission_display() if hasattr(advert, 'get_transmission_display') else ''),
+    #     ("Топливо", advert.get_fuel_display() if hasattr(advert, 'get_fuel_display') else ''),
+    #     ("Привод", advert.get_drive_display() if hasattr(advert, 'get_drive_display') else ''),
+    #     ("Адрес размещения", getattr(advert, 'address', '')),
+    #     ("Цена", getattr(application, 'price', '')),
+    # ]
+    #
+    # for label, value in data:
+    #     if y < 40:
+    #         c.showPage()
+    #         y = height - 60
+    #         if photo_path:
+    #             c.drawImage(photo_path, 0, 0, width=width, height=height)
+    #     c.drawString(60, y, f"{label}: {value}")
+    #     y -= 16
+    #
+    # c.save()
+    # buffer.seek(0)
+    #
+    # response = FileResponse(buffer, as_attachment=True, filename=f"contract_{application_id}.pdf")
+    # response['Content-Type'] = 'application/pdf'
+    # return response
 
 
 @login_required
