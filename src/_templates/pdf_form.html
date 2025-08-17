@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PDF формы — плоское сохранение без обводки (PDF.js + pdf-lib)</title>
+  <style>
+    :root { --bg:#0b0f14; --panel:#11161d; --panel2:#0e141b; --text:#e7edf3; --muted:#9fb3c8; --brand:#1e5ea4; --border:#223041; --radius:12px; }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { margin: 0; font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,"Noto Sans","Liberation Sans",sans-serif; color:var(--text);
+           background: radial-gradient(1200px 600px at 20% -10%, #122032 0, #0b0f14 60%); }
+    .wrap { display:grid; grid-template-rows:auto 1fr; height:100%; }
+    header { display:flex; gap:10px; flex-wrap:wrap; align-items:center; padding:10px 14px; border-bottom:1px solid var(--border);
+             background:linear-gradient(180deg,var(--panel),var(--panel2)); position:sticky; top:0; z-index:5; }
+    .group { display:flex; gap:8px; align-items:center; }
+    input[type="text"] { background:#0f1a2a; color:var(--text); border:1px solid var(--border); border-radius:8px; padding:8px 10px; width: 180px; }
+    .btn { appearance:none; border:1px solid #173557; background:#122338; color:#fff; padding:8px 12px; border-radius:9px; cursor:pointer; font-weight:600; }
+    .btn.primary { background:var(--brand); border-color:#134476; }
+    .btn.warn { background:#b32d38; border-color:#7a1f26; }
+    .btn.ghost { background:transparent; color:#e7edf3; }
+    .info { color:#9fb3c8; font-size:13px; }
+    main { overflow:auto; padding:16px; }
+    #stage { display:grid; gap:16px; grid-template-columns: 1fr 420px; align-items: start; max-width: 1600px; margin: 0 auto; }
+    #viewerWrap { background:#0e141b; border:1px solid var(--border); border-radius:var(--radius); padding:12px; }
+    #pdfCanvas { max-width:100%; display:block; background:#fff; border-radius:8px; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+    .panel { background:#0e141b; border:1px solid var(--border); border-radius:var(--radius); padding:12px; position: sticky; top: 76px; }
+    .row { display:flex; gap:8px; align-items:center; margin:8px 0; }
+    .pill { font-size:12px; color:#cad6e4; background:#0f1a2a; border:1px solid var(--border); border-radius:999px; padding:4px 8px; }
+    .field-item { background:#0f1a2a; border:1px solid var(--border); border-radius:10px; padding:8px; margin-top:8px; }
+    .field-item small { color:#9fb3c8; display:block; margin-top:4px; }
+    .muted { color:#9fb3c8; font-size:13px; }
+    .list { max-height: 50vh; overflow:auto; padding-right:6px; }
+    .disabled { opacity:.6; pointer-events:none; }
+    .spin { display:none; margin-left:8px; font-size:12px; color:#9fb3c8; }
+    .spin.on { display:inline; }
+    .sep { width:1px; height:28px; background:#223041; margin:0 4px; }
+  </style>
+
+  <!-- PDF.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script>
+    window['pdfjs-dist/build/pdf'].GlobalWorkerOptions.workerSrc =
+      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  </script>
+
+  <!-- pdf-lib -->
+  <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="group">
+        <label class="btn" for="file">Открыть PDF</label>
+        <input id="file" type="file" accept="application/pdf" style="display:none">
+      </div>
+
+      <div class="group">
+        <span class="info">Режим:</span>
+        <button id="modeDesign" class="btn">Конструктор</button>
+        <button id="modeFill" class="btn primary">Заполнение</button>
+        <span id="liveSpin" class="spin">обновление предпросмотра…</span>
+      </div>
+
+      <div class="group" id="designTools" style="display:none">
+        <span class="info">Конструктор:</span>
+        <button id="modeText" class="btn">Текстовое поле</button>
+      </div>
+
+      <div class="sep"></div>
+
+      <div class="group">
+        <button id="saveMode" class="btn primary">Сохранить (по режиму)</button>
+        <button id="saveAsForm" class="btn">Сохранить как форму</button>
+        <button id="saveFlat" class="btn warn">Сохранить без полей</button>
+      </div>
+
+      <span class="info" id="status">Откройте PDF. В «Заполнении» значения отображаются в документе в реальном времени.</span>
+    </header>
+
+    <main>
+      <div id="stage">
+        <div id="viewerWrap">
+          <canvas id="pdfCanvas"></canvas>
+        </div>
+
+        <div class="panel">
+          <div class="row"><span class="pill">Поля документа</span></div>
+
+          <!-- Конструктор (скрыт по умолчанию) -->
+          <div id="designerPanel" style="display:none">
+            <div class="row" style="flex-wrap:wrap">
+              <input id="fieldName" type="text" placeholder="Имя поля (id)" />
+              <input id="fieldValue" type="text" placeholder="Значение" />
+              <button id="setValue" class="btn">Установить значение</button>
+            </div>
+
+            <div class="row"><span class="pill">Добавленные поля</span></div>
+            <div id="fieldsList" class="list"></div>
+          </div>
+
+          <!-- Заполнение (по умолчанию) -->
+          <div id="fillerPanel">
+            <div class="muted">Режим «Заполнение»: создание полей отключено. Введите значения — PDF обновится сразу.</div>
+            <div class="row"><span class="pill">Существующие поля</span></div>
+            <div id="existingFields" class="list"></div>
+            <div class="row">
+              <button id="clearFillValues" class="btn ghost">Очистить</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // ===== helpers =====
+    const $ = (id) => document.getElementById(id);
+    const cloneArrayBuffer = (ab) => ab.slice(0);
+    const debounce = (fn, ms=250) => { let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); }; };
+
+    // ===== state =====
+    let pdfArrayBuffer = null;
+    let pdfjsDoc = null;
+    let pageIndex = 0;
+    let canvasScale = 1.25;
+    const fields = [];
+    const pdfCanvas = $('pdfCanvas');
+    const ctx = pdfCanvas.getContext('2d');
+    const pageSize = { width: 0, height: 0 };
+
+    let modeApp = 'fill';
+    let existingFieldsCache = []; // [{name,type:'text',value}]
+
+    const liveSpin = $('liveSpin');
+    const setSpin = (on) => liveSpin.classList.toggle('on', !!on);
+    const setStatus = (msg) => $('status').textContent = msg;
+
+    // ===== UI toggles =====
+    function setAppMode(nextMode) {
+      modeApp = nextMode;
+      $('modeDesign').classList.toggle('primary', modeApp === 'design');
+      $('modeFill').classList.toggle('primary', modeApp === 'fill');
+      $('designTools').style.display = (modeApp === 'design') ? '' : 'none';
+      $('designerPanel').style.display = (modeApp === 'design') ? '' : 'none';
+      $('fillerPanel').style.display = (modeApp === 'fill') ? '' : 'none';
+
+      if (modeApp === 'fill') {
+        renderExistingFieldsList();
+        setStatus('Заполнение: вводите значения — PDF обновляется сразу.');
+      } else {
+        setStatus('Конструктор: кликайте по странице, чтобы добавлять поля. Затем сохраняйте.');
+        if (pdfArrayBuffer) renderOriginal();
+      }
+    }
+
+    $('modeDesign').addEventListener('click', () => setAppMode('design'));
+    $('modeFill').addEventListener('click',   () => setAppMode('fill'));
+
+    // ===== loading / rendering =====
+    async function renderPageFromDoc(doc) {
+      const page = await doc.getPage(pageIndex+1);
+      const viewport = page.getViewport({ scale: canvasScale });
+      pdfCanvas.width = viewport.width;
+      pdfCanvas.height = viewport.height;
+      await page.render({ canvasContext: ctx, viewport }).promise;
+
+      const pageOrigViewport = page.getViewport({ scale: 1 });
+      pageSize.width = pageOrigViewport.width;
+      pageSize.height = pageOrigViewport.height;
+    }
+
+    async function openInViewerFromBytes(bytes) {
+      const doc = await pdfjsLib.getDocument({ data: bytes }).promise;
+      pdfjsDoc = doc;
+      await renderPageFromDoc(pdfjsDoc);
+    }
+
+    async function renderOriginal() {
+      const doc = await pdfjsLib.getDocument({ data: cloneArrayBuffer(pdfArrayBuffer) }).promise;
+      pdfjsDoc = doc;
+      await renderPageFromDoc(pdfjsDoc);
+    }
+
+    async function loadFromArrayBuffer(abOriginal) {
+      const ab = cloneArrayBuffer(abOriginal);
+      pdfArrayBuffer = ab;
+
+      await renderOriginal();
+
+      fields.length = 0;
+      $('fieldsList').innerHTML = '';
+
+      await loadExistingFields();
+      if (modeApp === 'fill') renderExistingFieldsList();
+
+      setStatus(modeApp === 'fill'
+        ? 'PDF загружен. Заполнение: значения будут видны сразу.'
+        : 'PDF загружен. Конструктор активен: кликните по странице для добавления полей.'
+      );
+    }
+
+    $('file').addEventListener('change', async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const abOriginal = await file.arrayBuffer();
+      await loadFromArrayBuffer(abOriginal);
+    });
+
+    // ===== fill mode: list & inputs =====
+    function renderExistingFieldsList() {
+      const box = $('existingFields');
+      box.innerHTML = '';
+      if (!existingFieldsCache.length) {
+        box.innerHTML = '<div class="muted">Полей формы не найдено.</div>';
+        return;
+      }
+      for (const f of existingFieldsCache) {
+        const row = document.createElement('div');
+        row.className = 'field-item';
+        const id = 'inp_' + f.name;
+        row.innerHTML = `
+          <div style="font-weight:700;margin-bottom:6px;">${f.name} <span class="muted">(text)</span></div>
+          <input id="${id}" type="text" value="${f.value ?? ''}" />
+        `;
+        box.appendChild(row);
+
+        setTimeout(() => {
+          const el = $(id);
+          if (!el) return;
+          const handler = debounce(() => { f.value = el.value; refreshLivePreview(); }, 120);
+          el.addEventListener('input', handler);
+        }, 0);
+      }
+    }
+
+    async function loadExistingFields() {
+      existingFieldsCache = [];
+      try {
+        const ab = cloneArrayBuffer(pdfArrayBuffer);
+        const doc = await PDFLib.PDFDocument.load(ab, { updateMetadata: false });
+        const form = doc.getForm();
+        const fieldsAll = form.getFields();
+        for (const fld of fieldsAll) {
+          if (fld instanceof PDFLib.PDFTextField || (fld.constructor && /text/i.test(fld.constructor.name))) {
+            const name = fld.getName();
+            let value = '';
+            try { value = fld.getText() || ''; } catch(_) {}
+            existingFieldsCache.push({ name, type: 'text', value });
+          }
+        }
+      } catch (e) {
+        console.warn('Не удалось прочитать поля формы:', e);
+      }
+    }
+
+    // ===== constructor (hidden by default) =====
+    pdfCanvas.addEventListener('click', (evt) => {
+      if (modeApp !== 'design' || !pdfArrayBuffer) return;
+      const rect = pdfCanvas.getBoundingClientRect();
+      const xCanvas = evt.clientX - rect.left;
+      const yCanvas = evt.clientY - rect.top;
+
+      const wCanvas = 200, hCanvas = 24;
+      const xPdf = xCanvas * (pageSize.width / pdfCanvas.width);
+      const yPdfTop = yCanvas * (pageSize.height / pdfCanvas.height);
+      const yPdf = pageSize.height - yPdfTop - (hCanvas * (pageSize.height / pdfCanvas.height));
+      const wPdf = wCanvas * (pageSize.width / pdfCanvas.width);
+      const hPdf = hCanvas * (pageSize.height / pdfCanvas.height);
+
+      const name = 'text_' + (fields.length + 1);
+      const f = { name, type: 'text', pageIndex, x: xPdf, y: yPdf, width: wPdf, height: hPdf, value: '' };
+      fields.push(f);
+
+      const el = document.createElement('div');
+      el.className = 'field-item';
+      el.innerHTML = `<strong>TEXT</strong> — ${f.name}
+        <small>стр.: ${f.pageIndex+1}, x: ${Math.round(f.x)}, y: ${Math.round(f.y)}, w: ${Math.round(f.width)}, h: ${Math.round(f.height)}</small>`;
+      $('fieldsList').appendChild(el);
+
+      ctx.save();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#1e5ea4';
+      ctx.strokeRect(xCanvas, yCanvas, wCanvas, hCanvas);
+      ctx.restore();
+
+      refreshLivePreview();
+    });
+
+    $('modeText').addEventListener('click', () => {
+      setStatus('Конструктор: добавляется текстовое поле');
+    });
+
+    $('setValue').addEventListener('click', () => {
+      const name = $('fieldName').value.trim();
+      const value = $('fieldValue').value;
+      if (!name) { alert('Укажите имя поля'); return; }
+      const f = fields.find(x => x.name === name);
+      if (!f) { alert('Поле не найдено среди добавленных'); return; }
+      f.value = value;
+      setStatus('Установлено значение для ' + name);
+      refreshLivePreview();
+    });
+
+    // ===== live preview =====
+    const refreshLivePreview = debounce(async () => {
+      if (!pdfArrayBuffer) return;
+      try {
+        setSpin(true);
+        const ab = cloneArrayBuffer(pdfArrayBuffer);
+        const tmp = await PDFLib.PDFDocument.load(ab, { updateMetadata: false });
+        const form = tmp.getForm();
+        const pages = tmp.getPages();
+
+        if (modeApp === 'design') {
+          for (const f of fields) {
+            const page = pages[f.pageIndex];
+            if (!page) continue;
+            const tf = form.createTextField(f.name);
+            if (f.value != null) tf.setText(String(f.value));
+            try { tf.setBorderWidth(1); } catch(_) {}
+            tf.addToPage(page, { x: f.x, y: f.y, width: f.width, height: f.height });
+          }
+        } else {
+          for (const f of existingFieldsCache) {
+            try {
+              const tf = form.getTextField(f.name);
+              if (!tf) continue;
+              tf.setText(String(f.value || ''));
+            } catch (e) {
+              console.warn('Не удалось установить значение для', f.name, e);
+            }
+          }
+        }
+
+        const bytes = await tmp.save(); // без flatten — чтобы поля оставались редактируемыми
+        await openInViewerFromBytes(bytes);
+      } catch (e) {
+        console.warn('Live preview error:', e);
+      } finally {
+        setSpin(false);
+      }
+    }, 150);
+
+    // ===== save with TRUE FLAT (draw text & remove fields) =====
+    async function buildPdf({ keepFields = true } = {}) {
+      if (!pdfArrayBuffer) { alert('Сначала загрузите PDF'); return; }
+
+      const ab = cloneArrayBuffer(pdfArrayBuffer);
+      const freshPdf = await PDFLib.PDFDocument.load(ab, { updateMetadata: false });
+      const form = freshPdf.getForm();
+      const pages = freshPdf.getPages();
+
+      // 1) применяем значения / создаём поля (по режиму)
+      if (modeApp === 'design') {
+        for (const f of fields) {
+          const page = pages[f.pageIndex];
+          if (!page) continue;
+          const tf = form.createTextField(f.name);
+          if (f.value != null) tf.setText(String(f.value));
+          try { tf.setBorderWidth(1); } catch(_) {}
+          tf.addToPage(page, { x: f.x, y: f.y, width: f.width, height: f.height });
+        }
+      } else {
+        for (const f of existingFieldsCache) {
+          try {
+            const tf = form.getTextField(f.name);
+            if (!tf) continue;
+            tf.setText(String(f.value || ''));
+          } catch (e) {
+            console.warn('Не удалось установить значение для поля', f.name, e);
+          }
+        }
+      }
+
+      if (keepFields) {
+        // просто сохраняем форму как есть
+        const bytes = await freshPdf.save();
+        return downloadBytes(bytes, 'edited_with_form.pdf');
+      }
+
+      // 2) FLAT без обводок: рисуем текст и удаляем поля
+      const font = await freshPdf.embedStandardFont(PDFLib.StandardFonts.Helvetica);
+      const fontSize = 12;
+
+      // Быстрый доступ к страницам по ref, чтобы понять на какой странице виджет
+      const pageByRef = new Map();
+      pages.forEach(pg => pageByRef.set(pg.ref, pg));
+
+      const fieldsAll = form.getFields();
+      for (const fld of fieldsAll) {
+        const name = fld.getName();
+        let textValue = '';
+        try {
+          if (fld instanceof PDFLib.PDFTextField || (fld.constructor && /text/i.test(fld.constructor.name))) {
+            textValue = fld.getText() || '';
+          } else {
+            // другие типы игнорируем тут
+            textValue = '';
+          }
+        } catch(_) {}
+
+        // Пройдём по всем виджетам этого поля
+        const widgets = fld.acroField.getWidgets ? fld.acroField.getWidgets() : (fld.getWidgets ? fld.getWidgets() : []);
+        for (const w of widgets) {
+          try {
+            const rect = w.getRectangle(); // { x, y, width, height }
+            const pageRef = w.P(); // иногда getP, но в pdf-lib это P()
+            const page = pageByRef.get(pageRef) || pages.find(p => p.ref === pageRef) || null;
+            if (!page) continue;
+
+            // Небольшой отступ и вертикальное центрирование
+            const paddingX = 2;
+            const textY = rect.y + Math.max(0, (rect.height - fontSize) * 0.6);
+
+            if (textValue) {
+              page.drawText(String(textValue), {
+                x: rect.x + paddingX,
+                y: textY,
+                size: fontSize,
+                font
+              });
+            }
+          } catch (e) {
+            console.warn('Не удалось нарисовать значение для виджета', name, e);
+          }
+        }
+
+        // удаляем поле целиком из формы (вместе с виджетами) — чтобы ничего не осталось
+        try { form.removeField(name); } catch(_) {}
+      }
+
+      const bytes = await freshPdf.save();
+      downloadBytes(bytes, 'edited_flat.pdf');
+    }
+
+    function downloadBytes(bytes, filename) {
+      const blob = new Blob([bytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+    }
+
+    // Кнопки сохранения
+    $('saveMode').addEventListener('click', () => {
+      const keep = (modeApp === 'design'); // конструктор — с полями, заполнение — без
+      buildPdf({ keepFields: keep });
+    });
+    $('saveAsForm').addEventListener('click', () => buildPdf({ keepFields: true }));
+    $('saveFlat').addEventListener('click', () => buildPdf({ keepFields: false }));
+
+    // Очистка значений (fill)
+    $('clearFillValues').addEventListener('click', () => {
+      if (!existingFieldsCache.length) return;
+      for (const f of existingFieldsCache) f.value = '';
+      renderExistingFieldsList();
+      refreshLivePreview();
+    });
+
+    // стартуем явно в режиме «Заполнение»
+    setAppMode('fill');
+  </script>
+</body>
+</html>
