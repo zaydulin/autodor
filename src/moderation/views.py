@@ -22,12 +22,10 @@ from django.views.decorators.http import require_POST
 from django.views.generic import ListView, DetailView, TemplateView, FormView
 from django.db.models import Q
 from django.contrib.auth.mixins import LoginRequiredMixin
-# from reportlab.pdfgen import canvas
 
 from .models import AdvertAplication, ChatMessage, CallSession, AdvertDocument, AdvertExpense
 from moderation.models import Advert, AdvertAplication
 from webmain.models import Faqs, Seo
-# from reportlab.lib.pagesizes import A4
 from useraccount.models import Profile
 
 from webmain.models import SettingsGlobale
