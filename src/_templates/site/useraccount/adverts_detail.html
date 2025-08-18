@@ -79,13 +79,13 @@
                     {% if advert.drive %}<tr><th>Привод</th><td>{{ advert.get_drive_display }}</td></tr>{% endif %}
                 </tbody>
             </table>
-
-            <div class="mb-3">
-                <label for="price-input" class="form-label">Укажите свою цену</label>
-                <input type="number" id="price-input" class="form-control" placeholder="Введите цену" min="0" step="1" value="0">
-            </div>
-
-            <button id="btn-take" class="button_take">создать заявку на покупку</button>
+            {% if request.user.employee == 0 %}
+                <div class="mb-3">
+                    <label for="price-input" class="form-label">Укажите свою цену</label>
+                    <input type="number" id="price-input" class="form-control" placeholder="Введите цену" min="0" step="1" value="0">
+                </div>
+                <button id="btn-take" class="button_take">создать заявку на покупку</button>
+            {% endif %}
         </div>
     </div>
 </div>
