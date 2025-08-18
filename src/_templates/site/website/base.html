@@ -102,8 +102,8 @@
                         <div class="footer_about pe-lg-5">
                             <div class="site_logo">
                                 <a class="site_link" href="index.html">
-                                    <img class="dark_theme_logo" src="{% if settings.logo %}{{settings.logo.url}}{% endif %}" alt="Site Logo – ProMotors – Car Service & Detailing Template">
-                                    <img class="light_theme_logo" src="{% if settings.logo_white %}{{settings.logo_white.url}}{% endif %}" alt="Site Logo – ProMotors – Car Service & Detailing Template">
+                                    <img class="light_theme_logo" src="{% if settings.logo %}{{settings.logo.url}}{% endif %}" alt="Site Logo – ProMotors – Car Service & Detailing Template">
+                                    <img class="dark_theme_logo" src="{% if settings.logo_white %}{{settings.logo_white.url}}{% endif %}" alt="Site Logo – ProMotors – Car Service & Detailing Template">
                                 </a>
                             </div>
                             <p>{{settings.description|safe}}</p>
@@ -178,9 +178,9 @@
                                         {% if pages %}{% for page in pages %}{% if page.pagetype == 4 %}
                                         <li>
                                             <a href="{% url 'webmain:page' page.slug  %}">
-                                                <span class="info_icon">
-                                                    <img src="{% static 'site/website/site/images/icon_square.svg' %}"  alt="ProMotors - Icon Square">
-                                                </span>
+<!--                                                <span class="info_icon">-->
+<!--                                                    <img src="{% static 'site/website/site/images/icon_square.svg' %}"  alt="ProMotors - Icon Square">-->
+<!--                                                </span>-->
                                                 <span class="info_text">{{page.name}}</span>
                                             </a>
                                         </li>
@@ -188,9 +188,9 @@
                                         {% if pages %}{% for page in pages %}{% if page.pagetype == 5 %}
                                         <li>
                                             <a href="{% url 'webmain:page' page.slug  %}">
-                                                <span class="info_icon">
-                                                    <img src="{% static 'site/website/site/images/icon_square.svg' %}"  alt="ProMotors - Icon Square">
-                                                </span>
+<!--                                                <span class="info_icon">-->
+<!--                                                    <img src="{% static 'site/website/site/images/icon_square.svg' %}"  alt="ProMotors - Icon Square">-->
+<!--                                                </span>-->
                                                 <span class="info_text">{{page.name}}</span>
                                             </a>
                                         </li>
