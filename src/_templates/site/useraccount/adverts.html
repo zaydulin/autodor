@@ -195,10 +195,15 @@
                         {% for advert in adverts %}
                         <div class="col-lg-4" data-href="{% url 'moderation:advert_detail' advert.id %}" style="margin-bottom: 7%;">
                             <div class="iq-upcoming-cars">
-                                {% if advert.images %}
-                                <img src="{{ advert.images.0 }}" class="img-fluid w-100" alt="{{ advert.name }}">
+                                {% if advert.images|length > 1 %}
+                                <div style="position: relative; width: 100%; padding-top: 56.25%; /* пропорции 16:9 */">
+                                  <img src="{{ advert.images.0 }}" class="img-fluid w-100" alt="{{ advert.name }}"
+                                       style="position: absolute; top: 0; left: 0; height: 100%; object-fit: cover;"
+                                       onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+                                  <div style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: #f0f0f0;"></div>
+                                </div>
                                 {% else %}
-                                    <img src="{% static 'assets/images/no-image.png' %}" class="img-fluid w-100" alt="Нет фото">
+                                    <img src="{% static 'assets/images/no-image.png' %}" class="img-fluid w-100" alt="Нет фото" onerror="this.style.display='none'">
                                 {% endif %}
                                 <div class="iq-car-details">
                                     <h6 class="text-primary">{{ advert.name }}</h6>
