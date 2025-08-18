@@ -30,7 +30,16 @@
 
 </head>
 <body>
+<style>
+    [data-bs-theme=dark] a.btn_hotline .info_text {
+        color: #fff;
+    }
 
+    /* Для светлой темы */
+    [data-bs-theme=light] a.btn_hotline .info_text {
+        color: #000;
+    }
+</style>
 
 <div class="page_wrapper">
     <div class="backtotop">
@@ -80,23 +89,10 @@
                                     <span class="btn_text" data-text="{{settings.phone}}">{{settings.phone}}</span>
                                 </a>
                             </li>
-                            {% if request.user.is_authenticated %}
                             <li>
-                            <a href="{% url 'moderation:adverts' %}" style="
-                                color: #161616;
-                                font-size: 15px;
-                                font-weight: bold;
-                            ">Войти</a>
+
+                                <span class="info_text"><a href="{% url 'moderation:adverts' %}" style="color:unset;">Войти</a></span>
                             </li>
-                            {% else %}
-                            <li>
-                            <a href="{% url 'webmain:login' %}" style="
-                                color: #161616;
-                                font-size: 15px;
-                                font-weight: bold;
-                            ">Войти</a>
-                            </li>
-                            {% endif %}
                         </ul>
                     </div>
                 </div>
