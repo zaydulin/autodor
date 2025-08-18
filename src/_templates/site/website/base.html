@@ -174,10 +174,7 @@
                                         </li>
                                         {% endif %}{% endfor %}{% endif %}
 
-                                    </ul>
-                                </div>
-                                <div class="col-md-6 col-sm-6">
-                                    <ul class="info_list unordered_list_block text-uppercase">
+
                                         {% if pages %}{% for page in pages %}{% if page.pagetype == 4 %}
                                         <li>
                                             <a href="{% url 'webmain:page' page.slug  %}">
