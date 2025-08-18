@@ -45,8 +45,8 @@
                     <div class="col-lg-3 col-5">
                         <div class="site_logo">
                             <a class="site_link" href="{% url 'webmain:home' %}">
-                                <img height="70px" class="light_theme_logo" src="{% if settings.logo %}{{settings.logo.url}}{% endif %}" alt="Site Logo – ProMotors – Car Service & Detailing Template">
-                                <img height="70px" class="dark_theme_logo" src="{% if settings.logo_white %}{{settings.logo_white.url}}{% endif %}"  alt="Site Logo – ProMotors – Car Service & Detailing Template">
+                                <img style="height:70px" class="light_theme_logo" src="{% if settings.logo %}{{settings.logo.url}}{% endif %}" alt="Site Logo – ProMotors – Car Service & Detailing Template">
+                                <img style="height:70px" class="dark_theme_logo" src="{% if settings.logo_white %}{{settings.logo_white.url}}{% endif %}"  alt="Site Logo – ProMotors – Car Service & Detailing Template">
                             </a>
                         </div>
                     </div>
@@ -205,27 +205,18 @@
 
                                 <li>
                                     <a href="{% url 'useraccount:login' %}">
-                                        <span class="info_icon">
-                                            <img src="{% static 'site/website/site/images/icon_square.svg' %}"  alt="ProMotors - Icon Square">
-                                        </span>
                                         <span class="info_text">Объявления</span>
                                     </a>
                                 </li>
 
                                 <li>
                                     <a href="{% url 'useraccount:login' %}">
-                                        <span class="info_icon">
-                                            <img src="{% static 'site/website/site/images/icon_square.svg' %}"  alt="ProMotors - Icon Square">
-                                        </span>
                                         <span class="info_text">Профиль</span>
                                     </a>
                                 </li>
 
                                 <li>
                                     <a href="{% url 'useraccount:login' %}">
-                                        <span class="info_icon">
-                                            <img src="{% static 'site/website/site/images/icon_square.svg' %}"  alt="ProMotors - Icon Square">
-                                        </span>
                                         <span class="info_text">Лизные заявки</span>
                                     </a>
                                 </li>
