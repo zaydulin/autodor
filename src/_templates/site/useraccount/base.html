@@ -84,7 +84,7 @@
 </div>
 <!-- loader END -->
 <aside class="sidebar sidebar-default sidebar-two navs-pill sidebar-mini">
-    <div class="sidebar-header d-flex align-items-center justify-content-start">
+    <div class="sidebar-header d-flex align-items-center justify-content-start" style="height: 125px;">
         <a href="{% url 'webmain:home' %}" class="navbar-brand">
             <!--Logo start-->
                     <img src="{% if settings.favicon %}{{settings.favicon.url}}{% endif %}" class="img-fluid" alt="img1">
@@ -93,7 +93,7 @@
     </div>
     <div class="sidebar-body pt-0 data-scrollbar">
         <div class="sidebar-list">
-            <ul class="navbar-nav iq-main-menu nav nav-tabs" id="sidebar-menu" role="tablist">
+            <ul class="navbar-nav iq-main-menu nav nav-tabs"  id="sidebar-menu" role="tablist">
                 <li class="nav-item">
                     <a class="nav-link " aria-current="page" href="{% url 'moderation:adverts' %}" data-sidebar-toggle="tooltip" data-bs-placement="right" title="Dashboard">
                         <i class="icon">
@@ -285,39 +285,45 @@
 
                         <ul class="sub-nav collapse show" id="sidebar-user" data-bs-parent="#sidebar-menu-users">
                             <li class="nav-item">
-                                <a class="nav-link " href="../../dashboard/app/user-profile.html">
-                                    <i class="icon">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor">
-                                            <g>
-                                            <circle cx="12" cy="12" r="8" fill="currentColor"></circle>
-                                            </g>
-                                        </svg>
-                                    </i>
-                                    <span class="item-name">User Profile</span>
+                                <a class="nav-link " href="{% url 'moderation:adverts'%}">
+                                    <span class="item-name">Adverts</span>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link " href="../../dashboard/app/user-add.html">
-                                    <i class="icon">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor">
-                                            <g>
-                                            <circle cx="12" cy="12" r="8" fill="currentColor"></circle>
-                                            </g>
-                                        </svg>
-                                    </i>
-                                    <span class="item-name">Add User</span>
+                                <a class="nav-link " href="{% url 'moderation:my_applications'%}">
+                                    <span class="item-name">My applications</span>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link " href="../../dashboard/app/user-list.html">
-                                    <i class="icon">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor">
-                                            <g>
-                                            <circle cx="12" cy="12" r="8" fill="currentColor"></circle>
-                                            </g>
-                                        </svg>
-                                    </i>
+                                <a class="nav-link " href="{% url 'moderation:faqs_moder'%}">
+
                                     <span class="item-name">User List</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link " href="{% url 'moderation:my_applications'%}">
+
+                                    <span class="item-name">Bookmark</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link " href="{% url 'moderation:my_applications'%}">
+                                    <span class="item-name">Location</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link " href="{% url 'moderation:my_applications'%}">
+                                    <span class="item-name">Info</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link " href="{% url 'moderation:my_applications'%}">
+                                    <span class="item-name">Shop</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link " href="{% url 'moderation:my_applications'%}">
+                                    <span class="item-name">Documents</span>
                                 </a>
                             </li>
                         </ul>
