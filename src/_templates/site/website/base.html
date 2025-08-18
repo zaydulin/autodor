@@ -30,11 +30,7 @@
 
 </head>
 <body>
-{% if request.user.is_authenticated %}
-<a style="position: absolute; right:2%; z-index: 1000;" href="{% url 'moderation:adverts' %}">Личный кабинет</a>
-{% else %}
-<a style="position: absolute; right:2%; z-index: 1000;" href="{% url 'useraccount:login' %}">Войти</a>
-{% endif %}
+
 
 <div class="page_wrapper">
     <div class="backtotop">
@@ -84,6 +80,23 @@
                                     <span class="btn_text" data-text="{{settings.phone}}">{{settings.phone}}</span>
                                 </a>
                             </li>
+                            {% if request.user.is_authenticated %}
+                            <li>
+                            <a href="{% url 'moderation:adverts' %}" style="
+                                color: #161616;
+                                font-size: 15px;
+                                font-weight: bold;
+                            ">Личный кабинет</a>
+                            </li>
+                            {% else %}
+                            <li>
+                            <a href="{% url 'webmain:login' %}" style="
+                                color: #161616;
+                                font-size: 15px;
+                                font-weight: bold;
+                            ">Войти</a>
+                            </li>
+                            {% endif %}
                         </ul>
                     </div>
                 </div>
