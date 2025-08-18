@@ -4,7 +4,7 @@
         {% if page_obj.has_previous %}
         <li class="page-item page-indicator">
             <a class="page-link" href="?page=1">
-                <i class="la la-angle-left"></i></a>
+                <i class="la la-angle-left"></i>1</a>
         </li>
         {% endif %}
         {% for i in paginator.page_range %}
@@ -20,7 +20,7 @@
         {% if page_obj.has_next %}
         <li class="page-item page-indicator">
             <a class="page-link" href="?page={{ paginator.num_pages }}">
-                <i class="la la-angle-right"></i></a>
+                <i class="la la-angle-right"></i>{{ paginator.num_pages }}</a>
         </li>
         {% endif %}
         {% endif %}
