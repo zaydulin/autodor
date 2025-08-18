@@ -1,3 +1,4 @@
+import base64
 import io
 import json
 import os
@@ -16,7 +17,7 @@ from moderation.tasks import start_call_task, end_call_task
 from django.contrib.auth.decorators import login_required
 from django.db import models, transaction
 from django.http import JsonResponse, HttpResponse, HttpResponseServerError, FileResponse
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.generic import ListView, DetailView, TemplateView, FormView
@@ -99,8 +100,27 @@ class AdvertAplicationDetailView(LoginRequiredMixin, DetailView):
 
 
 def document_editor(request,document_id):
-    return render(request,'site/useraccount/document_editor.html')
+    document = get_object_or_404(AdvertDocument, id=document_id)
 
+    pdf_bytes = document.file.read()  # или другой способ получения PDF
+    pdf_base64 = base64.b64encode(pdf_bytes).decode('utf-8')
+    return render(request, 'pdf_form.html', {
+        'document': document,
+        'pdf_base64': pdf_base64,
+    })
+
+
+@require_POST
+def save_document(request, pk):
+    document = get_object_or_404(AdvertDocument, pk=pk)
+    uploaded_file = request.FILES.get('file_bytes')
+    if not uploaded_file:
+        return JsonResponse({'error': 'No file received'}, status=400)
+
+    # Сохраняем файл
+    document.file.save('modified.pdf', uploaded_file)
+    document.save()
+    return JsonResponse({'status': 'success'})
 
 @csrf_exempt
 def update_application(request, application_id):
@@ -181,7 +201,7 @@ class AdvertView(ListView):
     template_name = 'site/useraccount/adverts.html'
     context_object_name = 'adverts'
     model = Advert
-    paginate_by = 16
+    paginate_by = 15
 
     def get_queryset(self):
         qs = Advert.objects.all().order_by('-created_at')
@@ -300,6 +320,7 @@ class AdvertView(ListView):
             # по умолчанию — свежие
             qs = qs.order_by('-created_at')
 
+
         return qs
 
     def get_context_data(self, **kwargs):
@@ -379,15 +400,23 @@ def create_application(request, advert_id):
                 price = svoi_price,
             )
 
-            documents_base = BaseDocument.objects.all().count()
-            for document in range(1,8):
-                AdvertDocument.objects.create(
-                    aplication=application,
-                    file = SettingsGlobale.document_file_1,
-                    document_type=2,
-                    type=document,
-                    name=SettingsGlobale.document_file_1.name,
-                )
+            settings = SettingsGlobale.objects.first()  # или другой способ получения нужного экземпляра
+
+            # Перебираем номера файлов от 1 до 8
+            for i in range(1, 9):
+                # Получаем название поля, например 'document_file_1'
+                file_field_name = f'document_file_{i}'
+                # Получаем файл из модели
+                file_obj = getattr(settings, file_field_name)
+                if file_obj:
+                    # Создаем документ
+                    AdvertDocument.objects.create(
+                        aplication=application,
+                        file=file_obj,
+                        document_type=2,
+                        type=i,
+                        name=file_obj.name,
+                    )
 
             application.user.add(request.user)
             application.save()
