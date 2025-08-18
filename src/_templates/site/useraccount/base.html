@@ -181,9 +181,9 @@
 </aside>
 <div class="tab-content sidebar sidebar-default navs-rounded-all" id="nav-tabContent">
         <div class="sidebar-header d-flex align-items-center justify-content-start">
-            <a href="../../dashboard/index.html" class="navbar-brand">
+            <a  href="{% url 'webmain:home' %}" class="navbar-brand">
                 <!--Logo start-->
-                <img src="../../assets/images/logo.png" class="img-fluid" alt="logo-big">
+                <img src="{% if settings.favicon %}{{settings.favicon.url}}{% endif %}" class="img-fluid" alt="logo-big">
                 <!--Logo end-->        </a>
             <div class="sidebar-toggle sidebar-icon-close">
                 <i class="icon">
