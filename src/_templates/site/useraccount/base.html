@@ -69,6 +69,17 @@
     .btn-outline-primary:hover {
     color: white !important;
     }
+    .sidebar-two+.tab-content:not(.in-active)+.main-content {
+
+    margin-left: 13.75rem!important;
+}
+    .sidebar-two+.tab-content{ left: 0!important};
+    .navs-rounded-all .navbar-nav .nav-item {
+    padding-left: 0px!important};
+}
+.sidebar-two+.tab-content:not(.in-active)+.main-content {
+    margin-left: 13.75rem!important;
+}
 </style>
 <!-- loader Start -->
 <div id="loading">
@@ -83,14 +94,14 @@
     </div>
 </div>
 <!-- loader END -->
-<aside class="sidebar sidebar-default sidebar-two navs-pill sidebar-mini">
-    <div class="sidebar-header d-flex align-items-center justify-content-start" style="height: 69px;">
-        <a href="{% url 'webmain:home' %}" class="navbar-brand">
-            <!--Logo start-->
-                <img src="{% if settings.favicon %}{{settings.favicon.url}}{% endif %}" class="img-fluid" alt="img1">
-            <!--logo End-->
-        </a>
-    </div>
+<aside class="sidebar sidebar-default sidebar-two navs-pill sidebar-mini d-none">
+<!--    <div class="sidebar-header d-flex align-items-center justify-content-start" style="height: 69px;">-->
+<!--        <a href="{% url 'webmain:home' %}" class="navbar-brand">-->
+<!--            &lt;!&ndash;Logo start&ndash;&gt;-->
+<!--                <img src="{% if settings.favicon %}{{settings.favicon.url}}{% endif %}" class="img-fluid" alt="img1">-->
+<!--            &lt;!&ndash;logo End&ndash;&gt;-->
+<!--        </a>-->
+<!--    </div>-->
     <div class="sidebar-body pt-0 data-scrollbar">
         <div class="sidebar-list">
             <ul class="navbar-nav iq-main-menu nav nav-tabs"  id="sidebar-menu" role="tablist">
@@ -344,7 +355,7 @@
             <div class="container-fluid navbar-inner">
                 <a href="" class="navbar-brand">
                     <!--Logo start-->
-                    <img src="{% if settings.favicon %}{{settings.favicon.url}}{% endif %}" class="img-fluid" alt="logo-big">
+                    <img src="{% if settings.favicon %}{{settings.logo.url}}{% endif %}" class="img-fluid" alt="logo-big">
                     <!--Logo end-->
                 </a>
                 <div class="sidebar-toggle sidebar-toggle-responsive" data-toggle="sidebar" data-active="true">
