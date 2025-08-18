@@ -156,9 +156,6 @@
                                         {% if pages %}{% for page in pages %}{% if page.pagetype == 2 %}
                                         <li>
                                             <a href="{% url 'webmain:page' page.slug  %}">
-                                                <span class="info_icon">
-                                                    <img src="{% static 'site/website/site/images/icon_square.svg' %}"  alt="ProMotors - Icon Square">
-                                                </span>
                                                 <span class="info_text">{{page.name}}</span>
                                             </a>
                                         </li>
@@ -166,9 +163,6 @@
                                         {% if pages %}{% for page in pages %}{% if page.pagetype == 3 %}
                                         <li>
                                             <a href="{% url 'webmain:page' page.slug  %}">
-                                                <span class="info_icon">
-                                                    <img src="{% static 'site/website/site/images/icon_square.svg' %}"  alt="ProMotors - Icon Square">
-                                                </span>
                                                 <span class="info_text">{{page.name}}</span>
                                             </a>
                                         </li>
