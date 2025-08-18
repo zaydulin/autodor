@@ -11,6 +11,310 @@
 
 {% endblock head %}
 {% block content %}
-    <iframe style="width:100%; height: 100%" src="https://www.lunuc.com/system/pdf_edit"></iframe>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond&family=Open+Sans&family=Roboto&family=Roboto+Mono&family=Comic+Neue&family=Oswald&family=Merriweather&family=Noto+Serif&display=swap" rel="stylesheet" />
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    padding: 10px;
+  }
+  #pdfView {
+    position: relative;
+    border: 1px solid #999;
+    display: inline-block;
+    user-select: none;
+  }
+  canvas {
+    display: block;
+  }
+  .text-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+  .text-item {
+    position: absolute;
+    pointer-events: auto;
+    background: rgba(255, 255, 0, 0.15);
+    padding: 0 1px;
+    border-radius: 2px;
+    white-space: pre;
+    cursor: text;
+    user-select: text;
+  }
+  .text-item[contenteditable="true"]:focus {
+    outline: 1px solid #007bff;
+  }
+  .text-item[contenteditable="false"] {
+    background: transparent;
+    cursor: default;
+    user-select: none;
+  }
+  button {
+    margin-top: 12px;
+  }
+</style>
+</head>
+<body>
+
+<h2>Upload PDF, Edit Text Overlay & Save PDF with Changes</h2>
+<input type="file" id="fileInput" accept="application/pdf" />
+<button id="saveBtn" disabled>Save Edited PDF</button>
+
+<div id="pdfView"></div>
+
+<!-- PDF.js and pdf-lib from CDNs -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+
+<script>
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+  const fileInput = document.getElementById('fileInput');
+  const saveBtn = document.getElementById('saveBtn');
+  const pdfView = document.getElementById('pdfView');
+
+  const pdfFontToGoogleFontMap = {
+    'Times-Roman': "'Times New Roman', serif",
+    'TimesNewRoman': "'Times New Roman', serif",
+    'Times': "'Times New Roman', serif",
+    'Helvetica': "'Open Sans', 'Roboto', sans-serif",
+    'Arial': "'Open Sans', 'Roboto', sans-serif",
+    'ArialMT': "'Open Sans', 'Roboto', sans-serif",
+    'Courier': "'Roboto Mono', monospace",
+    'CourierNew': "'Roboto Mono', monospace",
+    'Courier New': "'Roboto Mono', monospace",
+    'Monaco': "'Roboto Mono', monospace",
+    'Symbol': "",
+    'ZapfDingbats': "",
+    'Wingdings': "",
+    'Calibri': "'Roboto', sans-serif",
+    'Garamond': "'EB Garamond', serif",
+    'Verdana': "'Open Sans', sans-serif",
+    'Comic Sans MS': "'Comic Neue', cursive",
+    'Arial Black': "'Oswald', sans-serif",
+    'Impact': "'Oswald', sans-serif",
+    'Palatino': "'Merriweather', serif",
+    'Bookman Old Style': "'Noto Serif', serif",
+  };
+
+  function isIconOrSymbol(text) {
+    if (!text || text.length === 0) return true;
+    const alnumCount = (text.match(/[a-zA-Z0-9]/g) || []).length;
+    return (alnumCount / text.length) < 0.5;
+  }
+
+  function cloneArrayBuffer(buffer) {
+    return buffer.slice(0);
+  }
+
+  let originalPdfBytes = null;
+  let scale = 1.5;
+  let viewport = null;
+  let extractedTextItems = [];
+  let renderedPdfDoc = null;
+  let renderedPdfDocJs = null;
+
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files[0];
+    if (!file || file.type !== "application/pdf") {
+      alert('Please select a valid PDF file.');
+      return;
+    }
+    originalPdfBytes = cloneArrayBuffer(await file.arrayBuffer());
+
+    renderedPdfDocJs = await pdfjsLib.getDocument({ data: cloneArrayBuffer(originalPdfBytes) }).promise;
+    const page = await renderedPdfDocJs.getPage(1);
+    viewport = page.getViewport({ scale });
+
+    pdfView.innerHTML = '';
+    pdfView.style.width = viewport.width + 'px';
+    pdfView.style.height = viewport.height + 'px';
+
+    const canvas = document.createElement('canvas');
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    canvas.style.position = 'absolute';
+    canvas.style.top = '0';
+    canvas.style.left = '0';
+    pdfView.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+    await page.render({ canvasContext: ctx, viewport }).promise;
+
+    const textContent = await page.getTextContent();
+
+    extractedTextItems = textContent.items.map(item => {
+      const [a, b, c, d, e, f] = item.transform;
+      const fontHeight = Math.sqrt(a * a + b * b);
+      return {
+        str: item.str,
+        x: e,
+        y: f,
+        width: item.width || fontHeight * item.str.length * 0.5,
+        height: fontHeight,
+        fontName: item.fontName,
+        matrix: [a, b, c, d, e, f]
+      };
+    });
+
+    const textLayer = document.createElement('div');
+    textLayer.className = 'text-layer';
+    textLayer.style.width = viewport.width + "px";
+    textLayer.style.height = viewport.height + "px";
+    textLayer.style.pointerEvents = 'none';
+    pdfView.appendChild(textLayer);
+
+    let hasEditableText = false;
+
+    extractedTextItems.forEach(item => {
+      const text = item.str.trim();
+      if (!text) return;
+
+      const baseFontFamily = (textContent.styles[item.fontName] && textContent.styles[item.fontName].fontFamily) || 'sans-serif';
+      const appliedFont = pdfFontToGoogleFontMap[baseFontFamily] || baseFontFamily || 'sans-serif';
+
+      const x = item.x * scale;
+      const y = viewport.height - item.y * scale;
+      const fontHeightPx = item.height * scale;
+
+      const [a, b] = [item.matrix[0], item.matrix[1]];
+      const scaleX = a / Math.sqrt(a * a + b * b);
+
+      const span = document.createElement('span');
+      span.className = 'text-item';
+      span.textContent = text;
+      span.style.left = `${x}px`;
+      span.style.top = `${y - fontHeightPx}px`;
+      span.style.fontSize = `${fontHeightPx}px`;
+      span.style.transformOrigin = 'left bottom';
+      span.style.transform = `scaleX(${scaleX})`;
+      span.style.fontFamily = appliedFont;
+
+      if (isIconOrSymbol(text)) {
+        span.contentEditable = 'false';
+        span.setAttribute('aria-label', 'non-editable symbol');
+      } else {
+        span.contentEditable = 'true';
+        hasEditableText = true;
+      }
+
+      textLayer.appendChild(span);
+    });
+
+    if (hasEditableText) {
+      textLayer.style.pointerEvents = 'auto';
+    }
+
+    saveBtn.disabled = false;
+
+    await renderTextHiddenPdf();
+  });
+
+  async function renderTextHiddenPdf() {
+    if (!originalPdfBytes || !extractedTextItems.length || !viewport) return;
+
+    renderedPdfDoc = await PDFLib.PDFDocument.load(cloneArrayBuffer(originalPdfBytes));
+
+    const pages = renderedPdfDoc.getPages();
+    const page = pages[0];
+    const { width: pdfWidth, height: pdfHeight } = page.getSize();
+
+    extractedTextItems.forEach(item => {
+      const x = item.x;
+      const y = item.y - 2;
+      const boxWidth = item.width;
+      const boxHeight = item.height + 5;
+
+      page.drawRectangle({
+        x,
+        y,
+        width: boxWidth,
+        height: boxHeight,
+        color: PDFLib.rgb(1, 1, 1),
+        opacity: 1,
+      });
+    });
+
+    const newPdfBytes = await renderedPdfDoc.save();
+
+    const newPdfJsDoc = await pdfjsLib.getDocument({ data: newPdfBytes }).promise;
+    const newPage = await newPdfJsDoc.getPage(1);
+    const newViewport = newPage.getViewport({ scale });
+
+    const canvas = pdfView.querySelector('canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    if (canvas.width !== newViewport.width || canvas.height !== newViewport.height) {
+      canvas.width = newViewport.width;
+      canvas.height = newViewport.height;
+      pdfView.style.width = newViewport.width + "px";
+      pdfView.style.height = newViewport.height + "px";
+    }
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    await newPage.render({ canvasContext: ctx, viewport: newViewport }).promise;
+  }
+
+  saveBtn.addEventListener('click', async () => {
+    if (!renderedPdfDoc || !extractedTextItems.length) return;
+
+    const pages = renderedPdfDoc.getPages();
+    const page = pages[0];
+    const helveticaFont = await renderedPdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+
+    extractedTextItems.forEach(item => {
+      const x = item.x;
+      const y = item.y - 2;
+      const boxWidth = item.width;
+      const boxHeight = item.height + 5;
+      page.drawRectangle({
+        x,
+        y,
+        width: boxWidth,
+        height: boxHeight,
+        color: PDFLib.rgb(1, 1, 1),
+        opacity: 1,
+      });
+    });
+
+    const overlays = Array.from(pdfView.querySelectorAll('.text-item'));
+    for (let i = 0; i < extractedTextItems.length && i < overlays.length; i++) {
+      const item = extractedTextItems[i];
+      const span = overlays[i];
+
+      if (span.contentEditable !== 'true') continue;
+
+      const newText = span.textContent || "";
+
+      const textX = item.x;
+      const textY = item.y;
+      const fontSizePts = item.height;
+
+      if(newText.trim() !== "") {
+        page.drawText(newText, {
+          x: textX,
+          y: textY,
+          size: fontSizePts,
+          font: helveticaFont,
+          color: PDFLib.rgb(0, 0, 0)
+        });
+      }
+    }
+
+    const finalPdfBytes = await renderedPdfDoc.save();
+
+    const blob = new Blob([finalPdfBytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'edited_pdf_text_hidden.pdf';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+</script>
 {% endblock content %}
 

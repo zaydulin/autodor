@@ -19,4 +19,5 @@ urlpatterns = [
     path('expenses/create/', views.CreateExpenseView.as_view(), name='create_expense'),
     path('applications-list/', views.application_list, name='application_list'),
     path('document_editor/<uuid:document_id>/',views.document_editor,name='document_editor'),
+    path('save-document/<uuid:pk>/', views.save_document, name='save_document'),
 ]
