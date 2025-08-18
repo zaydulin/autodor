@@ -74,8 +74,13 @@
   <div class="wrap">
     <header>
       <div class="group">
-        <label class="btn" for="file">Открыть PDF</label>
-        <input id="file" type="file" value="{{ document.file.url }}" accept="application/pdf" style="display:none">
+<!--      <form method="POST" enctype="multipart/form-data" action="{% url 'moderation:save_document' document.id %}">-->
+          {% csrf_token %}
+          <label class="btn" for="file" style="display:none;">Открыть PDF</label>
+<!--          <input type="file" name="file" accept="application/pdf" required>-->
+            <button id="saveMode" class="btn primary" onclick="sendModifiedPdf()">Сохранить</button>
+          <input name="file" id="file" type="file" value="{{ document.file.url }}" accept="application/pdf" style="display:none" required>
+<!--        </form>-->
       </div>
 
       <div class="group">
@@ -93,12 +98,7 @@
       <div class="sep"></div>
 
       <div class="group">
-        <button id="saveMode" class="btn primary" style="display:none;">Сохранить (по режиму)</button>
-        <form method="POST" enctype="multipart/form-data" action="{% url 'moderation:save_document' document.id %}">
-          {% csrf_token %}
-          <input type="file" name="file" accept="application/pdf" required>
-          <button type="submit" class="btn primary">Сохранить</button>
-        </form>
+<!--        <button id="saveMode" class="btn primary" style="display:none;">Сохранить (по режиму)</button>-->
         <button id="saveAsForm" class="btn" style="display:none;">Сохранить как форму</button>
         <button id="saveFlat" class="btn warn" style="display:none;">Сохранить без полей</button>
       </div>
@@ -507,7 +507,7 @@
       }, 120);
 
       // ===== save: embed images; keep or remove fields =====
-      $('saveMode').addEventListener('click', () => { const keep = (modeApp === 'design'); buildPdf({ keepFields: keep }); });
+      document.getElementById('saveMode').addEventListener('click', sendModifiedPdf);
       $('saveAsForm').addEventListener('click', () => buildPdf({ keepFields: true }));
       $('saveFlat').addEventListener('click', () => buildPdf({ keepFields: false }));
 
@@ -552,6 +552,30 @@
           alert('Ошибка при сохранении: ' + (e?.message || e));
         }
       }
+
+      async function sendModifiedPdf() {
+          const bytes = await buildPdf({ keepFields: true }); // или false, по необходимости
+
+          // Создайте FormData
+          const formData = new FormData();
+          // Передавайте байты как Blob
+          formData.append('file_bytes', new Blob([bytes], { type: 'application/pdf' }), 'modified.pdf');
+
+          // Отправка
+          const response = await fetch('{% url "moderation:save_document" document.id %}', {
+            method: 'POST',
+            headers: {
+              'X-CSRFToken': '{{ csrf_token }}', // CSRF
+            },
+            body: formData,
+          });
+
+          if (response.ok) {
+            alert('Файл успешно сохранён');
+          } else {
+            alert('Ошибка при сохранении файла');
+          }
+        }
 
       async function embedAllImages(doc, pages) {
         const dataURLtoBytes = (url) => {

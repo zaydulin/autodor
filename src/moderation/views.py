@@ -113,17 +113,14 @@ def document_editor(request,document_id):
 @require_POST
 def save_document(request, pk):
     document = get_object_or_404(AdvertDocument, pk=pk)
-    uploaded_file = request.FILES.get('file')
-    if uploaded_file:
-        # Сохраняем файл в модель
-        document.file.save(uploaded_file.name, uploaded_file)
-        document.save()
-        # Перенаправляем пользователя
-        return redirect('moderation:my_applications')
-    else:
-        # Обработка ошибки, если файл не был передан
-        # Можно вернуть сообщение или перезагрузить страницу с ошибкой
-        return redirect('moderation:my_applications')
+    uploaded_file = request.FILES.get('file_bytes')
+    if not uploaded_file:
+        return JsonResponse({'error': 'No file received'}, status=400)
+
+    # Сохраняем файл
+    document.file.save('modified.pdf', uploaded_file)
+    document.save()
+    return JsonResponse({'status': 'success'})
 
 
 @csrf_exempt
