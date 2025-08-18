@@ -539,7 +539,7 @@
 
           if (keepFields) {
             const bytes = await doc.save();
-            return downloadBytes(bytes, 'edited_with_form_and_images.pdf');
+            return bytes
           }
 
           // 3) плоско: нарисовать текст полей и удалить виджеты + поля + очистить AcroForm
@@ -547,33 +547,50 @@
 
           const bytes = await doc.save();
           downloadBytes(bytes, 'edited_flat_images.pdf');
+          return bytes
         } catch (e) {
           console.error(e);
           alert('Ошибка при сохранении: ' + (e?.message || e));
         }
       }
 
+
       async function sendModifiedPdf() {
+          // Создаём байты PDF с помощью buildPdf
           const bytes = await buildPdf({ keepFields: true }); // или false, по необходимости
+          // Проверка: если байты не получены, прервать
+          console.log(bytes);
+          if (!bytes) {
+            alert('Не удалось сформировать PDF');
+            return;
+          }
 
-          // Создайте FormData
+          // Создаём Blob из байтов
+          const blob = new Blob([bytes], { type: 'application/pdf' });
+
+          // Формируем FormData и добавляем Blob как файл
           const formData = new FormData();
-          // Передавайте байты как Blob
-          formData.append('file_bytes', new Blob([bytes], { type: 'application/pdf' }), 'modified.pdf');
+          formData.append('file_bytes', blob, 'modified.pdf');
 
-          // Отправка
-          const response = await fetch('{% url "moderation:save_document" document.id %}', {
-            method: 'POST',
-            headers: {
-              'X-CSRFToken': '{{ csrf_token }}', // CSRF
-            },
-            body: formData,
-          });
+          try {
+            // Отправляем POST-запрос на сервер
+            const response = await fetch('{% url "moderation:save_document" document.id %}', {
+              method: 'POST',
+              headers: {
+                'X-CSRFToken': '{{ csrf_token }}', // CSRF токен
+              },
+              body: formData,
+            });
 
-          if (response.ok) {
-            alert('Файл успешно сохранён');
-          } else {
-            alert('Ошибка при сохранении файла');
+            if (response.ok) {
+              alert('Файл успешно сохранён');
+            } else {
+              const errorText = await response.text();
+              alert('Ошибка при сохранении файла: ' + errorText);
+            }
+          } catch (e) {
+            console.error('Ошибка при отправке файла:', e);
+            alert('Произошла ошибка при отправке файла.');
           }
         }
 

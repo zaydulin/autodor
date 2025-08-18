@@ -122,7 +122,6 @@ def save_document(request, pk):
     document.save()
     return JsonResponse({'status': 'success'})
 
-
 @csrf_exempt
 def update_application(request, application_id):
     if request.method == 'POST':
