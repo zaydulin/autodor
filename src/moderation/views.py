@@ -201,7 +201,7 @@ class AdvertView(ListView):
     template_name = 'site/useraccount/adverts.html'
     context_object_name = 'adverts'
     model = Advert
-    paginate_by = 16
+    paginate_by = 15
 
     def get_queryset(self):
         qs = Advert.objects.all().order_by('-created_at')
@@ -319,6 +319,7 @@ class AdvertView(ListView):
         else:
             # по умолчанию — свежие
             qs = qs.order_by('-created_at')
+
 
         return qs
 

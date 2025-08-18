@@ -198,7 +198,7 @@
                                 {% if advert.images %}
                                 <img src="{{ advert.images.0 }}" class="img-fluid w-100" alt="{{ advert.name }}">
                                 {% else %}
-                                <img src="{% static 'assets/images/no-image.png' %}" class="img-fluid w-100" alt="Нет фото">
+                                    <img src="{% static 'assets/images/no-image.png' %}" class="img-fluid w-100" alt="Нет фото">
                                 {% endif %}
                                 <div class="iq-car-details">
                                     <h6 class="text-primary">{{ advert.name }}</h6>
@@ -211,6 +211,7 @@
                             </div>
                         </div>
                         {% endfor %}
+                {% include 'site/useraccount/include/paginations.html' with items=adverts %}
 
 
                     </div>

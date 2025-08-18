@@ -1,31 +1,28 @@
-<div class="th-pagination text-center">
-    <ul >
+<nav class="mt-3 right" style=" float: right; ">
+    <ul class="pagination pagination-xs pagination-circle">
         {% if paginator.num_pages >= 1 %}
         {% if page_obj.has_previous %}
-        <li>
-            <a href="?page=1" >
-                <i class="far fa-arrow-left"></i>
-            </a>
+        <li class="page-item page-indicator">
+            <a class="page-link" href="?page=1">
+                <i class="la la-angle-left"></i></a>
         </li>
         {% endif %}
         {% for i in paginator.page_range %}
         {% if page_obj.number == i %}
-        <li >
-            <a class="active" href="#">{{ i }}</a>
+        <li class="page-item active"><a class="page-link" href="">{{ i }}</a>
         </li>
         {% elif i > page_obj.number|add:'-2' and i < page_obj.number|add:'3' %}
-        <li >
-            <a  href="?page={{ i }}">{{ i }}</a>
+        <li class="page-item">
+            <a class="page-link" href="?page={{ i }}">{{ i }}</a>
         </li>
         {% endif %}
         {% endfor %}
         {% if page_obj.has_next %}
-        <li>
-            <a  href="?page={{ paginator.num_pages }}" aria-label="Next">
-                <i class="far fa-arrow-right"></i>
-            </a>
+        <li class="page-item page-indicator">
+            <a class="page-link" href="?page={{ paginator.num_pages }}">
+                <i class="la la-angle-right"></i></a>
         </li>
         {% endif %}
         {% endif %}
     </ul>
-</div>
+</nav>

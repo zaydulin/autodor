@@ -6,8 +6,9 @@
 {% block propertydescription %}{{ seo_propertytitle }}{% endblock propertydescription %}
 {% block propertyimage %}{{ seo_propertydescription }}{% endblock propertyimage %}
 {% block head %}{% endblock head %}
+{% block content %}ъ
+<a style="position: absolute; right:2%; z-index: 1000;" href="{% url 'moderation:adverts' %}">Личный кабинет</a>
 
-{% block content %}
 {{ homepage.description|safe }}
 {% endblock content %}
 {% block footer %}{% endblock footer %}
