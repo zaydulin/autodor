@@ -53,9 +53,7 @@
             <form method="post"  class="account__main-info" enctype="multipart/form-data">
                 {% csrf_token %}
                 <div class="tab-content mt-4" id="profileTabsContent">
-                    <button type="submit" class="btn  btn-primary">
-                        {% trans 'Сохранить' %}
-                    </button>
+
                     <!-- Мой профиль -->
                     <div class="tab-pane fade show active" id="profile" role="tabpanel" aria-labelledby="profile-tab">
                         <div class="card-body">
@@ -298,6 +296,11 @@
                         </div>
                     </div>
                 </div>
+                <div style="width: 100%;justify-content: flex-end; display: flex;">
+                <button type="submit" class="btn  btn-primary" >
+                    {% trans 'Сохранить' %}
+                </button>
+                </div>
             </form>
         </div>
     </div>
@@ -307,7 +310,6 @@
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="changePasswordModalLabel">{% trans 'Сменить пароль' %}</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Закрыть' %}"></button>
       </div>
       <div class="modal-body">
         <form method="post">
