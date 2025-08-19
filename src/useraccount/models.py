@@ -23,14 +23,15 @@ class Profile(AbstractUser):
         (0, 'Сотрудники'),
         (1, 'Клиент'),
     ]
-    type = models.PositiveSmallIntegerField('Пол', choices=TYPE, blank=False, default=1)
+    type = models.PositiveSmallIntegerField('Тип пользователя', choices=TYPE, blank=False, default=1)
     EMPLOYEE = [
         (0, 'Нет должности'),
         (1, 'Водитель'),
         (2, 'Менеджер'),
         (3, 'Посредник'),
+        (4, 'Админ'),
     ]
-    employee = models.PositiveSmallIntegerField('сотрудник', choices=EMPLOYEE, blank=False, default=0)
+    employee = models.PositiveSmallIntegerField('Должность', choices=EMPLOYEE, blank=False, default=0)
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     phone = models.CharField(blank=True, verbose_name='Телефон', max_length=500, null=True)
     avatar = models.FileField(upload_to=get_user_dir, blank=True, verbose_name='Аватар', default='default/user-nophoto.png', validators=[FileExtensionValidator(allowed_extensions=['png', 'webp', 'jpeg', 'jpg', 'svg'])],)
