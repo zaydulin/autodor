@@ -12,13 +12,18 @@
 
 {% block content %}
 <!--  row -->
+<style>
+    .nav-tabs .nav-link.active {
+        box-shadow: 0 0 0 rgba(245, 65, 20, 0.3);
+    }
+</style>
 <div class="row">
     <div class="card">
         <div class="card-header">
             <h4 class="card-title">{% trans 'Редактирование профиля' %}</h4>
         </div>
         <div class="card-body">
-            <div class="d-flex">
+            <div class="d-flex" style="justify-content: space-between;">
                 <!-- Вкладки -->
                 <ul class="nav nav-tabs" id="profileTabs" role="tablist">
                     <li class="nav-item" role="presentation">
@@ -48,7 +53,7 @@
             <form method="post"  class="account__main-info" enctype="multipart/form-data">
                 {% csrf_token %}
                 <div class="tab-content mt-4" id="profileTabsContent">
-                    <button type="submit" class="btn btn-info">
+                    <button type="submit" class="btn  btn-primary">
                         {% trans 'Сохранить' %}
                     </button>
                     <!-- Мой профиль -->

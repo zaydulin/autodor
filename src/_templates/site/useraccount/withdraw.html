@@ -26,7 +26,7 @@
         <div class="card-header">
             <div class="toolbar" role="toolbar" style="text-align: -webkit-right;">
                 <div class="btn-group mb-1">
-                    <h6 class="mb-0" style="color: #3a7afe;padding: 10px 20px;border-radius: 0.5rem;font-weight: 500;background-color: #ecf2ff;">
+                    <h6 class="mb-0" style="display:flex;align-items: center; justify-content: space-between;  color: #50A0CC; gap:10px; padding: 10px 20px;border-radius: 0.5rem;font-weight: 500;border: 2px solid #50A0CC;height: 50px;">
                         {% if cards %}
                         <span id="card">{% trans 'Карта' %}: {{ cards.card }}</span>
                         <button type="button" class="btn btn-primary light " style="    margin: 0;    padding: 0;" data-bs-toggle="modal" data-bs-target="#EditBankCard">
@@ -86,7 +86,7 @@
                     </h6>
                 </div>
                 <div class="btn-group mb-1">
-                    <h6 class="mb-0" style="color: #3a7afe;padding: 10px 20px;border-radius: 0.5rem;font-weight: 500;background-color: #ecf2ff;">{% trans 'Сумма на балансе' %}:
+                    <h6 class="mb-0" style="display:flex; align-items: center; color: #50A0CC;padding: 10px 20px;border-radius: 0.5rem;font-weight: 500;border: 2px solid #50A0CC;">{% trans 'Сумма на балансе' %}:
                         <span id="total_amount">{{ balance }}</span>
                     </h6>
                 </div>

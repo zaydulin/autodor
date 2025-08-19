@@ -101,14 +101,14 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if(data.success) {
-                alert('Заявка успешно создана!');
+                window.location.href = "{% url 'moderation:my_applications' %}";
             } else {
-                alert('Произошла ошибка: ' + data.error);
+                console.log('Произошла ошибка: ' + data.error);
             }
         })
         .catch(error => {
             console.error('Ошибка:', error);
-            alert('Произошла ошибка при отправке заявки.');
+            console.log('Произошла ошибка при отправке заявки.');
         });
     });
 });
