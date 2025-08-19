@@ -20,13 +20,28 @@
         margin-top: 0;
         border: 0;
     }
+    .btn.btn-primary.light svg {
+    fill: white !important; /* светло-синий цвет */
+}
+
+.white-border {
+    color: #ffffff; /* белый цвет текста или иконки */
+    border: 1px solid #ffffff; /* белая рамка */
+    background-color: transparent; /* прозрачный фон, если нужно */
+}
+    svg {
+    color: white;
+    background: white;
+    border-radius: 6px;
+    border: 1px solid white;
+    }
 </style>
 <div class="col-lg-12">
     <div class="card">
         <div class="card-header">
             <div class="toolbar" role="toolbar" style="text-align: -webkit-right;">
                 <div class="btn-group mb-1">
-                    <h6 class="mb-0" style="display:flex;align-items: center; justify-content: space-between;  color: #50A0CC; gap:10px; padding: 10px 20px;border-radius: 0.5rem;font-weight: 500;border: 2px solid #50A0CC;height: 50px;">
+                    <h6 class="mb-0" style="display:flex;align-items: center; justify-content: space-between;  color: white; gap:10px; padding: 10px 20px;border-radius: 0.5rem;font-weight: 500;background: #50A0CC;height: 50px;">
                         {% if cards %}
                         <span id="card">{% trans 'Карта' %}: {{ cards.card }}</span>
                         <button type="button" class="btn btn-primary light " style="    margin: 0;    padding: 0;" data-bs-toggle="modal" data-bs-target="#EditBankCard">
@@ -57,7 +72,7 @@
                         {% else %}
                         <span>{% trans 'Нет карты' %}</span>
                         <button type="button" class="btn btn-primary light " style="    margin: 0;    padding: 0;" data-bs-toggle="modal" data-bs-target="#AddBankCard">
-                                                            <svg width="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">                                <path opacity="0.4" d="M16.6667 2H7.33333C3.92889 2 2 3.92889 2 7.33333V16.6667C2 20.0622 3.92 22 7.33333 22H16.6667C20.0711 22 22 20.0622 22 16.6667V7.33333C22 3.92889 20.0711 2 16.6667 2Z" fill="currentColor"></path>                                <path d="M15.3205 12.7083H12.7495V15.257C12.7495 15.6673 12.4139 16 12 16C11.5861 16 11.2505 15.6673 11.2505 15.257V12.7083H8.67955C8.29342 12.6687 8 12.3461 8 11.9613C8 11.5765 8.29342 11.2539 8.67955 11.2143H11.2424V8.67365C11.2824 8.29088 11.6078 8 11.996 8C12.3842 8 12.7095 8.29088 12.7495 8.67365V11.2143H15.3205C15.7066 11.2539 16 11.5765 16 11.9613C16 12.3461 15.7066 12.6687 15.3205 12.7083Z" fill="currentColor"></path>                                </svg>
+                                                            <svg width="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">                                <path style="color: #50A0CC" opacity="0.4" d="M16.6667 2H7.33333C3.92889 2 2 3.92889 2 7.33333V16.6667C2 20.0622 3.92 22 7.33333 22H16.6667C20.0711 22 22 20.0622 22 16.6667V7.33333C22 3.92889 20.0711 2 16.6667 2Z" fill="currentColor"></path>                                <path d="M15.3205 12.7083H12.7495V15.257C12.7495 15.6673 12.4139 16 12 16C11.5861 16 11.2505 15.6673 11.2505 15.257V12.7083H8.67955C8.29342 12.6687 8 12.3461 8 11.9613C8 11.5765 8.29342 11.2539 8.67955 11.2143H11.2424V8.67365C11.2824 8.29088 11.6078 8 11.996 8C12.3842 8 12.7095 8.29088 12.7495 8.67365V11.2143H15.3205C15.7066 11.2539 16 11.5765 16 11.9613C16 12.3461 15.7066 12.6687 15.3205 12.7083Z" fill="currentColor"></path>                                </svg>
                         </button>
                         <!-- Создание банковской карты -->
                         <div class="modal fade" id="AddBankCard" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="BankCardLabel" aria-hidden="true">
@@ -86,17 +101,17 @@
                     </h6>
                 </div>
                 <div class="btn-group mb-1">
-                    <h6 class="mb-0" style="display:flex; align-items: center; color: #50A0CC;padding: 10px 20px;border-radius: 0.5rem;font-weight: 500;border: 2px solid #50A0CC;">{% trans 'Сумма на балансе' %}:
+                    <h6 class="mb-0" style="display:flex; align-items: center; color: white;padding: 10px 20px;border-radius: 0.5rem;font-weight: 500;background: #50A0CC;">{% trans 'Сумма на балансе' %}:
                         <span id="total_amount">{{ balance }}</span>
                     </h6>
                 </div>
                 <div class="btn-group mb-1">
                     <button type="button" class="btn btn-primary light  " style="    margin: 0;    padding: 0;" data-bs-toggle="modal" data-bs-target="#createWithdraw" >
-                                                        <svg width="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">                                <path opacity="0.4" d="M16.6667 2H7.33333C3.92889 2 2 3.92889 2 7.33333V16.6667C2 20.0622 3.92 22 7.33333 22H16.6667C20.0711 22 22 20.0622 22 16.6667V7.33333C22 3.92889 20.0711 2 16.6667 2Z" fill="currentColor"></path>                                <path d="M15.3205 12.7083H12.7495V15.257C12.7495 15.6673 12.4139 16 12 16C11.5861 16 11.2505 15.6673 11.2505 15.257V12.7083H8.67955C8.29342 12.6687 8 12.3461 8 11.9613C8 11.5765 8.29342 11.2539 8.67955 11.2143H11.2424V8.67365C11.2824 8.29088 11.6078 8 11.996 8C12.3842 8 12.7095 8.29088 12.7495 8.67365V11.2143H15.3205C15.7066 11.2539 16 11.5765 16 11.9613C16 12.3461 15.7066 12.6687 15.3205 12.7083Z" fill="currentColor"></path>                                </svg>
+                                                        <svg width="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">                                <path style="color: #50A0CC" opacity="0.4" d="M16.6667 2H7.33333C3.92889 2 2 3.92889 2 7.33333V16.6667C2 20.0622 3.92 22 7.33333 22H16.6667C20.0711 22 22 20.0622 22 16.6667V7.33333C22 3.92889 20.0711 2 16.6667 2Z" fill="currentColor"></path>                                <path d="M15.3205 12.7083H12.7495V15.257C12.7495 15.6673 12.4139 16 12 16C11.5861 16 11.2505 15.6673 11.2505 15.257V12.7083H8.67955C8.29342 12.6687 8 12.3461 8 11.9613C8 11.5765 8.29342 11.2539 8.67955 11.2143H11.2424V8.67365C11.2824 8.29088 11.6078 8 11.996 8C12.3842 8 12.7095 8.29088 12.7495 8.67365V11.2143H15.3205C15.7066 11.2539 16 11.5765 16 11.9613C16 12.3461 15.7066 12.6687 15.3205 12.7083Z" fill="currentColor"></path>                                </svg>
                     </button>
                     <button type="button" class="btn btn-primary light " style="    margin: 0;    padding: 0;" onclick="location.href=`{% url 'useraccount:withdraw' %}`">
                             <svg xmlns="http://www.w3.org/2000/svg" width="32" viewBox="0 0 24 24" fill="none">
-                                <circle cx="12" cy="12" r="7.5" fill="currentColor" fill-opacity="0.4" stroke="none"></circle>
+                                <circle style="color: #50A0CC" cx="12" cy="12" r="7.5" fill="currentColor" fill-opacity="0.4" stroke="none"></circle>
                             </svg>
                     </button>
                 </div>
