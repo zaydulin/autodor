@@ -392,12 +392,11 @@ def create_application(request, advert_id):
         try:
             data = json.loads(request.body)
             advert = Advert.objects.get(id=advert_id)
-            svoi_price = Decimal(data.get('price'))
 
             application = AdvertAplication.objects.create(
                 advert=advert,
                 status=AdvertAplication.Status.NEW,
-                price = svoi_price,
+                price=0,
             )
 
             settings = SettingsGlobale.objects.first()  # или другой способ получения нужного экземпляра

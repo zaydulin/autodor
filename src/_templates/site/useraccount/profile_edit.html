@@ -39,8 +39,8 @@
                 </ul>
                 <ul class="nav nav-tabs" id="passwordTabs" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="password-tab" data-bs-toggle="tab" data-bs-target="#password" type="button" role="tab" aria-controls="password" aria-selected="false">
-                            Сменить пароль
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                            {% trans 'Сменить пароль' %}
                         </button>
                     </li>
                 </ul>
@@ -294,56 +294,39 @@
                     </div>
                 </div>
             </form>
-            <div class="tab-content mt-4" id="passwordTabsContent">
-                <!-- Сменить пароль -->
-                <div class="tab-pane fade" id="password" role="tabpanel" aria-labelledby="password-tab">
-                    <div class="card-body">
-                        <form method="post">
-                            {% csrf_token %}
-                            <div class="row">
-                                <div class="col-sm-3">
-                                    <h6 class="mb-0">{% trans 'Старый пароль' %}</h6>
-                                </div>
-                                <div class="col-sm-9 text-secondary">
-                                    {{ password_form.old_password }}
-                                </div>
-                            </div>
-                            <hr>
-                            <div class="row">
-                                <div class="col-sm-3">
-                                    <h6 class="mb-0">{% trans 'Новый пароль' %}</h6>
-                                </div>
-                                <div class="col-sm-9 text-secondary">
-                                    {{ password_form.new_password1 }}
-                                </div>
-                            </div>
-                            <hr>
-                            <div class="row">
-                                <div class="col-sm-3">
-                                    <h6 class="mb-0">{% trans 'Подтверждение нового пароля' %}</h6>
-                                </div>
-                                <div class="col-sm-9 text-secondary">
-                                    {{ password_form.new_password2 }}
-                                </div>
-                            </div>
-                            <hr>
-                            <div class="row">
-                                <div class="col-sm-12">
-                                    <button type="submit" class="btn btn-info">
-                                        {% trans 'Изменить пароль' %}
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-            </div>
         </div>
     </div>
 </div>
-</div>
-<style>
+<div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="changePasswordModalLabel">{% trans 'Сменить пароль' %}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Закрыть' %}"></button>
+      </div>
+      <div class="modal-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="id_old_password" class="form-label">{% trans 'Старый пароль' %}</label>
+                {{ password_form.old_password }}
+            </div>
+            <div class="mb-3">
+                <label for="id_new_password1" class="form-label">{% trans 'Новый пароль' %}</label>
+                {{ password_form.new_password1 }}
+            </div>
+            <div class="mb-3">
+                <label for="id_new_password2" class="form-label">{% trans 'Подтверждение нового пароля' %}</label>
+                {{ password_form.new_password2 }}
+            </div>
+            <div class="d-flex justify-content-end">
+                <button type="submit" class="btn btn-primary">{% trans 'Изменить пароль' %}</button>
+            </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div><style>
     .form-control[type="file"]:not(:disabled):not([readonly]) {
         --tw-border-opacity: 1;
         border-color: rgb(226 232 240 / var(--tw-border-opacity));
@@ -371,40 +354,61 @@
     window.addEventListener('load', function() {
         // Инициализация маски для телефона
         var element = document.getElementById('id_phone');
-        var maskOptions = {
-            mask: '+7(000)000-00-00',
-            lazy: false
+        if (element) {
+            var maskOptions = {
+                mask: '+7(000)000-00-00',
+                lazy: false
+            }
+            var mask = new IMask(element, maskOptions);
         }
-        var mask = new IMask(element, maskOptions);
 
         // Инициализация маски для email
-        var maskOptions2 = {
-            mask: function (value) {
-                if(/^[a-z0-9_\.-]+$/.test(value))
-                    return true;
-                if(/^[a-z0-9_\.-]+@$/.test(value))
-                    return true;
-                if(/^[a-z0-9_\.-]+@[a-z0-9-]+$/.test(value))
-                    return true;
-                if(/^[a-z0-9_\.-]+@[a-z0-9-]+\.$/.test(value))
-                    return true;
-                if(/^[a-z0-9_\.-]+@[a-z0-9-]+\.[a-z]{1,4}$/.test(value))
-                    return true;
-                if(/^[a-z0-9_\.-]+@[a-z0-9-]+\.[a-z]{1,4}\.$/.test(value))
-                    return true;
-                if(/^[a-z0-9_\.-]+@[a-z0-9-]+\.[a-z]{1,4}\.[a-z]{1,4}$/.test(value))
-                    return true;
-                return false;
-            },
-            lazy: false
-        }
-
         var emailElement = document.getElementById('id_email');
         if (emailElement) {
-            var mask2 = new IMask(emailElement, maskOptions2);
+            var maskOptions2 = {
+                mask: function (value) {
+                    if(/^[a-z0-9_\.-]+$/.test(value))
+                        return true;
+                    if(/^[a-z0-9_\.-]+@$/.test(value))
+                        return true;
+                    if(/^[a-z0-9_\.-]+@[a-z0-9-]+$/.test(value))
+                        return true;
+                    if(/^[a-z0-9_\.-]+@[a-z0-9-]+\.$/.test(value))
+                        return true;
+                    if(/^[a-z0-9_\.-]+@[a-z0-9-]+\.[a-z]{1,4}$/.test(value))
+                        return true;
+                    if(/^[a-z0-9_\.-]+@[a-z0-9-]+\.[a-z]{1,4}\.$/.test(value))
+                        return true;
+                    if(/^[a-z0-9_\.-]+@[a-z0-9-]+\.[a-z]{1,4}\.[a-z]{1,4}$/.test(value))
+                        return true;
+                    return false;
+                },
+                lazy: false
+            }
+            var emailMask = new IMask(emailElement, maskOptions2);
         }
     });
 
+    // Инициализация suggestions
+    var api_key = '7fd18aaabd7d53ffa4846e4521c1f736c13490eb';
+
+    function formatCity(suggestion) {
+        var address = suggestion.data;
+        if (address.city_with_type === address.region_with_type) {
+            return address.settlement_with_type || "";
+        } else {
+            return address.city_with_type || "";
+        }
+    }
+
+    var $city = $('#id_city');
+    $city.suggestions({
+        token: api_key,
+        type: 'ADDRESS',
+        hint: false,
+        bounds: "city-settlement",
+        formatSelected: formatCity
+    });
 </script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
