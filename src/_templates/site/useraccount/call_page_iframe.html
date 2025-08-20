@@ -161,7 +161,7 @@
   }
 <!--  const wsUrl = `ws://${location.host}/ws/call/${callId}/`;-->
   const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-  const ws = new WebSocket(`${protocol}://${location.host}/ws/call/${callId}/`);
+  const ws = new WebSocket(`${protocol}://${window.location.host}/ws/call/${callId}/`);
   ws.onopen = () => console.log('Open');
   ws.onerror = (e) => console.error('Error', e);
 
