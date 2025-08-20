@@ -18,27 +18,38 @@ class CallConsumer(AsyncWebsocketConsumer):
         data = json.loads(text_data)
         message_type = data.get('type')
 
-        if message_type == 'hangup':
+        if message_type == 'call_incoming':
+            # Пользователю приходит уведомление о входящем звонке
+            call_id = data.get('call_id')
+            caller_id = data.get('caller_id')
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'incoming_call',
+                    'call_id': call_id,
+                    'caller_id': caller_id,
+                }
+            )
+        elif message_type == 'hangup':
             # Обработка завершения звонка
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
-                    'type': '',
-                    'message': {
-                        'type': 'hangup',
-                        'sender': data.get('sender'),
-                    }
+                    'type': 'call_hangup',
+                    'sender': data.get('sender'),
                 }
             )
         else:
-            # Обработка других сигналов
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    'type': 'send_message',
-                    'message': data,
-                }
-            )
+            # Передача сигналов WebRTC
+            target_user_id = data.get('target_user_id')
+            if target_user_id:
+                await self.channel_layer.group_send(
+                    f'user_{target_user_id}',
+                    {
+                        'type': 'send_message',
+                        'message': data,
+                    }
+                )
 
     async def send_message(self, event):
         # Унифицированный метод отправки сообщений

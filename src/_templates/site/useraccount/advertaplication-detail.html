@@ -175,19 +175,20 @@
                         {% endif %}
                     </div>
                     <div class="card-body">
-                        <table class="table table-sm align-middle">
-                            <thead>
-                            <tr><th>Статья</th><th class="text-end">Сумма</th><th>Дата</th></tr>
-                            </thead>
-                            <tbody>
-                            {% for expense in expenses %}
-                                <tr><td>{{ expense.title }}</td><td class="text-end">{{ expense.amount }} {{ advert.currency }}</td><td>{{ expense.created_at|date:"d.m.Y" }}</td></tr>
-                            {% endfor %}
-                            <form action=""></form>
-                                <tr style="display: none"><td></td><td class="text-end">{{ expense.amount }} {{ advert.currency }}</td><td>{{ expense.created_at|date:"d.m.Y" }}</td></tr>
-                            </form>
-                            </tbody>
-                        </table>
+                        {% if expenses %}
+                            <table class="table table-sm align-middle">
+                                <thead>
+                                    <tr><th>Статья</th><th class="text-end">Сумма</th><th>Дата</th></tr>
+                                </thead>
+                                <tbody>
+                                {% for expense in expenses %}
+                                    <tr><td>{{ expense.title }}</td><td class="text-end">{{ expense.amount }} {{ advert.currency }}</td><td>{{ expense.created_at|date:"d.m.Y" }}</td></tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        {% else %}
+                            <p style="text-align: center;">Нет дополнительных расходов</p>
+                        {% endif %}
                     </div>
                 </div>
             </div>

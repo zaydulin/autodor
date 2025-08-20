@@ -620,7 +620,7 @@ class CreateExpenseView(View):
 
             # Проверяем права доступа
             application = AdvertAplication.objects.get(id=application_id)
-            if request.user not in application.user_menager.all():
+            if request.user not in application.user_menager.all() and request.user.employee != 4:
                 raise PermissionDenied("У вас нет прав на добавление расходов")
 
             # Создаем новый расход
