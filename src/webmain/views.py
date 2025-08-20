@@ -132,17 +132,7 @@ class NearestOnlineTrainingView(LoginRequiredMixin, TemplateView):
 
 
         # Получаем блоги, связанные с этими платежами
-        related_blogs = Blogs.objects.first()
-
-
-
-        # Фильтрация: онлайн, дата >= сегодня, есть стрим
-        filtered_blogs = related_blogs.filter(
-            pagetype=1,
-            data__gte=today,
-            stream=True
-        ).order_by('data', 'time')
-
+        filtered_blogs = Blogs.objects.all()
 
         # Ближайший блог
         blog = filtered_blogs.first()
