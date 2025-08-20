@@ -7,6 +7,11 @@
 {% block propertyimage %}{{ seo_propertydescription }}{% endblock propertyimage %}
 {% block head %}{% endblock head %}
 {% block content %}
+<style>
+    .item_title {
+    margin: 0;
+    }
+</style>
 <section class="page_banner" style="background-image: url('assets/images/shapes/tyre_print_3.svg');">
     <div class="container">
         <ul class="breadcrumb_nav unordered_list">
@@ -37,12 +42,7 @@
                                 <ul class="post_meta unordered_list">
                                     <li>{{blog.create}}</li>
                                 </ul>
-                                <a class="btn-link" href="{% url 'webmain:blog' blog.slug %}">
-                                    <span class="btn_text">
-                                        <small>Подробнее..</small>
-                                        <small>Подробнее..</small>
-                                    </span>
-                                </a>
+
                             </div>
                         </div>
                     </div>
