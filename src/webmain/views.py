@@ -134,9 +134,6 @@ class NearestOnlineTrainingView(LoginRequiredMixin, TemplateView):
         # Получаем блоги, связанные с этими платежами
         related_blogs = Blogs.objects.first()
 
-        if not related_blogs.exists():
-            context['blog'] = None
-            return context
 
 
         # Фильтрация: онлайн, дата >= сегодня, есть стрим
