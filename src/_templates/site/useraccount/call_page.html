@@ -166,7 +166,8 @@
   const otherUserId = "{{ other_user.id }}";
 
 <!--  const wsUrl = `ws://${location.host}/ws/call/${callId}/`;-->
-  const ws = new WebSocket('ws://' + location.host + '/ws/call/' + callId + '/');
+  const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+  const ws = new WebSocket(`${protocol}://${location.host}/ws/call/${callId}/`);
   ws.onopen = () => console.log('Open');
   ws.onerror = (e) => console.error('Error', e);
   let localStream;
@@ -187,14 +188,12 @@
   const cancelBtn = document.getElementById('cancelBtn');
   const muteBtn = document.getElementById('muteBtn');
   const callStatusDiv = document.getElementById('callStatus');
-  console.log(cancelBtn)
   // Функции обновления статуса
   function updateCallStatus(message) {
     callStatusDiv.textContent = message;
   }
 
   function updateUIOnCallStart() {
-    console.log(cancelBtn)
 
     if (callBtn) callBtn.style.display = 'none';
     if (cancelBtn) {
