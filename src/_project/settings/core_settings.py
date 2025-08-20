@@ -41,12 +41,18 @@ CHANNEL_LAYERS = {
     },
 }
 
+INTERNAL_IPS = [
+    # ...
+    "127.0.0.1",
+    # ...
+]
+
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
 
 INSTALLED_APPS = [
-    'daphne',
     "jazzmin",
+    'daphne',
     'channels',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -127,6 +133,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 X_FRAME_OPTIONS = 'SAMEORIGIN'
 
+SITE_ID = 1
 
 JAZZMIN_SETTINGS = {
     "site_title": "Admin",
