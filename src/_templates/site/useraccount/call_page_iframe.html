@@ -160,7 +160,7 @@
     document.getElementById('callBtn').click();
   }
 <!--  const wsUrl = `ws://${location.host}/ws/call/${callId}/`;-->
-  const ws = new WebSocket('wss://bahtrucks.com/ws/call/510cc83d-af54-420a-8f75-b18f2f5f9f16/');
+  const ws = new WebSocket('ws://' + location.host + '/ws/call/' + callId + '/');
   ws.onopen = () => console.log('Open');
   ws.onerror = (e) => console.error('Error', e);
 
