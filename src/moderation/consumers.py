@@ -1,54 +1,47 @@
 import json
+
 from channels.generic.websocket import AsyncWebsocketConsumer
-from .models import CallSession
-from asgiref.sync import sync_to_async
+
 
 class CallConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.call_id = self.scope['url_route']['kwargs']['call_id']
-        self.room_group_name = f'call_{self.call_id}'
+        self.user = self.scope['user']
+        self.user_id = self.user.id
+        self.group_name = f'user_{self.user_id}'
 
-        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+        await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
 
     async def disconnect(self, close_code):
-        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
-
-    async def call_ended(self, event):
-        # Отправляем всем участникам сообщение о завершении
-        print(event)
-        await self.send(text_data=json.dumps({
-            'type': 'call_ended',
-            'sender': event.get('sender'),
-        }))
+        await self.channel_layer.group_discard(self.group_name, self.channel_name)
 
     async def receive(self, text_data):
         data = json.loads(text_data)
         message_type = data.get('type')
 
         if message_type == 'call_incoming':
-            # Пользователю приходит уведомление о входящем звонке
-            call_id = data.get('call_id')
-            caller_id = data.get('caller_id')
+            # Отправляем вызываемому пользователю
+            target_user_id = data.get('target_user_id')
             await self.channel_layer.group_send(
-                self.room_group_name,
+                f'user_{target_user_id}',
                 {
                     'type': 'incoming_call',
-                    'call_id': call_id,
-                    'caller_id': caller_id,
+                    'call_id': data.get('call_id'),
+                    'caller_id': self.user_id,
                 }
             )
         elif message_type == 'hangup':
-            # Обработка завершения звонка
+            # Рассылаем всем участникам
             await self.channel_layer.group_send(
-                self.room_group_name,
+                f'call_{self.call_id}',
                 {
                     'type': 'call_hangup',
-                    'sender': data.get('sender'),
+                    'sender': self.user_id,
                 }
             )
         else:
-            # Передача сигналов WebRTC
+            # Передача WebRTC сигналов
             target_user_id = data.get('target_user_id')
             if target_user_id:
                 await self.channel_layer.group_send(
@@ -59,13 +52,18 @@ class CallConsumer(AsyncWebsocketConsumer):
                     }
                 )
 
-    async def send_message(self, event):
-        # Унифицированный метод отправки сообщений
-        await self.send(text_data=json.dumps(event['message']))
+    async def incoming_call(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'incoming_call',
+            'call_id': event['call_id'],
+            'caller_id': event['caller_id'],
+        }))
 
     async def call_hangup(self, event):
-        # Обработка события hangup
         await self.send(text_data=json.dumps({
             'type': 'call_hangup',
-            'sender': event.get('sender'),
+            'sender': event['sender'],
         }))
+
+    async def send_message(self, event):
+        await self.send(text_data=json.dumps(event['message']))
