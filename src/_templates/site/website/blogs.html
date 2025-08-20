@@ -25,7 +25,7 @@
                     <div class="col-md-4 col-sm-6">
                         <div class="blog_item mb-5">
                             <a class="item_image" href="{% url 'webmain:blog' blog.slug %}">
-                                <img src="https://html.merku.love/assets/images/blogs/blog_img_10.jpg" alt="ProMotors - Blog Image">
+                                <img src="{{blog.previev.url}}" alt="ProMotors - Blog Image">
                             </a>
                             <div class="item_content">
                                 <ul class="item_type_list unordered_list">
