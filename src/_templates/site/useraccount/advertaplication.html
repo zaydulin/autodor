@@ -176,6 +176,8 @@
                     <h4 style="display: flex; justify-content: center;">У вас нет заявок, выберите машину в разделе объявления</h4>
                     {% endif %}
 </div>
+{% include 'site/useraccount/include/paginations.html' with items=adverts %}
+
 {% endblock content %}
 {% block footertop %}
 <script>

@@ -1,18 +1,5 @@
-{% extends 'site/useraccount/base.html' %}
-  {% load static  %}
-  {% load i18n %}
-  {% block title %}Аудиозвонок с {{ other_user.username }}{% endblock title %}
-  {% block description %}{{ seo_description }}{% endblock description %}
-  {% block propertytitle %}{% if seo_previev %}{{ seo_previev.url }} {% endif %} {% endblock propertytitle %}
-  {% block propertydescription %}{{ seo_propertytitle }}{% endblock propertydescription %}
-  {% block propertyimage %}{{ seo_propertydescription }}{% endblock propertyimage %}
-  {% block head %}
-
-
-  {% endblock head %}
-{% block content %}
-
-  <style>
+<body>
+<style>
 
 
     h1 {
@@ -268,26 +255,11 @@
     if (data.type === 'incoming_call') {
         showIncomingCallNotification(data.call_id, data.caller_id);
     } else if (data.type === 'hangup') {
-    // Завершение звонка и уведомление всех участников
-    endCall();
+        endCall();
+        updateCallStatus("Звонок завершен");
+    } else {
+      if (data.sender === userId) return; // игнорировать свои сообщения
 
-    // Отправляем сообщение всем участникам, чтобы они тоже завершили звонок
-    sendMessage({ type: 'call_ended', call_id: callId, sender: userId });
-      fetch(`/api/calls/${callId}/end/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': '{{ csrf_token }}'
-        },
-        body: JSON.stringify({ reason: 'call ended' })
-      });
-
-      updateCallStatus("Звонок завершен");
-    } else if (data.type === 'call_ended') {
-      // Другие участники получили уведомление о завершении
-      endCall();
-      updateCallStatus("Звонок завершен");
-    }
       switch (data.type) {
         case 'offer':
           if (!peerConnection) {
@@ -308,7 +280,7 @@
           endCall();
           break;
     }
-
+    }
 };
 
   // Инициализация PeerConnection
@@ -475,4 +447,4 @@
     };
   }
 </script>
-{% endblock content %}
+</body>

@@ -16,8 +16,11 @@ urlpatterns = [
     path('application/<uuid:application_id>/update/', views.update_application, name='update_application'),
     path('generate_contract/<uuid:application_id>/', views.generate_contract,name='generate_contract'),
     path('call/<uuid:application_id>/<uuid:calle_id>/', views.call_page, name='call_page'),
+    path('call_iframe/<uuid:application_id>/<uuid:calle_id>/', views.call_page_iframe, name='call_page_iframe'),
     path('expenses/create/', views.CreateExpenseView.as_view(), name='create_expense'),
     path('applications-list/', views.application_list, name='application_list'),
     path('document_editor/<uuid:document_id>/',views.document_editor,name='document_editor'),
     path('save-document/<uuid:pk>/', views.save_document, name='save_document'),
+    path('check_active_call/', views.check_active_call, name='check_active_call'),
+
 ]

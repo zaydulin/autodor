@@ -585,6 +585,7 @@ def call_page(request, application_id,calle_id):
     calle = Profile.objects.get(id=calle_id)
     call, created = CallSession.objects.get_or_create(
         application=application,
+        is_active = True,
         defaults={
             'caller': request.user,
             'callee': calle
@@ -601,6 +602,34 @@ def call_page(request, application_id,calle_id):
         'application_id': application_id,
         'call_id': str(call.id),
         'user': request.user,
+        'is_call_page': True,
+        'other_user': other_user,
+    })
+
+@login_required
+def call_page_iframe(request, application_id,calle_id):
+    application = get_object_or_404(AdvertAplication, id=application_id)
+    calle = Profile.objects.get(id=calle_id)
+    call, created = CallSession.objects.get_or_create(
+        application=application,
+        is_active = True,
+        defaults={
+            'caller': request.user,
+            'callee': calle
+        }
+    )
+
+    if not call.callee:
+        return HttpResponse("Нет пользователя для звонка", status=400)
+
+    other_user = call.callee if request.user == call.caller else call.caller
+
+
+    return render(request, 'site/useraccount/call_page_iframe.html', {
+        'application_id': application_id,
+        'call_id': str(call.id),
+        'user': request.user,
+        'is_call_page': True,
         'other_user': other_user,
     })
 
@@ -631,6 +660,8 @@ class CreateExpenseView(View):
                 date=date
             )
 
+
+
             return JsonResponse({
                 'success': True,
                 'message': 'Расход успешно добавлен',
@@ -644,3 +675,13 @@ class CreateExpenseView(View):
                 'message': str(e)
             }, status=403)
 
+@login_required
+def check_active_call(request):
+    user = request.user
+    # Проверяем, есть ли активный звонок, где пользователь - это callee
+    active_call = CallSession.objects.filter(callee=user, is_active=True).first()
+    if active_call:
+        # Можно вернуть информацию о звонке, например, его id или URL для iframe
+        return JsonResponse({'has_active_call': True, 'call_id': str(active_call.application.id), 'calle_id': str(active_call.callee.id)})
+    else:
+        return JsonResponse({'has_active_call': False})
