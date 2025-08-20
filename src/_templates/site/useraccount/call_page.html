@@ -164,14 +164,7 @@
   const callId = "{{ call_id }}";
   const userId = "{{ user.id }}";
   const otherUserId = "{{ other_user.id }}";
-  const urlParams = new URLSearchParams(window.location.search);
-  const incoming = urlParams.get('incoming');
 
-  if (incoming === 'true') {
-    // Автоматически начать звонок или показать уведомление
-    // Например, автоматически нажать кнопку "Начать звонок"
-    document.getElementById('callBtn').click();
-  }
   const wsUrl = `ws://${location.host}/ws/call/${callId}/`;
   const ws = new WebSocket(wsUrl);
 
@@ -265,51 +258,29 @@
 
   ws.onmessage = async (event) => {
     const data = JSON.parse(event.data);
-    if (data.type === 'incoming_call') {
-        showIncomingCallNotification(data.call_id, data.caller_id);
-    } else if (data.type === 'hangup') {
-    // Завершение звонка и уведомление всех участников
-    endCall();
+    if (data.sender === userId) return; // игнорировать свои сообщения
 
-    // Отправляем сообщение всем участникам, чтобы они тоже завершили звонок
-    sendMessage({ type: 'call_ended', call_id: callId, sender: userId });
-      fetch(`/api/calls/${callId}/end/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': '{{ csrf_token }}'
-        },
-        body: JSON.stringify({ reason: 'call ended' })
-      });
-
-      updateCallStatus("Звонок завершен");
-    } else if (data.type === 'call_ended') {
-      // Другие участники получили уведомление о завершении
-      endCall();
-      updateCallStatus("Звонок завершен");
+    switch (data.type) {
+      case 'offer':
+        if (!peerConnection) {
+          initPeerConnection();
+        }
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+        sendMessage({ type: 'answer', answer: peerConnection.localDescription, sender: userId });
+        break;
+      case 'answer':
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+        break;
+      case 'ice-candidate':
+        await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+        break;
+      case 'hangup':
+        endCall();
+        break;
     }
-      switch (data.type) {
-        case 'offer':
-          if (!peerConnection) {
-            initPeerConnection();
-          }
-          await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
-          const answer = await peerConnection.createAnswer();
-          await peerConnection.setLocalDescription(answer);
-          sendMessage({ type: 'answer', answer: peerConnection.localDescription, sender: userId });
-          break;
-        case 'answer':
-          await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
-          break;
-        case 'ice-candidate':
-          await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
-          break;
-        case 'hangup':
-          endCall();
-          break;
-    }
-
-};
+  };
 
   // Инициализация PeerConnection
   function initPeerConnection() {
@@ -431,48 +402,6 @@
       setTimeout(analyze, 1000);
     }
     analyze();
-  }
-
-
-
-
-  // Функция отображения уведомления о входящем звонке
-  function showIncomingCallNotification(callId, callerId) {
-    // Создаем элемент уведомления
-    const notification = document.createElement('div');
-    notification.id = 'incomingCallNotification';
-    notification.style.position = 'fixed';
-    notification.style.top = '20px';
-    notification.style.right = '20px';
-    notification.style.backgroundColor = '#fff';
-    notification.style.border = '2px solid #2980b9';
-    notification.style.borderRadius = '8px';
-    notification.style.padding = '15px';
-    notification.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
-    notification.style.zIndex = '1000';
-
-    // Получить имя вызывающего (можно через API или из данных)
-    const callerName = "{{ user.username }}"; // или сделать AJAX-запрос, чтобы получить имя по callerId
-
-    notification.innerHTML = `
-      <strong>Входящий звонок от ${callerName}</strong><br>
-      <button id="acceptCallBtn">Принять</button>
-      <button id="rejectCallBtn">Отклонить</button>
-    `;
-
-    document.body.appendChild(notification);
-
-    document.getElementById('acceptCallBtn').onclick = () => {
-      // Перейти к странице звонка или начать звонок
-      // Можно открыть страницу звонка с параметром call_id
-      window.location.href = `/call/${callId}/?incoming=true`;
-    };
-
-    document.getElementById('rejectCallBtn').onclick = () => {
-      // Отправить сигнал о отклонении
-      sendMessage({ type: 'hangup', sender: "{{ user.id }}", call_id: callId });
-      document.body.removeChild(notification);
-    };
   }
 </script>
 {% endblock content %}
