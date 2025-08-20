@@ -160,7 +160,7 @@
     document.getElementById('callBtn').click();
   }
 <!--  const wsUrl = `ws://${location.host}/ws/call/${callId}/`;-->
-  const wsUrl = `ws://bahtrucks.com/ws/call/${callId}/`;
+  const wsUrl = `wss://bahtrucks.com/ws/call/${callId}/`;
   const ws = new WebSocket(wsUrl);
 
   let localStream;
