@@ -1,5 +1,7 @@
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponseRedirect, JsonResponse
 from django.urls import reverse_lazy
+from django.utils import timezone
 from django.views.generic import ListView, DetailView, TemplateView, FormView
 from django.views.generic.list import MultipleObjectMixin
 from django.contrib import messages
@@ -117,6 +119,39 @@ class ContactView(ListView):
             )
         except:pass
         return redirect(reverse('webmain:contacts'))
+
+
+class NearestOnlineTrainingView(LoginRequiredMixin, TemplateView):
+    template_name = 'site/website/nearest_training.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        today = timezone.localdate()
+        user = self.request.user
+
+
+        # Получаем блоги, связанные с этими платежами
+        related_blogs = Blogs.objects.first()
+
+        if not related_blogs.exists():
+            context['blog'] = None
+            return context
+
+
+        # Фильтрация: онлайн, дата >= сегодня, есть стрим
+        filtered_blogs = related_blogs.filter(
+            pagetype=1,
+            data__gte=today,
+            stream=True
+        ).order_by('data', 'time')
+
+
+        # Ближайший блог
+        blog = filtered_blogs.first()
+
+        context['blog'] = blog
+        return context
 
 """ЧаВо"""
 class FaqsView(ListView):
