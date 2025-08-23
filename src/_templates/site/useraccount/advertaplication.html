@@ -14,15 +14,25 @@
     font-weight: 600;
     }
 
+    @media (max-width: 992px) {
+    .col-lg-6 {
+        display: flex;
+        justify-content: center;
+    }
+    }
+    .application-item {
+        margin-bottom: 20px; /* пробел между заявками */
+        cursor: pointer; /* курсор при наведении */
+        padding: 10px; /* немного внутреннего отступа для фона */
+        background-color: #f9f9f9; /* светлый фон для заявок, по желанию */
+        border-radius: 8px; /* скругление углов, по желанию */
+    }
 </style>
-<div class="conatiner-fluid content-inner mt-5 py-0">
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="card">
-                <div class="card-body">
+<div class="container">
+                {% if advertaplications %}
                     {% for advertaplication in advertaplications %}
-                    <div style="margin-bottom: 10%">
-                    <div class="row d-flex align-items-center pb-3"  data-href="{% url 'moderation:application_detail' advertaplication.id %}">
+                    <div  style="margin-bottom: 10%; background: white;" data-href="{% url 'moderation:application_detail' advertaplication.id %}">
+                    <div style="padding:5%" class="row d-flex align-items-center pb-3 "  >
                         <div class="col-lg-6" style="height:300px;">
                             {# Если в images хранится список ссылок #}
                             {% if advertaplication.advert.images %}
@@ -162,11 +172,12 @@
                     </div>
                     </div>
                     {% endfor %}
-                </div>
-            </div>
-        </div>
-    </div>
+                    {% else %}
+                    <h4 style="display: flex; justify-content: center;">У вас нет заявок, выберите машину в разделе объявления</h4>
+                    {% endif %}
 </div>
+{% include 'site/useraccount/include/paginations.html' with items=adverts %}
+
 {% endblock content %}
 {% block footertop %}
 <script>

@@ -160,8 +160,8 @@
         </div>
     </div>
 </aside>
-<div class="tab-content sidebar sidebar-default navs-rounded-all" id="nav-tabContent">
-        <div class="sidebar-header d-flex align-items-center justify-content-start">
+<div class="tab-content sidebar sidebar-default" id="nav-tabContent">
+    <div class="sidebar-header d-flex align-items-center justify-content-start">
             <a  href="{% url 'webmain:home' %}" class="navbar-brand">
                 <!--Logo start-->
                 <img src="{% if settings.favicon %}{{settings.logo.url}}{% endif %}" class="img-fluid" alt="logo-big">
@@ -292,7 +292,7 @@
                             </li>
 
                             <li class="nav-item">
-                                <a class="nav-link " href="{% url 'moderation:my_applications'%}">
+                                <a class="nav-link " href="{% url 'moderation:application_list'%}">
                                     <i class="icon">
                                         <svg width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                             <path opacity="0.4" d="M16.191 2H7.81C4.77 2 3 3.78 3 6.83V17.16C3 20.26 4.77 22 7.81 22H16.191C19.28 22 21 20.26 21 17.16V6.83C21 3.78 19.28 2 16.191 2Z" fill="currentColor"></path>
@@ -363,7 +363,7 @@
         <!--Nav Start-->
         <nav class="nav navbar navbar-expand-lg navbar-light iq-navbar">
             <div class="container-fluid navbar-inner">
-                <a href="" class="navbar-brand">
+                <a  href="{% url 'webmain:home' %}"  class="navbar-brand">
                     <!--Logo start-->
                     <img src="{% if settings.favicon %}{{settings.logo.url}}{% endif %}" class="img-fluid" alt="logo-big">
                     <!--Logo end-->
@@ -396,7 +396,7 @@
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
                                 <li><a class="dropdown-item" href="{% url 'useraccount:edit_profile' %}">Профиль</a></li>
-                                <li><a class="dropdown-item" href="{% url 'useraccount:withdraw' %}">Баланс</a></li>
+                                <li><a class="dropdown-item" href="{% url 'useraccount:withdraw' %}">Начисление</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="{% url 'useraccount:logout' %}">Выйти</a></li>
                             </ul>
@@ -447,7 +447,18 @@
         </li>
     </ul>
 </div>
-
+<div class="modal fade" id="callModal" tabindex="-1" aria-labelledby="callModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 900px; min-height: 1200px;">
+    <div class="modal-content" style="height: 800px;">
+      <div class="modal-header">
+        <h5 class="modal-title" id="callModalLabel">Звонок</h5>
+      </div>
+      <div class="modal-body" id="callModalBody" style="height: 400px;">
+        <!-- iframe будет вставляться сюда -->
+      </div>
+    </div>
+  </div>
+</div>
 </main>
 <style>
     .mobile-bottom-menu {
@@ -481,6 +492,14 @@
   font-family: "Mulish" !important;
     }
 
+    @media (max-width: 992px) {
+    .sidebar {
+        display: none !important;
+    }
+ .sidebar-two+.tab-content:not(.in-active)+.main-content {
+        margin-left: 0 !important;
+    }
+}
 </style>
 <!-- Wrapper End-->
 <!-- Navbar -->
@@ -507,6 +526,87 @@
 
 <!-- App Script -->
 <script src="{% static 'site/website/admin/assets/js/vrooom.js' %}" defer></script>
+{% if not is_call_page %}
+<script>
+  let isCallOpen = false; // флаг, показывающий открыт ли звонок
+
+  function checkForActiveCall() {
+    fetch('/check_active_call/', {
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRFToken': getCookie('csrftoken') // если нужен CSRF токен
+      },
+      credentials: 'include'
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.has_active_call) {
+        showCallIframe(data.call_id, data.calle_id);
+      } else {
+        hideCallIframe();
+      }
+    })
+    .catch(error => {
+      console.error('Error checking call:', error);
+    });
+  }
+
+  function showCallIframe(callId,CalleeId) {
+    if (isCallOpen) {
+      // Уже открыт звонок, ничего не делаем
+      return;
+    }
+    isCallOpen = true; // отмечаем, что звонок открыт
+
+    const iframeContainer = document.getElementById('callModalBody');
+    iframeContainer.innerHTML = `<iframe src="/call_iframe/${callId}/${CalleeId}" width="100%" height="100%" style="border:none;" allowfullscreen></iframe>`;
+    const callModal = new bootstrap.Modal(document.getElementById('callModal'));
+    callModal.show();
+
+    // Обработчик закрытия модального окна
+    document.getElementById('callModal').addEventListener('hidden.bs.modal', () => {
+      isCallOpen = false; // сбрасываем флаг при закрытии
+      iframeContainer.innerHTML = ''; // очищаем iframe
+    }, { once: true }); // чтобы обработчик сработал только один раз
+  }
+
+  function hideCallIframe() {
+    const iframeContainer = document.getElementById('callModalBody');
+    iframeContainer.innerHTML = '';
+    const callModalEl = document.getElementById('callModal');
+    const callModal = bootstrap.Modal.getInstance(callModalEl);
+    if (callModal) {
+      callModal.hide();
+    }
+    isCallOpen = false; // сбрасываем флаг, если закрываем вручную
+  }
+
+  // Запускаем проверку каждые 10 секунд
+  setInterval(checkForActiveCall, 10000);
+
+  // Запуск при загрузке
+  document.addEventListener('DOMContentLoaded', () => {
+    checkForActiveCall();
+  });
+
+  // Функция для получения CSRF токена
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+</script>
+{% endif %}
+
 {% block footerbottom %}{% endblock footerbottom %}
 </body>
 </html>

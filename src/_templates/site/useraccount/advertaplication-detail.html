@@ -20,6 +20,12 @@
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
+
+        @media (max-width: 992px) {
+        .offcanvas-body {
+            margin-bottom: 100px;
+        }
+        }
     </style>
     <div class="container py-4">
         <div class="row g-4">
@@ -84,7 +90,7 @@
                 <div class="d-grid gap-2">
                     <button class="btn btn-light border" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCalls">☎️ Звонки</button>
                     <button class="btn btn-primary" data-bs-toggle="offcanvas" data-bs-target="#offcanvasChat">💬 Групповой чат</button>
-                    {% if request.user in application.user_menager.all %}
+                    {% if request.user in application.user_menager.all or request.user.employee == 4 %}
                     <button class="btn btn-primary" id="edit-sidebar-btn">Внести изменения</button>
                     {% endif %}
                 </div>
@@ -99,8 +105,12 @@
                         <div class="mb-2"><strong>Заказчик:</strong></div>
                         <ul class="list-unstyled mb-0">
                             <li class="d-flex align-items-center gap-2 mb-2">
-                                <span class="avatar">{{ application.user.first.first_name|slice:":1" }}</span>
-                                <div><div class="fw-semibold">{{ application.user.first.first_name }} {{ application.user.first.last_name }}</div><div class="small text-muted"> {{ application.user.first.email }}</div></div>
+                                {% for user in application.user.all %}
+                                    {% if user.employee == 0 %}
+                                        <span class="avatar">{{ user.first_name|slice:":1" }}</span>
+                                        <div><div class="fw-semibold">{{ user.first_name }} {{ user.last_name }}</div><div class="small text-muted"> {{ user.email }}</div></div>
+                                    {%endif%}
+                                {% endfor %}
                             </li>
                         </ul>
 
@@ -142,7 +152,7 @@
                                  {{ document.name }} — {{ document.file.name }}
                             </span>
                                 <a href="{{ document.file.url }}" class="btn btn-outline-primary btn-sm" download>Скачать</a>
-                                {% if request.user in application.user_menager.all %}
+                                {% if request.user in application.user_menager.all or request.user.employee == 4 %}
                                     <a href="{% url 'moderation:document_editor' document.id %} " class="btn btn-outline-primary btn-sm">пересоздать</a>
                                 {% endif %}
                         </li> {% empty %}
@@ -158,27 +168,27 @@
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Расходы</h5>
                         <span style="padding: 10px;" class="badge bg-primary">Итого: {{ total_price }} {{ advert.currency }}</span>
-                        {% if request.user in application.user_menager.all %}
+                        {% if request.user in application.user_menager.all or request.user.employee == 4 %}
                             <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addExpenseModal">
                                 <i class="bi bi-plus"></i> Добавить расход
                             </button>
                         {% endif %}
                     </div>
                     <div class="card-body">
-                        <table class="table table-sm align-middle">
-                            <thead>
-                            <tr><th>Статья</th><th class="text-end">Сумма</th><th>Дата</th></tr>
-                            </thead>
-                            <tbody>
-                            <tr><td>Своя Стоимость</td><td class="text-end">{{ application.price }} {{ advert.currency }}</td><td>{{ application.created_at|date:"d.m.Y" }}</td></tr>
-                            {% for expense in expenses %}
-                                <tr><td>{{ expense.title }}</td><td class="text-end">{{ expense.amount }} {{ advert.currency }}</td><td>{{ expense.created_at|date:"d.m.Y" }}</td></tr>
-                            {% endfor %}
-                            <form action=""></form>
-                                <tr style="display: none"><td></td><td class="text-end">{{ expense.amount }} {{ advert.currency }}</td><td>{{ expense.created_at|date:"d.m.Y" }}</td></tr>
-                            </form>
-                            </tbody>
-                        </table>
+                        {% if expenses %}
+                            <table class="table table-sm align-middle">
+                                <thead>
+                                    <tr><th>Статья</th><th class="text-end">Сумма</th><th>Дата</th></tr>
+                                </thead>
+                                <tbody>
+                                {% for expense in expenses %}
+                                    <tr><td>{{ expense.title }}</td><td class="text-end">{{ expense.amount }} {{ advert.currency }}</td><td>{{ expense.created_at|date:"d.m.Y" }}</td></tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        {% else %}
+                            <p style="text-align: center;">Нет дополнительных расходов</p>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -304,11 +314,6 @@
             <form id="edit-application-form">
               {% csrf_token %}
 
-              <!-- Поле для стоимости -->
-              <div class="mb-3">
-                <label for="edit-price" class="form-label">Своя цена</label>
-                <input type="text" class="form-control" id="edit-price" name="price">
-              </div>
 
               <!-- Поле для статуса -->
               <div class="mb-3">
@@ -521,41 +526,6 @@
         isEditing = false;
       }
 
-      // AJAX-сохранение
-      function saveChanges(data) {
-        fetch("{% url 'moderation:update_application' application.id %}", {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-        })
-        .then(response => response.json())
-        .then(result => {
-            if (result.success) {
-                // Обновляем отображение
-                for (const field in result.updated_fields) {
-                    const card = document.querySelector(`.card[data-field="${field}"]`);
-                    if (card) {
-                        const viewSpan = card.querySelector('.view-mode');
-                        viewSpan.innerText = result.updated_fields[field];
-                        toggleEditMode(card, false);
-                    }
-                }
-
-                // Дополнительно обновляем список пользователей
-                if (result.updated_fields.user_menager || result.updated_fields.user_drivers) {
-                    updateUserList(); // функция для обновления отображения пользователей
-                }
-            } else {
-                alert('Ошибка сохранения');
-            }
-        })
-        .catch(() => {
-            alert('Ошибка сервера');
-        });
-    }
 
     </script>
     <script>
@@ -571,7 +541,6 @@
         document.getElementById('edit-sidebar-btn')?.addEventListener('click', () => {
           // Заполняем форму текущими данными
           // Предполагаем, что есть текущие значения, можно их вставить сюда
-          document.getElementById('edit-price').value = "{{ application.price }}";
 
           // Заполняем выбранный статус
           document.getElementById('edit-status').value = "{{ application.status }}";
@@ -598,7 +567,6 @@
         saveBtn?.addEventListener('click', () => {
           // Собираем данные
           const data = {
-            price: document.getElementById('edit-price').value,
             status: document.getElementById('edit-status').value,
             user_menager: Array.from(document.getElementById('edit-managers').selectedOptions).map(opt => opt.value),
             user_drivers: Array.from(document.getElementById('edit-drivers').selectedOptions).map(opt => opt.value),
@@ -769,4 +737,4 @@
     });
 </script>
 
-    {% endblock %}
+{% endblock %}

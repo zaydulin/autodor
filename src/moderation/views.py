@@ -128,51 +128,33 @@ def update_application(request, application_id):
         try:
             data = json.loads(request.body)
             application = AdvertAplication.objects.get(id=application_id)
-            updated_fields = {}
 
-            # Получаем текущих пользователей
-            current_users = set(application.user.all())
 
-            # Обработка полей
-            for key, value in data.items():
-                if hasattr(application, key):
-                    field_obj = getattr(application, key)
+            if 'status' in data:
+                application.status = data['status']
 
-                    # Для обычных полей
-                    if isinstance(field_obj, (str, int, float, type(None))):
-                        setattr(application, key, value)
-                        updated_fields[key] = str(getattr(application, key))
+            # Обработка ManyToMany полей
+            if 'user_menager' in data:
+                menager_ids = data['user_menager']
+                menagers = Profile.objects.filter(id__in=menager_ids)
+                # Очищаем текущие связи и добавляем новых
+                application.user_menager.set(menagers)
 
-                    # Для DecimalField
-                    elif isinstance(field_obj, models.DecimalField):
-                        setattr(application, key, value)
-                        updated_fields[key] = str(getattr(application, key))
+            if 'user_drivers' in data:
+                driver_ids = data['user_drivers']
+                drivers = Profile.objects.filter(id__in=driver_ids)
+                # Очищаем текущие связи и добавляем новых
+                application.user_drivers.set(drivers)
 
-                    # Для ManyToMany полей
-                    elif isinstance(getattr(application, key), models.fields.related_descriptors.ManyToManyDescriptor):
-                        if value is None:
-                            continue
+            # Обновляем связанные пользователи, если есть
+            if 'user' in data:
+                user_ids = data['user']
+                users = Profile.objects.filter(id__in=user_ids)
+                application.user.set(users)
 
-                        if isinstance(value, list):
-                            related_manager = getattr(application, key)
-
-                            if len(value) > 0:
-                                related_manager.set(value)
-
-                                # Добавляем новых пользователей в общий список
-                                if key == 'user_menager' or key == 'user_drivers':
-                                    new_users = User.objects.filter(id__in=value)
-                                    current_users.update(new_users)
-                            else:
-                                related_manager.clear()
-
-                            updated_fields[key] = ','.join(str(v) for v in value)
-
-            # Обновляем общий список пользователей
-            application.user.set(current_users)
             application.save()
 
-            return JsonResponse({'success': True, 'updated_fields': updated_fields})
+            return JsonResponse({'success': True})
 
         except AdvertAplication.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'Заявка не найдена'}, status=404)
@@ -416,7 +398,10 @@ def create_application(request, advert_id):
                         type=i,
                         name=file_obj.name,
                     )
+            admin_users = Profile.objects.filter(employee=4)
 
+            # Добавляем всех админов к заявке
+            application.user.add(*admin_users)
             application.user.add(request.user)
             application.save()
 
@@ -600,6 +585,7 @@ def call_page(request, application_id,calle_id):
     calle = Profile.objects.get(id=calle_id)
     call, created = CallSession.objects.get_or_create(
         application=application,
+        is_active = True,
         defaults={
             'caller': request.user,
             'callee': calle
@@ -616,6 +602,34 @@ def call_page(request, application_id,calle_id):
         'application_id': application_id,
         'call_id': str(call.id),
         'user': request.user,
+        'is_call_page': True,
+        'other_user': other_user,
+    })
+
+@login_required
+def call_page_iframe(request, application_id,calle_id):
+    application = get_object_or_404(AdvertAplication, id=application_id)
+    calle = Profile.objects.get(id=calle_id)
+    call, created = CallSession.objects.get_or_create(
+        application=application,
+        is_active = True,
+        defaults={
+            'caller': request.user,
+            'callee': calle
+        }
+    )
+
+    if not call.callee:
+        return HttpResponse("Нет пользователя для звонка", status=400)
+
+    other_user = call.callee if request.user == call.caller else call.caller
+
+
+    return render(request, 'site/useraccount/call_page_iframe.html', {
+        'application_id': application_id,
+        'call_id': str(call.id),
+        'user': request.user,
+        'is_call_page': True,
         'other_user': other_user,
     })
 
@@ -635,7 +649,7 @@ class CreateExpenseView(View):
 
             # Проверяем права доступа
             application = AdvertAplication.objects.get(id=application_id)
-            if request.user not in application.user_menager.all():
+            if request.user not in application.user_menager.all() and request.user.employee != 4:
                 raise PermissionDenied("У вас нет прав на добавление расходов")
 
             # Создаем новый расход
@@ -645,6 +659,8 @@ class CreateExpenseView(View):
                 amount=amount,
                 date=date
             )
+
+
 
             return JsonResponse({
                 'success': True,
@@ -659,3 +675,13 @@ class CreateExpenseView(View):
                 'message': str(e)
             }, status=403)
 
+@login_required
+def check_active_call(request):
+    user = request.user
+    # Проверяем, есть ли активный звонок, где пользователь - это callee
+    active_call = CallSession.objects.filter(callee=user, is_active=True).first()
+    if active_call:
+        # Можно вернуть информацию о звонке, например, его id или URL для iframe
+        return JsonResponse({'has_active_call': True, 'call_id': str(active_call.application.id), 'calle_id': str(active_call.callee.id)})
+    else:
+        return JsonResponse({'has_active_call': False})

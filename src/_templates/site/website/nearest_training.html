@@ -1,0 +1,198 @@
+{% extends 'site/useraccount/base.html' %}
+{% load i18n %}
+{% load static  %}
+{% block title %}{{ seo_title }}{% endblock title %}
+{% block description %}{{ seo_description }}{% endblock description %}
+{% block propertytitle %}{% if seo_previev %}{{ seo_previev.url }} {% endif %} {% endblock propertytitle %}
+{% block propertydescription %}{{ seo_propertytitle }}{% endblock propertydescription %}
+{% block propertyimage %}{{ seo_propertydescription }}{% endblock propertyimage %}
+{% block head %}
+{% endblock head %}
+
+<!-- ======================== Breadcrumb Three Section End ===================== -->
+
+<!-- ===================== Profile Section Start ============================== -->
+{% block content %}
+<div class="tab-pane fade show active" id="pills-profile" role="tabpanel" aria-labelledby="pills-profile-tab" tabindex="0">
+    <!-- Tab Content End -->
+    <div class="row gy-4 list-grid-wrapper">
+        {% if blog %}
+        <div class="col-xl-8 col-sm-12">
+            <iframe id="iframe" src="https://samo.vizor.company" style="width: 100%; height: 100%; border: none;min-height: 240px;" allowfullscreen="" data-userid="{{settings.description}}({{user.id}})"></iframe>
+            <script>
+                window.addEventListener("message", function(event) {
+                  if (event.origin !== "https://samo.vizor.company") {
+                    return;
+                  }
+
+                  if (event.data.request === "getUserId") {
+                    const iframe = document.getElementById("iframe");
+                    const userId = iframe.getAttribute("data-userid");
+
+                    // Отправляем userId обратно в iframe
+                    iframe.contentWindow.postMessage({ userId: userId }, "https://samo.vizor.company");
+                  }
+                });
+            </script>
+            <script>
+                window.addEventListener("message", function(event) {
+                  console.log("📥 Получено сообщение от iframe:", event.origin, event.data);
+
+                  // Проверка источника iframe
+                  if (event.origin !== "https://samo.vizor.company") {
+                    console.warn("⚠️ Сообщение не от samo.vizor.company:", event.origin);
+                    return;
+                  }
+
+                  // Проверка запроса userId
+                  if (event.data.request === "getUserId") {
+                    const iframe = document.getElementById("iframe");
+                    if (!iframe) {
+                      console.error("❌ iframe с id='iframe' не найден.");
+                      return;
+                    }
+
+                    const userId = iframe.getAttribute("data-userid");
+
+                    if (!userId) {
+                      console.warn("⚠️ Атрибут data-userid не установлен в iframe.");
+                    } else {
+                      console.log("📤 Отправка userId в iframe:", userId);
+                    }
+
+                    // Отправляем userId обратно в iframe
+                    iframe.contentWindow.postMessage(
+                      { userId: userId || "userId не установлен" },
+                      "https://stream.vizor.company"
+                    );
+                  }
+                });
+            </script>
+
+
+        </div>
+        <div class="col-xl-4 col-sm-12">
+            <div class="common-sidebar-wrapper" style=" height: 70vh;">
+                <div class="common-sidebar">
+                    <h6 class="common-sidebar__title">
+                        {% trans 'Онлайн' %}
+                        <span class="notification" style="float: right;" id="online_count">
+                                                0
+                                            </span>
+                    </h6>
+                    <div id="messages-container">
+                        <p>{% trans 'Загрузка сообщений' %}...</p>
+                    </div>
+                </div>
+                <div class="common-sidebar p-0 w-100" style=" position: absolute; bottom: 0; margin: -10px 10px 10px -25px; ">
+                    <form id="message-form" autocomplete="off">
+                        {% csrf_token %}
+                        <div class="search-box w-75">
+                            <textarea type="text" class="common-input border-0" id="message-input" placeholder="{% trans 'Сообщение' %} ..." required style="height: 56px;"></textarea>
+                            <button type="button" id="send-message" class="icon line-height-1 rounded-icon " style="right: -45px!important;
+        background: #8f8e8e;">
+                                <img src="{% static 'site/assets/images/icons/arrow-right-white.svg' %}" alt="">
+                            </button>
+                        </div>
+                    </form>
+                    <script>
+                        document.addEventListener("DOMContentLoaded", function () {
+                            const messageInput = document.getElementById("message-input");
+                            const sendButton = document.getElementById("send-message");
+
+                            messageInput.addEventListener("keydown", function (event) {
+                                if (event.key === "Enter" && !event.shiftKey) {
+                                    event.preventDefault();  // отменяет перенос строки
+                                    sendButton.click();     // нажимает на кнопку
+                                }
+                            });
+                        });
+                    </script>
+
+
+
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <p>{% trans 'Нет предстоящих онлайн тренингов' %}.</p>
+        {% endif %}
+    </div>
+    <!-- Tab Content Start -->
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const blogId = Number("{{ blog.id|default:0 }}");
+        const currentUserId = Number("{{ request.user.id|default:0 }}");
+
+        console.log("Connecting to WebSocket for blog:", blogId);
+
+    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    const chatSocket = new WebSocket(
+        `${protocol}://${window.location.host}/ws/blogs/${blogId}/chat/`
+    );
+
+        const messagesContainer = document.getElementById('messages-container');
+
+        chatSocket.onopen = function() {
+            console.log("✅ WebSocket connected");
+            messagesContainer.innerHTML = '';
+        };
+
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            if (data.error) {
+                console.error("❌ Error from server:", data.error);
+                return;
+            }
+
+            const messageHtml = `
+            <div class="latest-blog">
+                <div class="latest-blog__thumb">
+                    <a><img src="/_media/default/user-nophoto.png" class="cover-img" alt="Avatar"></a>
+                </div>
+                <div class="latest-blog__content" style="display: grid;">
+                    <span class="font-10" style="display: block;">
+                        <span style="float:left;">${data.author}</span>
+                        <span style="float:right; padding-right: 20px;">${data.date}</span>
+                    </span>
+                    <div class="latest-blog__title fw-500 font-body font-12">
+                        ${data.content}
+                    </div>
+                </div>
+            </div>`;
+
+            messagesContainer.insertAdjacentHTML('beforeend', messageHtml);
+        };
+
+        chatSocket.onerror = function(error) {
+            console.error("❌ WebSocket error:", error);
+        };
+
+        chatSocket.onclose = function(e) {
+            console.warn("⚠️ WebSocket closed:", e);
+        };
+
+        document.getElementById('send-message').addEventListener('click', function() {
+            const messageInput = document.getElementById('message-input');
+            const message = messageInput.value.trim();
+
+            if (message) {
+                chatSocket.send(JSON.stringify({
+                    'content': message,
+                    'author_id': currentUserId
+                }));
+                messageInput.value = '';
+            }
+        });
+
+        document.getElementById('message-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                document.getElementById('send-message').click();
+            }
+        });
+    });
+
+</script>
+{% endblock content %}

@@ -7,6 +7,11 @@
 {% block propertyimage %}{{ seo_propertydescription }}{% endblock propertyimage %}
 {% block head %}{% endblock head %}
 {% block content %}
+<style>
+    .item_title {
+    margin: 0;
+    }
+</style>
 <section class="page_banner" style="background-image: url('assets/images/shapes/tyre_print_3.svg');">
     <div class="container">
         <ul class="breadcrumb_nav unordered_list">
@@ -25,7 +30,7 @@
                     <div class="col-md-4 col-sm-6">
                         <div class="blog_item mb-5">
                             <a class="item_image" href="{% url 'webmain:blog' blog.slug %}">
-                                <img src="https://html.merku.love/assets/images/blogs/blog_img_10.jpg" alt="ProMotors - Blog Image">
+                                <img src="{{blog.previev.url}}" alt="ProMotors - Blog Image">
                             </a>
                             <div class="item_content">
                                 <ul class="item_type_list unordered_list">
@@ -37,13 +42,7 @@
                                 <ul class="post_meta unordered_list">
                                     <li>{{blog.create}}</li>
                                 </ul>
-                                <a class="btn-link" href="{% url 'webmain:blog' blog.slug %}">
-                                    <span class="btn_icon"><i class="fa-regular fa-angle-right"></i></span>
-                                    <span class="btn_text">
-                                        <small>Подробнее..</small>
-                                        <small>Подробнее..</small>
-                                    </span>
-                                </a>
+
                             </div>
                         </div>
                     </div>

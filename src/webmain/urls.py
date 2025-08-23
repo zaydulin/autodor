@@ -13,5 +13,6 @@ urlpatterns = [
     path("page/<slug:slug>/", views.PageDetailView.as_view(), name="page"),
     path('subscribe/',  views.subscribe, name='subscribe'),
     path('search/', views.MultiModelSearchView.as_view(), name='search'),
+    path('my-trainings/', views.NearestOnlineTrainingView.as_view(), name='my_trainings'),
 
 ]

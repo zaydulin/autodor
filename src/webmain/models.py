@@ -303,3 +303,15 @@ class Blogs(models.Model):
     class Meta:
         verbose_name = "Статья"
         verbose_name_plural = "Статьи"
+
+
+
+class MessagesChat(models.Model):
+    date = models.DateTimeField(auto_now_add=True, verbose_name="Дата")
+    content = models.TextField(verbose_name="Комментарий")
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name="Автор", blank=True, null=True)
+    ticket = models.ForeignKey(Blogs, on_delete=models.CASCADE)
+
+    class Meta:
+        verbose_name = "Комментарий тикета"
+        verbose_name_plural = "Комментарии тикета"
