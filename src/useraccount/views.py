@@ -35,6 +35,8 @@ from useraccount.models import Profile, Notification, Withdrawal, Cards
 from useraccount.forms import SignUpForm, UserProfileForm, PasswordResetEmailForm, SetPasswordFormCustom, CardsForm
 from moderation.forms import TicketCommentForm, WithdrawForm,  TicketWithCommentForm
 
+from useraccount.forms import EmailAuthenticationForm
+
 
 def custom_logout(request):
     logout(request)
@@ -44,6 +46,7 @@ def custom_logout(request):
 
 class CustomLoginView(auth_views.LoginView):
     template_name = 'site/useraccount/login.html'
+    authentication_form = EmailAuthenticationForm  # используем нашу форму
 
     def get_success_url(self):
         type = self.request.user.type
@@ -51,13 +54,13 @@ class CustomLoginView(auth_views.LoginView):
             success_url = reverse('moderation:adverts')
         else:
             success_url = reverse('useraccount:edit_profile')
-
         return success_url
 
     def dispatch(self, request, *args, **kwargs):
         if self.request.user.is_authenticated:
             return redirect(self.get_success_url())
         return super().dispatch(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 

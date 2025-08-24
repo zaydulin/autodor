@@ -59,6 +59,12 @@ class SignUpForm(forms.ModelForm):
         return user
 
 
+from django.contrib.auth.forms import AuthenticationForm
+
+class EmailAuthenticationForm(AuthenticationForm):
+    username = forms.EmailField(label='Email', max_length=254)
+
+
 
 class UserProfileForm(forms.ModelForm):
     GENDER_CHOICES = [

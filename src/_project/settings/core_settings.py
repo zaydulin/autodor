@@ -60,6 +60,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'useraccount.auth_backends.EmailBackend',
+    'django.contrib.auth.backends.ModelBackend',
     # Library (Бибилиотеки)
     'ckeditor',
     'ckeditor_uploader',
