@@ -60,8 +60,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'useraccount.auth_backends.EmailBackend',
-    'django.contrib.auth.backends.ModelBackend',
     # Library (Бибилиотеки)
     'ckeditor',
     'ckeditor_uploader',
@@ -75,6 +73,11 @@ INSTALLED_APPS = [
     'moderation.apps.ModerationConfig',
     'useraccount.apps.UseraccountConfig',
 
+]
+
+AUTHENTICATION_BACKENDS = [
+    'useraccount.backends.EmailBackend',  # ваш кастомный бэкенд
+    'django.contrib.auth.backends.ModelBackend',  # стандартный бэкенд
 ]
 
 MIDDLEWARE = [
