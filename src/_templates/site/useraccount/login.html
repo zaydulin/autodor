@@ -12,6 +12,19 @@
         <img width="100px" src="{% get_settings_first as settings %}{% if settings.logo %}{{settings.logo.url}}{% else %}{% static 'site/lk/images/logo-white.png' %}{% endif %}" alt="Логотип">
     </div>
     <h4 class="text-center mb-4">{% trans 'Авторизация в системе' %}</h4>
+
+    <!-- Кнопка входа через Google -->
+    <div class="text-center mb-4">
+        <a href="{{ google_auth_url }}" class="btn btn-danger">
+            <i class="fab fa-google me-2"></i>
+            {% trans 'Войти через Google' %}
+        </a>
+    </div>
+
+    <div class="divider mb-4">
+        <span>{% trans 'или' %}</span>
+    </div>
+
     <form method="post" id="login-form">
         {% csrf_token %}
         <div class="form-group mb-2">
@@ -29,12 +42,6 @@
     <div class="new-account mt-3">
         <p><a class="text-primary" href="{% url 'useraccount:password_reset' %}">{% trans 'Сбросить пароль' %}?</a> <a class="text-primary" href="{% url 'useraccount:signup' %}">{% trans 'Зарегистрироваться' %}?</a> </p>
     </div>
-<div class="social-login">
-    <a href="{% url 'social:begin' 'google' %}" class="btn btn-google">Войти через Google</a>
-    <!-- Для WhatsApp нужно будет настроить внешний сервис, например, через Twilio -->
-    <a href="{% url 'social:begin' 'whatsapp' %}" class="btn btn-whatsapp">Войти через WhatsApp</a>
-</div>
-
     <!-- Отображение сообщения об ошибке -->
     {% if messages %}
         {% for message in messages %}
@@ -50,6 +57,19 @@
         <img width="100px" src="{% get_settings_first as settings %}{% if settings.logo %}{{settings.logo.url}}{% else %}{% static 'site/lk/images/logo-white.png' %}{% endif %}" alt="Логотип">
     </div>
     <h4 class="text-center mb-4">{% trans 'Авторизация в системе' %}</h4>
+
+    <!-- Кнопка входа через Google -->
+    <div class="text-center mb-4">
+        <a href="{{ google_auth_url }}" class="btn btn-danger">
+            <i class="fab fa-google me-2"></i>
+            {% trans 'Войти через Google' %}
+        </a>
+    </div>
+
+    <div class="divider mb-4">
+        <span>{% trans 'или' %}</span>
+    </div>
+
     <form method="post" id="login-form">
         {% csrf_token %}
         <div class="form-group mb-2">
@@ -67,12 +87,6 @@
     <div class="new-account mt-3">
         <p><a class="text-primary" href="{% url 'useraccount:password_reset' %}">{% trans 'Сбросить пароль' %}?</a> <a class="text-primary" href="{% url 'useraccount:signup' %}">{% trans 'Зарегистрироваться' %}?</a> </p>
     </div>
-<div class="social-login">
-    <a href="{% url 'social:begin' 'google' %}" class="btn btn-google">Войти через Google</a>
-    <!-- Для WhatsApp нужно будет настроить внешний сервис, например, через Twilio -->
-    <a href="{% url 'social:begin' 'whatsapp' %}" class="btn btn-whatsapp">Войти через WhatsApp</a>
-</div>
-
     <!-- Отображение сообщения об ошибке -->
     {% if messages %}
         {% for message in messages %}
@@ -83,5 +97,41 @@
     {% endif %}
 {% endblock content_mobile %}
 
+{% block extra_css %}
+<style>
+    .divider {
+        display: flex;
+        align-items: center;
+        text-align: center;
+        color: #6c757d;
+    }
+
+    .divider::before,
+    .divider::after {
+        content: '';
+        flex: 1;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .divider::before {
+        margin-right: .25em;
+    }
+
+    .divider::after {
+        margin-left: .25em;
+    }
+
+    .btn-google {
+        background-color: #db4437;
+        color: white;
+        border: none;
+    }
+
+    .btn-google:hover {
+        background-color: #c23321;
+        color: white;
+    }
+</style>
+{% endblock extra_css %}
 
 {% block footer %}{% endblock footer %}
