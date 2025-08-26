@@ -115,8 +115,9 @@ WSGI_APPLICATION = '_project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 AUTHENTICATION_BACKENDS = (
-    'social_core.backends.google.GoogleOAuth2',  # для Google
-    'django.contrib.auth.backends.ModelBackend',  # для стандартной аутентификации
+    'useraccount.backends.EmailBackend',  # ваш кастомный бэкенд
+    'social_core.backends.google.GoogleOAuth2',
+    'django.contrib.auth.backends.ModelBackend',
 )
 
 
