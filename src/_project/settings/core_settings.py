@@ -138,6 +138,15 @@ LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
 
+# Разрешенные домены для OAuth
+SOCIALACCOUNT_ALLOWED_REDIRECT_URIS = [
+    'http://bahtrucks.com/complete/google-oauth2/',
+    'https://bahtrucks.com/complete/google-oauth2/',
+]
+
+# Для production добавьте:
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'
+
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
