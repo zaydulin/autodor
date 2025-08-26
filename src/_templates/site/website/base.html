@@ -153,8 +153,7 @@
                                 </a>
                             </li>
                             <li>
-
-                                <span class="info_text"><a href="{% url 'moderation:adverts' %}" style="color:unset;">Войти</a></span>
+                                <span class="info_text"><a href="{% if user.is_authenticated %} {% url 'moderation:adverts' %} {% else %} {% url 'webmain:advertsfree' %} {% endif %}" style="color:unset;">Войти</a></span>
                             </li>
                         </ul>
                     </div>
