@@ -174,7 +174,7 @@ class FaqsView(ListView):
 
 
 class AdvertViewFree(ListView):
-    template_name = 'site/useraccount/advertsfree.html'
+    template_name = 'site/website/advertsfree.html'
     context_object_name = 'adverts'
     model = Advert
     paginate_by = 15
@@ -329,7 +329,7 @@ class AdvertViewFree(ListView):
 class AdvertDetailViewFree(DetailView):
     """Страница новости"""
     model = Advert
-    template_name = 'site/useraccount/adverts_detailfree.html'
+    template_name = 'site/website/adverts_detailfree.html'
     context_object_name = 'advert'
     slug_field = "pk"
 

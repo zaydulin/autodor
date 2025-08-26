@@ -77,10 +77,7 @@ INSTALLED_APPS = [
 
 ]
 
-AUTHENTICATION_BACKENDS = [
-    'useraccount.backends.EmailBackend',  # ваш кастомный бэкенд
-    'django.contrib.auth.backends.ModelBackend',  # стандартный бэкенд
-]
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
