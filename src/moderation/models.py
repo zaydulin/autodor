@@ -273,7 +273,27 @@ class ChatMessage(models.Model):
 
 
 
+class Path(models.Model):
+    longitude = models.FloatField(verbose_name='Долгота')
+    latitude = models.FloatField(verbose_name='Широта')
+    request = models.CharField(max_length=255, verbose_name='Заявка')
 
+    def __str__(self):
+        return f"Path {self.id} ({self.latitude}, {self.longitude})"
+
+
+class PathResponsibility(models.Model):
+
+    # 0: "принял"
+    # 1: "закончил"
+
+    path_choice = models.ForeignKey(Path, on_delete=models.CASCADE, verbose_name='Путь выбор пути')
+    status = models.CharField(max_length=50, verbose_name='Статус')
+    additional = models.TextField(verbose_name='Дополнение', blank=True, null=True)
+    responsible = models.CharField(max_length=100, verbose_name='Ответственный')
+
+    def __str__(self):
+        return f"Responsibility for {self.path_choice} assigned to {self.responsible}"
 
 
 

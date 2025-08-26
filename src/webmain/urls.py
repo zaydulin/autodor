@@ -14,5 +14,6 @@ urlpatterns = [
     path('subscribe/',  views.subscribe, name='subscribe'),
     path('search/', views.MultiModelSearchView.as_view(), name='search'),
     path('my-trainings/', views.NearestOnlineTrainingView.as_view(), name='my_trainings'),
-
+    path("advertsfree/", views.AdvertViewFree.as_view(), name="advertsfree"),
+    path("advertsfree/<int:pk>/", views.AdvertDetailViewFree.as_view(), name="advertfree_detail"),
 ]
