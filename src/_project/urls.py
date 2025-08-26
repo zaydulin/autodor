@@ -11,6 +11,8 @@ urlpatterns = [
     path('', include('webmain.urls', namespace='webmain')),
     path('', include('moderation.urls', namespace='moderation')),
     path('', include('useraccount.urls', namespace='useraccount')),
+    path('auth/', include('social_django.urls', namespace='social')),
+
 ]
 
 if settings.DEBUG:

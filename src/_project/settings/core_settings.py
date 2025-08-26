@@ -54,6 +54,8 @@ INSTALLED_APPS = [
     "jazzmin",
     'daphne',
     'channels',
+    'social_django',
+
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -115,6 +117,16 @@ WSGI_APPLICATION = '_project.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
+AUTHENTICATION_BACKENDS = (
+    'social_core.backends.google.GoogleOAuth2',  # для Google
+    'django.contrib.auth.backends.ModelBackend',  # для стандартной аутентификации
+)
+
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = '<YOUR_GOOGLE_CLIENT_ID>'
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = '<YOUR_GOOGLE_CLIENT_SECRET>'
+
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = '/accounts/login/'  # или любой другой URL
 
 
 
