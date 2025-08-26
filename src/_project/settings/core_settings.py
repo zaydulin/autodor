@@ -270,3 +270,12 @@ CKEDITOR_CONFIGS = {
         ]),
     }
 }
+
+SOCIAL_AUTH_ALLOWED_REDIRECT_HOSTS = [
+    'bahtrucks.com',
+    'www.bahtrucks.com',
+    '127.0.0.1',
+    'localhost',
+    '127.0.0.1:8000',
+    'localhost:8000',
+]
