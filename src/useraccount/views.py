@@ -46,7 +46,7 @@ def custom_logout(request):
 
 class CustomLoginView(auth_views.LoginView):
     template_name = 'site/useraccount/login.html'
-    authentication_form = EmailAuthenticationForm  # используем нашу форму
+    authentication_form = EmailAuthenticationForm
 
     def get_success_url(self):
         type = self.request.user.type
@@ -77,6 +77,9 @@ class CustomLoginView(auth_views.LoginView):
             context['seo_description'] = None
             context['seo_propertytitle'] = None
             context['seo_propertydescription'] = None
+
+        # Добавляем URL для социальной авторизации
+        context['google_auth_url'] = reverse('social:begin', args=['google-oauth2'])
 
         return context
 
