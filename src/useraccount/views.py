@@ -61,6 +61,11 @@ class CustomLoginView(auth_views.LoginView):
             return redirect(self.get_success_url())
         return super().dispatch(request, *args, **kwargs)
 
+    def form_invalid(self, form):
+        # Добавляем сообщение об ошибке при неправильных данных
+        messages.error(self.request, 'неверный логин или пароль')
+        return super().form_invalid(form)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
