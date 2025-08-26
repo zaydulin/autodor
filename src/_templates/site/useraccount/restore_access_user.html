@@ -1,0 +1,48 @@
+{% extends 'site/useraccount/base_full.html' %}
+{% load static generals_tag %}
+{% block title %}{{ seo_title }}{% endblock title %}
+{% block description %}{{ seo_description }}{% endblock description %}
+{% block propertytitle %}{% if seo_previev %}{{ seo_previev.url }} {% endif %} {% endblock propertytitle %}
+{% block propertydescription %}{{ seo_propertytitle }}{% endblock propertydescription %}
+{% block propertyimage %}{{ seo_propertydescription }}{% endblock propertyimage %}
+
+{% block head%}
+
+{% endblock head %}
+{% block content %}
+
+<!-- Login Section Start -->
+<div class="section section-padding">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+                <!-- Login & Register Start -->
+                <div class="login-register-wrapper">
+                    <h4 class="title">Сменить пароль для своей учетной записи</h4>
+                    <form method="POST" id="login-form">
+                        {% csrf_token %}
+                        <div class="single-form">
+                            {{form.new_password1}}
+                        </div>
+                        <div class="single-form">
+                            {{form.new_password2}}
+                        </div>
+                        <div class="single-form">
+                            <button type="submit" class="btn btn-primary btn-hover-dark">
+                                Сменить
+                            </button>
+                        </div>
+                    </form>
+                    <p><a href="{% url 'useraccount:login' %}">Войти</a></p>
+                    <p>
+                        У вас нет аккаунта?
+                        <a href="{% url 'useraccount:signup' %}">Зарегистрироваться.</a>
+                    </p>
+                </div>
+                <!-- Login & Register End -->
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
