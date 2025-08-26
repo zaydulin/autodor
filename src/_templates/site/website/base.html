@@ -103,6 +103,10 @@
     .breadcrumb_nav > li:last-child a {
         color: #50A0CC;
     }
+
+    .main_menu_list > li:not(:last-child) {
+        margin: 0 32px 0 0;
+    }
 </style>
 <div class="page_wrapper">
     <div class="backtotop">
@@ -130,6 +134,7 @@
                                     <li><a href="{% url 'webmain:about' %}">О нас</a></li>
                                     <li><a href="{% url 'webmain:blogs' %}">Новости</a></li>
                                     <li><a href="{% url 'webmain:faqs' %}">ЧаВо</a></li>
+                                    <li><a href="{% url 'webmain:advertsfree' %}">Объявления</a></li>
                                     <li><a href="{% url 'webmain:contacts' %}">Контакты</a></li>
                                 </ul>
                             </div>
@@ -153,7 +158,7 @@
                                 </a>
                             </li>
                             <li>
-                                <span class="info_text"><a href="{% if user.is_authenticated %} {% url 'moderation:adverts' %} {% else %} {% url 'webmain:advertsfree' %} {% endif %}" style="color:unset;">Войти</a></span>
+                                <span class="info_text"><a href="{% url 'useraccount:login' %}" style="color:unset;">Войти</a></span>
                             </li>
                         </ul>
                     </div>
