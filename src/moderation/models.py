@@ -7,6 +7,9 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.core.validators import MinValueValidator, MaxValueValidator
 
+from useraccount.models import Profile
+
+
 class Advert(models.Model):
     # Основные
     name = models.CharField("Название", max_length=255)
@@ -274,8 +277,11 @@ class ChatMessage(models.Model):
 
 
 class Path(models.Model):
+    aplication = models.ForeignKey(AdvertAplication,blank=True,null=True, on_delete=models.CASCADE)
     longitude = models.FloatField(verbose_name='Долгота')
     latitude = models.FloatField(verbose_name='Широта')
+    name = models.CharField(max_length=100,verbose_name='Название этапа')
+    description = models.TextField("Описание", blank=True, null=True)
     request = models.CharField(max_length=255, verbose_name='Заявка')
 
     def __str__(self):
@@ -290,7 +296,7 @@ class PathResponsibility(models.Model):
     path_choice = models.ForeignKey(Path, on_delete=models.CASCADE, verbose_name='Путь выбор пути')
     status = models.CharField(max_length=50, verbose_name='Статус')
     additional = models.TextField(verbose_name='Дополнение', blank=True, null=True)
-    responsible = models.CharField(max_length=100, verbose_name='Ответственный')
+    responsible = models.ForeignKey(Profile, verbose_name='Ответственный',on_delete=models.CASCADE)
 
     def __str__(self):
         return f"Responsibility for {self.path_choice} assigned to {self.responsible}"

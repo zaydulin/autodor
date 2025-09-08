@@ -11,9 +11,11 @@ from django_ace import AceWidget
 from django.contrib.auth import get_user_model
 
 
-from .models import TicketComment, Notificationgroups, Ticket
+from .models import TicketComment, Notificationgroups, Ticket, Path, PathResponsibility
 from webmain.models import SettingsGlobale, HomePage, AboutPage, ContactPage, Faqs, Blogs, CategorysBlogs, TagsBlogs, Pages, Seo
 from useraccount.models import  Notification, Withdrawal
+
+from useraccount.models import Profile
 
 
 class TicketCommentForm(forms.ModelForm):
@@ -34,6 +36,130 @@ class TicketCommentForm(forms.ModelForm):
                 except forms.ValidationError:
                     self.add_error('files', f"Файл '{file.name}' имеет недопустимое расширение.")
         return files
+
+
+
+class PathForm(forms.ModelForm):
+    class Meta:
+        model = Path
+        fields = ['aplication', 'longitude', 'latitude', 'name', 'description', 'request']
+        widgets = {
+            'longitude': forms.NumberInput(attrs={
+                'step': 'any',
+                'class': 'form-control',
+                'placeholder': 'Введите долготу'
+            }),
+            'latitude': forms.NumberInput(attrs={
+                'step': 'any',
+                'class': 'form-control',
+                'placeholder': 'Введите широту'
+            }),
+            'name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Введите название этапа'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Введите описание этапа'
+            }),
+            'request': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Введите номер заявки'
+            }),
+            'aplication': forms.Select(attrs={
+                'class': 'form-control'
+            })
+        }
+        labels = {
+            'longitude': 'Долгота',
+            'latitude': 'Широта',
+            'name': 'Название этапа',
+            'description': 'Описание',
+            'request': 'Заявка',
+            'aplication': 'Приложение'
+        }
+
+    def clean_longitude(self):
+        longitude = self.cleaned_data.get('longitude')
+        if longitude is not None:
+            if longitude < -180 or longitude > 180:
+                raise forms.ValidationError('Долгота должна быть в диапазоне от -180 до 180')
+        return longitude
+
+    def clean_latitude(self):
+        latitude = self.cleaned_data.get('latitude')
+        if latitude is not None:
+            if latitude < -90 or latitude > 90:
+                raise forms.ValidationError('Широта должна быть в диапазоне от -90 до 90')
+        return latitude
+
+class PathResponsibilityForm(forms.ModelForm):
+    STATUS_CHOICES = [
+        ('принял', 'Принял'),
+        ('закончил', 'Закончил'),
+    ]
+
+    status = forms.ChoiceField(
+        choices=STATUS_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        label='Статус'
+    )
+
+    class Meta:
+        model = PathResponsibility
+        fields = ['path_choice', 'status', 'additional', 'responsible']
+        widgets = {
+            'path_choice': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+            'additional': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Введите дополнительную информацию'
+            }),
+            'responsible': forms.Select(attrs={
+                'class': 'form-control'
+            })
+        }
+        labels = {
+            'path_choice': 'Путь',
+            'additional': 'Дополнение',
+            'responsible': 'Ответственный'
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Опционально: можно ограничить queryset для полей ForeignKey
+        self.fields['path_choice'].queryset = Path.objects.all()
+        self.fields['responsible'].queryset = Profile.objects.all()
+
+class PathResponsibilityUpdateForm(forms.ModelForm):
+    """Форма для обновления ответственности (только статус и дополнение)"""
+    STATUS_CHOICES = [
+        ('принял', 'Принял'),
+        ('закончил', 'Закончил'),
+    ]
+
+    status = forms.ChoiceField(
+        choices=STATUS_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        label='Статус'
+    )
+
+    class Meta:
+        model = PathResponsibility
+        fields = ['status', 'additional']
+        widgets = {
+            'additional': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Введите дополнительную информацию'
+            })
+        }
+        labels = {
+            'additional': 'Дополнение'
+        }
 
 
 

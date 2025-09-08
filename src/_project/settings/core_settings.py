@@ -75,7 +75,7 @@ INSTALLED_APPS = [
     'webmain.apps.WebmainConfig',
     'moderation.apps.ModerationConfig',
     'useraccount.apps.UseraccountConfig',
-
+    'mobiledevaise.apps.MobiledevaiseConfig'
 ]
 
 

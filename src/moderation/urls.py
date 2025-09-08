@@ -22,5 +22,13 @@ urlpatterns = [
     path('document_editor/<uuid:document_id>/',views.document_editor,name='document_editor'),
     path('save-document/<uuid:pk>/', views.save_document, name='save_document'),
     path('check_active_call/', views.check_active_call, name='check_active_call'),
+    path('path/create/', views.create_path, name='create_path'),
+    path('path/update/<int:path_id>/', views.update_path, name='update_path'),
+    path('path/delete/<int:path_id>/', views.delete_path, name='delete_path'),
+    path('responsibility/create/', views.create_responsibility, name='create_responsibility'),
+    path('responsibility/update/<int:responsibility_id>/', views.update_responsibility,
+         name='update_responsibility'),
+    path('responsibility/delete/<int:responsibility_id>/', views.delete_responsibility,
+         name='delete_responsibility'),
 
 ]

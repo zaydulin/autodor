@@ -19,13 +19,14 @@ from django.db import models, transaction
 from django.http import JsonResponse, HttpResponse, HttpResponseServerError, FileResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_http_methods
 from django.views.generic import ListView, DetailView, TemplateView, FormView
 from django.db.models import Q
 from django.contrib.auth.mixins import LoginRequiredMixin
 
+from .forms import PathForm, PathResponsibilityForm
 from .models import AdvertAplication, ChatMessage, CallSession, AdvertDocument, AdvertExpense
-from moderation.models import Advert, AdvertAplication
+from moderation.models import Advert, AdvertAplication,Path,PathResponsibility
 from webmain.models import Faqs, Seo
 from useraccount.models import Profile
 
@@ -95,8 +96,139 @@ class AdvertAplicationDetailView(LoginRequiredMixin, DetailView):
 
         context['all_managers'] = Profile.objects.filter(type=0,employee=2)
         context['all_drivers'] = Profile.objects.filter(type=0,employee=1)
-
+        paths =  Path.objects.filter(aplication=application)
+        context['paths'] = paths
+        context['path_responsibilitys'] = PathResponsibility.objects.filter(path_choice__in=paths)
+        context['path_form'] = PathForm
+        context['path_responsibilitys_form'] = PathResponsibilityForm
         return context
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def create_path(request):
+    try:
+        data = json.loads(request.body)
+        form = PathForm(data)
+
+        if form.is_valid():
+            path = form.save()
+            return JsonResponse({
+                'success': True,
+                'path': {
+                    'id': path.id,
+                    'name': path.name,
+                    'description': path.description,
+                    'longitude': path.longitude,
+                    'latitude': path.latitude
+                }
+            })
+        else:
+            return JsonResponse({'success': False, 'errors': form.errors})
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def update_path(request, path_id):
+    try:
+        path = get_object_or_404(Path, id=path_id)
+        data = json.loads(request.body)
+        form = PathForm(data, instance=path)
+
+        if form.is_valid():
+            path = form.save()
+            return JsonResponse({
+                'success': True,
+                'path': {
+                    'id': path.id,
+                    'name': path.name,
+                    'description': path.description
+                }
+            })
+        else:
+            return JsonResponse({'success': False, 'errors': form.errors})
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+@csrf_exempt
+@require_http_methods(["DELETE"])
+def delete_path(request, path_id):
+    try:
+        path = get_object_or_404(Path, id=path_id)
+        path.delete()
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def create_responsibility(request):
+    try:
+        data = json.loads(request.body)
+        form = PathResponsibilityForm(data)
+
+        if form.is_valid():
+            responsibility = form.save()
+            return JsonResponse({
+                'success': True,
+                'responsibility': {
+                    'id': responsibility.id,
+                    'status': responsibility.status,
+                    'additional': responsibility.additional,
+                    'responsible': {
+                        'id': responsibility.responsible.id,
+                        'name': f"{responsibility.responsible.first_name} {responsibility.responsible.last_name}"
+                    }
+                }
+            })
+        else:
+            return JsonResponse({'success': False, 'errors': form.errors})
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def update_responsibility(request, responsibility_id):
+    try:
+        responsibility = get_object_or_404(PathResponsibility, id=responsibility_id)
+        data = json.loads(request.body)
+        form = PathResponsibilityForm(data, instance=responsibility)
+
+        if form.is_valid():
+            responsibility = form.save()
+            return JsonResponse({
+                'success': True,
+                'responsibility': {
+                    'id': responsibility.id,
+                    'status': responsibility.status,
+                    'additional': responsibility.additional
+                }
+            })
+        else:
+            return JsonResponse({'success': False, 'errors': form.errors})
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+@csrf_exempt
+@require_http_methods(["DELETE"])
+def delete_responsibility(request, responsibility_id):
+    try:
+        responsibility = get_object_or_404(PathResponsibility, id=responsibility_id)
+        responsibility.delete()
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
 
 
 def document_editor(request,document_id):
