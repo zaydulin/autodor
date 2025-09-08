@@ -12,7 +12,7 @@ urlpatterns = [
     path('', include('moderation.urls', namespace='moderation')),
     path('', include('useraccount.urls', namespace='useraccount')),
     path('', include('social_django.urls', namespace='social')),
-    path('', include('mobiledevaise.urls', namespace='mobiledevaise')),
+    path('', include(('mobiledevaise.urls', 'mobiledevaise'), namespace='mobiledevaise')),
 ]
 
 if settings.DEBUG:
