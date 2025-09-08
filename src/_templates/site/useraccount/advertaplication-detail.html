@@ -642,7 +642,10 @@ body {
                         <!-- Кнопка добавления этапа -->
                         {% if request.user.employee == 2 %}
                         <button class="btn add-phase-btn" data-bs-toggle="modal" data-bs-target="#addPhaseModal">
-                            <i class="fas fa-plus me-2"></i>Добавить новый этап
+                            <i class="fas fa-plus me-2"></i>Добавить новый путь
+                        </button>
+                        <button class="btn add-phase-btn" data-bs-toggle="modal" data-bs-target="#editPhaseModal" data-phase="1">
+                            Добавить новый этап
                         </button>
                         {% endif %}
                         <!-- стрелки -->
@@ -698,7 +701,7 @@ body {
                                 </div>
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                                    <button type="button" class="btn btn-primary" id="addPhaseBtn">Добавить этап</button>
+                                    <button type="submit" class="btn btn-primary" id="addPhaseBtn">Добавить этап</button>
                                 </div>
                             </div>
                         </div>
@@ -717,7 +720,7 @@ body {
                                 </div>
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                                    <button type="button" class="btn btn-primary" onclick="addNewPhase()">Добавить этап</button>
+                                    <button type="submit" class="btn btn-primary" onclick="addNewPhase()">Добавить этап</button>
                                 </div>
                             </div>
                         </div>
@@ -1328,7 +1331,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Глобальные переменные
 let currentApplicationId = "{{ application.id }}";
 
-// Функция создания этапа
+// Функция создания этапа (пути)
 async function createPath() {
     const formData = {
         aplication: currentApplicationId,
@@ -1338,6 +1341,12 @@ async function createPath() {
         latitude: parseFloat(document.getElementById('id_latitude').value) || 0,
         request: document.getElementById('id_request').value
     };
+
+    // Валидация обязательных полей
+    if (!formData.name) {
+        alert('Пожалуйста, введите название этапа');
+        return;
+    }
 
     try {
         const response = await fetch('{% url "moderation:create_path" %}', {
@@ -1352,14 +1361,30 @@ async function createPath() {
         const result = await response.json();
 
         if (result.success) {
-            // Закрываем модальное окно и обновляем страницу
-            bootstrap.Modal.getInstance(document.getElementById('addPhaseModal')).hide();
+            // Показываем сообщение об успехе
+            alert('Этап успешно создан!');
+
+            // Закрываем модальное окно
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addPhaseModal'));
+            modal.hide();
+
+            // Обновляем страницу чтобы увидеть новый этап
             location.reload();
         } else {
-            alert('Ошибка: ' + JSON.stringify(result.errors));
+            // Показываем ошибки валидации
+            if (result.errors) {
+                let errorMessage = 'Ошибки при сохранении:\n';
+                for (const field in result.errors) {
+                    errorMessage += `${field}: ${result.errors[field].join(', ')}\n`;
+                }
+                alert(errorMessage);
+            } else {
+                alert('Ошибка при создании этапа: ' + (result.error || 'Неизвестная ошибка'));
+            }
         }
     } catch (error) {
-        alert('Ошибка сети: ' + error);
+        console.error('Ошибка сети:', error);
+        alert('Ошибка сети: ' + error.message);
     }
 }
 
@@ -1385,6 +1410,7 @@ async function createResponsibility(pathId) {
         const result = await response.json();
 
         if (result.success) {
+            alert('Ответственность успешно добавлена!');
             bootstrap.Modal.getInstance(document.getElementById('addResponsibilityModal')).hide();
             location.reload();
         } else {
@@ -1398,37 +1424,106 @@ async function createResponsibility(pathId) {
 // Обработчики событий для кнопок
 document.addEventListener('DOMContentLoaded', function() {
     // Обработчик для кнопки добавления этапа
-    document.getElementById('addPhaseBtn')?.addEventListener('click', function() {
-        createPath();
-    });
+    const addPhaseBtn = document.getElementById('addPhaseBtn');
+    if (addPhaseBtn) {
+        addPhaseBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            createPath();
+        });
+    }
 
     // Обработчик для кнопки добавления ответственности
-    document.getElementById('addResponsibilityBtn')?.addEventListener('click', function() {
-        const pathId = this.dataset.pathId;
-        createResponsibility(pathId);
-    });
+    const addResponsibilityBtn = document.getElementById('addResponsibilityBtn');
+    if (addResponsibilityBtn) {
+        addResponsibilityBtn.addEventListener('click', function() {
+            const pathId = document.getElementById('responsibility_path_id').value;
+            if (pathId) {
+                createResponsibility(pathId);
+            } else {
+                alert('Выберите путь для добавления ответственности');
+            }
+        });
+    }
+
+    // Обработчик для формы (чтобы можно было нажимать Enter)
+    const pathForm = document.querySelector('#addPhaseModal form');
+    if (pathForm) {
+        pathForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            createPath();
+        });
+    }
 
     // Автозаполнение координат, если доступна геолокация
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(function(position) {
-            document.getElementById('id_latitude').value = position.coords.latitude.toFixed(6);
-            document.getElementById('id_longitude').value = position.coords.longitude.toFixed(6);
+            const latitudeInput = document.getElementById('id_latitude');
+            const longitudeInput = document.getElementById('id_longitude');
+
+            if (latitudeInput && !latitudeInput.value) {
+                latitudeInput.value = position.coords.latitude.toFixed(6);
+            }
+            if (longitudeInput && !longitudeInput.value) {
+                longitudeInput.value = position.coords.longitude.toFixed(6);
+            }
+        }, function(error) {
+            console.log('Геолокация недоступна:', error);
         });
     }
 });
 
-// Функция для быстрого добавления этапа с минимальными данными
-function quickAddPhase(phaseName, description = '') {
-    document.getElementById('id_name').value = phaseName;
-    document.getElementById('id_description').value = description;
-    createPath();
+// Функция для открытия модального окна добавления ответственности для конкретного пути
+function openAddResponsibilityModal(pathId) {
+    document.getElementById('responsibility_path_id').value = pathId;
+    const modal = new bootstrap.Modal(document.getElementById('addResponsibilityModal'));
+    modal.show();
 }
 
-// Функция для быстрого добавления ответственности
-function quickAddResponsibility(pathId, status, responsibleId) {
-    document.getElementById('id_status').value = status;
-    document.getElementById('id_responsible').value = responsibleId;
-    createResponsibility(pathId);
+// Функция для редактирования существующего пути
+async function editPath(pathId) {
+    // Заполняем форму данными пути
+    // (здесь нужно получить данные пути с сервера или из data-атрибутов)
+    const modal = new bootstrap.Modal(document.getElementById('editPathModal'));
+    modal.show();
+
+    // Устанавливаем обработчик для кнопки сохранения
+    document.getElementById('savePathBtn').onclick = function() {
+        updatePath(pathId);
+    };
+}
+
+// Функция обновления пути
+async function updatePath(pathId) {
+    const formData = {
+        name: document.getElementById('edit_path_name').value,
+        description: document.getElementById('edit_path_description').value,
+        longitude: parseFloat(document.getElementById('edit_path_longitude').value) || 0,
+        latitude: parseFloat(document.getElementById('edit_path_latitude').value) || 0,
+        request: document.getElementById('edit_path_request').value
+    };
+
+    try {
+        const response = await fetch(`/update-path/${pathId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify(formData)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            alert('Путь успешно обновлен!');
+            bootstrap.Modal.getInstance(document.getElementById('editPathModal')).hide();
+            location.reload();
+        } else {
+            alert('Ошибка при обновлении: ' + JSON.stringify(result.errors));
+        }
+    } catch (error) {
+        alert('Ошибка сети: ' + error);
+    }
 }
 </script>
 {% endblock %}
