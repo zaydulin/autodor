@@ -9,6 +9,8 @@
     <meta property="og:title" content="{% block propertytitle %} {% endblock propertytitle %}">
     <meta property="og:description" content="{% block propertydescription %}{% endblock propertydescription %}">
     <meta property="og:image" content="{% block propertyimage %}{% endblock propertyimage %}">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+
     <!-- Favicon -->
     <link rel="shortcut icon" type="image/x-icon" href="{% if settings.favicon %}{{settings.favicon.url}}{% endif %}" />
     <!-- Analitic link -->
@@ -29,6 +31,8 @@
 
 </head>
 <body class="  ">
+
+
 <!--<span class="screen-darken backdrop"></span>-->
 <!-- loader Start -->
 <!--<div id="loading">-->
@@ -47,32 +51,10 @@
 <!--</div>-->
 <!-- loader END -->
 <style>
-        * {
-    font-family: Mulish !important;
+     @media (max-width: 700px) {
+    .card {
+    width: 600px;
     }
-        .main-auth-page::before {
-        background: #f1fefe!important;
-        }
-        .card-body.col-5.offset-7:before {
-        background: #f1fefe9e!important;
-        }
-        .card-body.col-5.offset-7:before {
-        background: #f1fefe9e!important;
-        }
-        .main-auth-page .clip-board .auth-details-card .iq-auth-card {
-    background-color: #f1fefe9e!important;
-        }
-        .btn-primary {
-        background-color: #4093cb!important;
-        border-color: #677a89!important;
-        }
-        .text-primary {
-        --bs-text-opacity: 1;
-        color: #677a89!important;
-    }
-
-    .form-control:focus {
-        border-color: black !important;
     }
     </style>
 <div class="wrapper">

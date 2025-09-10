@@ -17,7 +17,7 @@ class Advert(models.Model):
     model_auto = models.CharField("модель", max_length=255)
     link = models.URLField("Ссылка", max_length=500)
     original_link = models.URLField("Оригинальная ссылка", max_length=500, blank=True, null=True)
-    price = models.DecimalField("Стоимость", max_digits=12, decimal_places=2)
+    price = models.IntegerField("Стоимость")
     currency = models.CharField("Валюта", max_length=10)  # например, 'USD', 'EUR', 'KZT'
     description = models.TextField("Описание", blank=True, null=True)
     images = models.JSONField("Список ссылок на изображения", blank=True, null=True)  # храним list[str]

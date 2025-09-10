@@ -12,6 +12,7 @@
     <meta property="og:description" content="{% block propertydescription %}{% endblock propertydescription %}">
     <meta property="og:image" content="{% block propertyimage %}{% endblock propertyimage %}">
     <!-- Favicon -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
     <link rel="shortcut icon" type="image/x-icon" href="{% if settings.favicon %}{{settings.favicon.url}}{% endif %}" />
     <!-- Analitic link -->
     {{settings.google_analitic|safe}}

@@ -29,7 +29,7 @@
         {% csrf_token %}
         <div class="form-group mb-2">
             <label class="mb-1"><strong>{% trans 'Email' %}</strong></label>
-            <input type="text" class="form-control" name="username" placeholder="{% trans 'Введите логин' %}">
+            <input type="text" class="form-control" name="username" placeholder="{% trans 'Введите email' %}">
         </div>
         <div class="form-group">
             <label class="mb-1"><strong>{% trans 'Пароль' %}</strong></label>
@@ -73,8 +73,8 @@
     <form method="post" id="login-form">
         {% csrf_token %}
         <div class="form-group mb-2">
-            <label class="mb-1"><strong>{% trans 'Логин' %}</strong></label>
-            <input type="text" class="form-control" name="username" placeholder="{% trans 'Введите логин' %}">
+            <label class="mb-1"><strong>{% trans 'email' %}</strong></label>
+            <input type="text" class="form-control" name="username" placeholder="{% trans 'Введите email' %}">
         </div>
         <div class="form-group">
             <label class="mb-1"><strong>{% trans 'Пароль' %}</strong></label>
