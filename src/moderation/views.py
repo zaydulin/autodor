@@ -4,11 +4,15 @@ import json
 import os
 from datetime import datetime
 from decimal import Decimal
+from urllib.parse import urlparse
 
+import requests
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.core.files.base import ContentFile
 from django.core.paginator import Paginator
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
@@ -25,7 +29,7 @@ from django.db.models import Q
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 from .forms import PathForm, PathResponsibilityForm
-from .models import AdvertAplication, ChatMessage, CallSession, AdvertDocument, AdvertExpense
+from .models import AdvertAplication, ChatMessage, CallSession, AdvertDocument, AdvertExpense, AdvertApplicationImage
 from moderation.models import Advert, AdvertAplication,Path,PathResponsibility
 from webmain.models import Faqs, Seo
 from useraccount.models import Profile
