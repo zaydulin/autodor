@@ -39,6 +39,8 @@ class Advert(models.Model):
         null=True,
         validators=[MinValueValidator(1900), MaxValueValidator(2100)]
     )
+    published = models.BooleanField("Опубликовано", default=True)
+    updated_at = models.DateTimeField("Обновлено", auto_now=True)
 
     class TransmissionType(models.TextChoices):
         MANUAL = "manual", "Механика"

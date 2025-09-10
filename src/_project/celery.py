@@ -1,5 +1,6 @@
 import os
 from celery import Celery
+from celery.schedules import crontab
 
 # Устанавливаем переменную окружения для настройки Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', '_project.settings')
@@ -8,7 +9,16 @@ app = Celery('_project')
 
 # Используем строку конфигурации Django
 app.config_from_object('django.conf:settings', namespace='CELERY')
-
+app.conf.beat_schedule = {
+    'check-model-changes-every-3-hours': {
+        'task': 'moderation.tasks.check_model_changes',
+        'schedule': crontab(hour='*/3'),  # каждые 3 часа
+    },
+    'update-expired-ads-every-5-hours': {
+        'task': 'moderation.tasks.update_expired_ads',
+        'schedule': crontab(hour='*/5'),  # каждые 5 часов
+    },
+}
 # Автоматическая загрузка задач из приложений
 app.autodiscover_tasks()
 
