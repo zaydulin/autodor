@@ -85,8 +85,8 @@ CHANNEL_LAYERS = {
     },
 }
 
-CELERY_BROKER_URL = "redis://cb-redis:6379/0"
-CELERY_RESULT_BACKEND = "redis://cb-redis:6379/0"
+CELERY_BROKER_URL = f"redis://{env.str('DJANGO_REDIS_HOST', 'localhost')}:6379/0"
+CELERY_RESULT_BACKEND = f"redis://{env.str('DJANGO_REDIS_HOST', 'localhost')}:6379/1"
 
 
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 1000000000000
