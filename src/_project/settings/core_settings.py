@@ -27,12 +27,6 @@ AUTH_USER_MODEL = 'useraccount.Profile'
 
 # Application definition
 
-# CHANNEL_LAYERS = {
-#     "default": {
-#         "BACKEND": "channels.layers.InMemoryChannelLayer",
-#     },
-# }
-
 
 
 
@@ -86,13 +80,14 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [("127.0.0.1", 6379)],
+            "hosts": [("cb-redis", 6379)],  # вместо localhost
         },
     },
 }
 
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_BROKER_URL = "redis://cb-redis:6379/0"
+CELERY_RESULT_BACKEND = "redis://cb-redis:6379/0"
+
 
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 1000000000000
 INTERNAL_IPS = [
