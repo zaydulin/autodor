@@ -251,7 +251,6 @@ class AdvertApplicationImage(models.Model):
     image = models.ImageField(upload_to='advert_applications/')
 
 class CallSession(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     application = models.ForeignKey(AdvertAplication, on_delete=models.CASCADE)
     caller = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='calls_made', on_delete=models.CASCADE)
     callee = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='calls_received', on_delete=models.CASCADE)
