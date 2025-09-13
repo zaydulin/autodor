@@ -13,7 +13,7 @@ import moderation.routing
 django_app = get_asgi_application()
 
 application = ProtocolTypeRouter({
-    "http": django_app(),
+    "http": django_app,
     "websocket": AuthMiddlewareStack (
         URLRouter(
             moderation.routing.websocket_urlpatterns
