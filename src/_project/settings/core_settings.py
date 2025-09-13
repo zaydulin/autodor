@@ -18,7 +18,7 @@ env.read_env()
 SECRET_KEY = 'django-insecure-zf_so_v)9wojzr_lzj^e6-_3jxfe$oc2%6wx#25mkc5^65513t'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 CSRF_COOKIE_SECURE = True
 
 ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", ["*"])
