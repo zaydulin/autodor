@@ -26,30 +26,16 @@ ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", ["*"])
 AUTH_USER_MODEL = 'useraccount.Profile'
 
 # Application definition
-ASGI_APPLICATION = '_project.asgi.application'
+
 # CHANNEL_LAYERS = {
 #     "default": {
 #         "BACKEND": "channels.layers.InMemoryChannelLayer",
 #     },
 # }
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [("127.0.0.1", 6379)],
-        },
-    },
-}
 
-DATA_UPLOAD_MAX_NUMBER_FIELDS = 1000000000000
-INTERNAL_IPS = [
-    # ...
-    "127.0.0.1",
-    # ...
-]
 
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+
+
 
 INSTALLED_APPS = [
     "jazzmin",
@@ -91,6 +77,28 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     # 'debug_toolbar.middleware.DebugToolbarMiddleware',
 
+]
+
+
+ASGI_APPLICATION = '_project.asgi.application'
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+        },
+    },
+}
+
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 1000000000000
+INTERNAL_IPS = [
+    # ...
+    "127.0.0.1",
+    # ...
 ]
 
 ROOT_URLCONF = '_project.urls'
