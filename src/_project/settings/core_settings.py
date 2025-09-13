@@ -32,8 +32,8 @@ AUTH_USER_MODEL = 'useraccount.Profile'
 
 
 INSTALLED_APPS = [
-    "jazzmin",
     'daphne',
+    "jazzmin",
     'channels',
     'social_django',
 
