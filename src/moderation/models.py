@@ -77,6 +77,18 @@ class Advert(models.Model):
         verbose_name = "Объявление"
         verbose_name_plural = "Объявления"
 
+    def delete_if_old(self, hours_threshold=5):
+        """
+        Удаляет объект если он не обновлялся более указанного количества часов
+        """
+        from django.utils import timezone
+        from datetime import timedelta
+
+        if timezone.now() - self.updated_at > timedelta(hours=hours_threshold):
+            self.delete()
+            return True
+        return False
+
     def __str__(self):
         return self.name
 

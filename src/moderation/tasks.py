@@ -35,3 +35,12 @@ def check_model_changes():
     """
     # Пример: обновлять все объявления, у которых есть изменения за последние 3 часа
     os.system('python3 /var/www/autodor/src/_dump/import_adverts_xml.py')
+
+
+@shared_task
+def delete_old_ads():
+    """
+    Простая задача для удаления старых объявлений
+    """
+    deleted_count = Advert.objects.delete_old_ads(hours_threshold=5)
+    return f"Удалено {deleted_count} старых объявлений"
