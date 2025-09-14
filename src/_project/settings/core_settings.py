@@ -18,7 +18,7 @@ env.read_env()
 SECRET_KEY = 'django-insecure-zf_so_v)9wojzr_lzj^e6-_3jxfe$oc2%6wx#25mkc5^65513t'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 CSRF_COOKIE_SECURE = True
 
 ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", ["*"])
@@ -34,9 +34,6 @@ AUTH_USER_MODEL = 'useraccount.Profile'
 INSTALLED_APPS = [
     'daphne',
     "jazzmin",
-    'channels',
-    'social_django',
-
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -45,6 +42,8 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'django.contrib.staticfiles',
     # Library (Бибилиотеки)
+    'channels',
+    'social_django',
     'ckeditor',
     'ckeditor_uploader',
     # 'debug_toolbar',
@@ -95,6 +94,16 @@ INTERNAL_IPS = [
     "127.0.0.1",
     # ...
 ]
+# Настройки CORS (разрешить Flutter доступ к API)
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_HTTPONLY = True
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = [
+    'content-type',
+    'Authorization',
+    'X-API-KEY',
+]
+CORS_ALLOW_ALL_ORIGINS = True
 
 ROOT_URLCONF = '_project.urls'
 
@@ -196,11 +205,10 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = '/_static/'
-STATICFILES_DIRS = ('_static', )
-STATIC_ROOT = os.path.join(BASE_DIR, '_staticfiles')
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / '_static'
 
-MEDIA_URL = '/_media/'
+MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / '_media'
 
 # Default primary key field type
