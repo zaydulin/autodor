@@ -257,6 +257,9 @@ def good_to_payload(good_el, images_limit=7, is_first_url=False):
              map_drive(fields.get("Napęd")) or
              map_drive(fields.get("Transmisie")))
 
+    if not fuel:
+        return
+
     payload = {
         "name": name,
         "link": link,
