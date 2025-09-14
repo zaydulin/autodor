@@ -57,6 +57,9 @@
             <button type="submit" class="btn btn-primary btn-block">{% trans 'Отправить' %}</button>
         </div>
     </form>
+        <div class="new-account mt-3">
+        <p><a class="text-primary" href="{% url 'useraccount:login' %}">{% trans 'Войти' %}?</a> <a class="text-primary" href="{% url 'useraccount:signup' %}">{% trans 'Зарегистрироваться' %}?</a> </p>
+    </div>
     <!-- Отображение сообщения об ошибке -->
     {% if form.errors %}
         <div class="alert alert-danger mt-3">
