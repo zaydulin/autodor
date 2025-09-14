@@ -27,14 +27,55 @@ def end_call_task(call_id):
     return f"Call {call_id} ended"
 
 
+import os
+from celery import shared_task
+from django.conf import settings
+import subprocess
+import logging
+
+logger = logging.getLogger(__name__)
+
+
 @shared_task
 def check_model_changes():
     """
-    Проверяет модели на изменения и при необходимости обновляет их.
-    Например, можно обновлять все объявления, у которых есть изменения.
+    Запускает импорт объявлений из XML файла
     """
-    # Пример: обновлять все объявления, у которых есть изменения за последние 3 часа
-    os.system('python3 /var/www/autodor/src/_dump/import_adverts_xml.py')
+    try:
+        # Правильный путь к файлу
+        script_path = os.path.join(settings.BASE_DIR, '_dump', 'import_adverts_xml.py')
+
+        # Проверяем существует ли файл
+        if not os.path.exists(script_path):
+            logger.error(f"Файл не найден: {script_path}")
+            return f"Ошибка: Файл {script_path} не существует"
+
+        # Меняем рабочую директорию на корень проекта
+        project_root = settings.BASE_DIR
+        os.chdir(project_root)
+
+        # Запускаем скрипт
+        result = subprocess.run(
+            ['python3', '_dump/import_adverts_xml.py'],
+            capture_output=True,
+            text=True,
+            timeout=3600  # 1 час таймаут
+        )
+
+        if result.returncode == 0:
+            logger.info("Импорт выполнен успешно")
+            logger.info(f"Вывод: {result.stdout}")
+            return f"Успешно: {result.stdout}"
+        else:
+            logger.error(f"Ошибка импорта: {result.stderr}")
+            return f"Ошибка: {result.stderr}"
+
+    except subprocess.TimeoutExpired:
+        logger.error("Импорт превысил лимит времени (1 час)")
+        return "Ошибка: Таймаут импорта"
+    except Exception as e:
+        logger.error(f"Ошибка при запуске импорта: {e}")
+        return f"Ошибка: {str(e)}"
 
 
 @shared_task
