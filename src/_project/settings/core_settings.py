@@ -20,10 +20,7 @@ SECRET_KEY = 'django-insecure-zf_so_v)9wojzr_lzj^e6-_3jxfe$oc2%6wx#25mkc5^65513t
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-STATIC_ROOT = BASE_DIR / '_staticfiles'
-STATICFILES_DIRS = [
-    BASE_DIR / '_static'
-]
+
 
 
 CSRF_COOKIE_SECURE = True
@@ -213,6 +210,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / '_static'  # Папка для collectstatic
+STATICFILES_DIRS = [
+    BASE_DIR / "static",  # Дополнительные папки со статикой
+]
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / '_media'
