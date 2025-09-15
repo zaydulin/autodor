@@ -62,8 +62,22 @@ class SignUpForm(forms.ModelForm):
 from django.contrib.auth.forms import AuthenticationForm
 
 class EmailAuthenticationForm(AuthenticationForm):
-    username = forms.EmailField(label='Email', max_length=254)
+    username = forms.CharField(label='E mail или логин', max_length=254)
 
+    def clean(self):
+        username = self.cleaned_data.get('username')
+        password = self.cleaned_data.get('password')
+
+        if username and password:
+            self.user_cache = None
+            self.user_cache = self.authenticate_user(username, password)
+            if self.user_cache is None:
+                raise forms.ValidationError('Неверный логин или пароль')
+        return super().clean()
+
+    def authenticate_user(self, username, password):
+        from django.contrib.auth import authenticate
+        return authenticate(self.request, username=username, password=password)
 
 
 class UserProfileForm(forms.ModelForm):

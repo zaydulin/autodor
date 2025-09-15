@@ -63,7 +63,7 @@ class CustomLoginView(auth_views.LoginView):
 
     def form_invalid(self, form):
         # Добавляем сообщение об ошибке при неправильных данных
-        messages.error(self.request, 'неверный логин или пароль')
+        messages.error(self.request, 'Неверный email/логин или пароль')
         return super().form_invalid(form)
 
     def get_context_data(self, **kwargs):

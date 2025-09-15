@@ -257,8 +257,8 @@ def good_to_payload(good_el, images_limit=7, is_first_url=False):
              map_drive(fields.get("Napęd")) or
              map_drive(fields.get("Transmisie")))
 
-    if not fuel or not images:
-        return
+    if not fuel or not images or mileage or not engine_volume or not transmission or not drive:
+        return None
 
     payload = {
         "name": name,
