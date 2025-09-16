@@ -84,16 +84,20 @@ class AudioConsumer(WebsocketConsumer):
     def connect(self):
         try:
             self.user = self.scope.get("user")
-            self.position_from_url = self.scope['url_route']['kwargs'].get('position')
-
-            print("Audio WS: connect", self.user, "pos_from_url:", self.position_from_url)
+            self.position_from_url = self.scope['url_route']['kwargs'].get("position")
+            print("Audio WS: connect user=", self.user, "pos_from_url=", self.position_from_url)
 
             if not self.user or not self.user.is_authenticated:
-                print("Anonymous user")
+                print("Anonymous user -> close()")
                 self.close()
                 return
 
             user_position = getattr(self.user, "position", None)
+            if user_position is None:
+                print("No position on user -> close()")
+                self.close()
+                return
+
             if str(user_position) != str(self.position_from_url):
                 print("Position mismatch:", user_position, self.position_from_url)
                 self.close()
