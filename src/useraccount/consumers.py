@@ -82,25 +82,24 @@ AUDIO_DIR = os.path.join(settings.MEDIA_ROOT, "audio")
 
 class AudioConsumer(WebsocketConsumer):
     def connect(self):
-        # ЛОГИ ДЛЯ ДИАГНОСТИКИ
-        print("Audio WS: connect")
         self.user = self.scope.get("user")
-        self.file_path = None
-        self.fh = None
-        self.filename = None
-        self.saved = False
+        self.user_id_from_url = self.scope['url_route']['kwargs'].get('user_id')
+        print("Audio WS: connect", self.user, self.user_id_from_url)
 
         if not self.user or not self.user.is_authenticated:
-            # Если вдруг гость — сразу закрываем (как у тебя и было)
             self.close()
             return
 
-        if not os.path.exists(AUDIO_DIR):
-            os.makedirs(AUDIO_DIR, exist_ok=True)
+        # Проверка: UUID из URL должен совпадать с self.user.id
+        if str(self.user.id) != str(self.user_id_from_url):
+            self.close()
+            return
 
         self.accept()
-        # Можно вернуть ACK клиенту
-        self.send(text_data=json.dumps({"type": "ready"}))
+        self.send(text_data=json.dumps({
+            "type": "ready",
+            "user_id": str(self.user_id_from_url)
+        }))
 
     def receive(self, text_data=None, bytes_data=None):
         # ТЕКСТОВЫЕ КОМАНДЫ УПРАВЛЕНИЯ
