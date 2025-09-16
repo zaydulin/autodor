@@ -1,5 +1,5 @@
 import json
-from channels.generic.websocket import AsyncWebsocketConsumer
+from channels.generic.websocket import AsyncWebsocketConsumer, WebsocketConsumer
 from channels.db import database_sync_to_async
 from .models import CallSession
 
@@ -63,3 +63,37 @@ class CallConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def call_session_exists(self):
         return CallSession.objects.filter(id=self.call_id).exists()
+
+
+
+class AudioConsumer(WebsocketConsumer):
+    def connect(self):
+        try:
+            self.user = self.scope.get("user")
+            self.position_from_url = self.scope["url_route"]["kwargs"].get("position")
+
+            print("Audio WS: connect", self.user, "pos_from_url:", self.position_from_url)
+
+            # Проверяем, авторизован ли пользователь
+            if not getattr(self.user, "is_authenticated", False):
+                print("Anonymous user -> close")
+                self.close()
+                return
+
+            # Сверяем position
+            user_position = getattr(self.user, "position", None)
+            if str(user_position) != str(self.position_from_url):
+                print("Position mismatch:", user_position, self.position_from_url)
+                self.close()
+                return
+
+            self.accept()
+            self.send(text_data=json.dumps({
+                "type": "ready",
+                "position": self.position_from_url
+            }))
+
+        except Exception:
+            import traceback; traceback.print_exc()
+            self.close()
+
