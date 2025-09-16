@@ -76,7 +76,6 @@ class BlogChatConsumer(WebsocketConsumer):
     def chat_message(self, event):
         self.send(text_data=json.dumps(event))
 
-AUDIO_DIR = os.path.join(settings.MEDIA_ROOT, "audio")
 
 
 
