@@ -82,32 +82,33 @@ AUDIO_DIR = os.path.join(settings.MEDIA_ROOT, "audio")
 
 class AudioConsumer(WebsocketConsumer):
     def connect(self):
-        self.user = self.scope.get("user")
-        self.position_from_url = self.scope['url_route']['kwargs'].get('position')
+        try:
+            self.user = self.scope.get("user")
+            self.position_from_url = self.scope['url_route']['kwargs'].get('position')
 
-        print("Audio WS: connect", self.user, "pos_from_url:", self.position_from_url)
+            print("Audio WS: connect", self.user, "pos_from_url:", self.position_from_url)
 
-        if not self.user or not self.user.is_authenticated:
+            if not self.user or not self.user.is_authenticated:
+                print("Anonymous user")
+                self.close()
+                return
+
+            user_position = getattr(self.user, "position", None)
+            if str(user_position) != str(self.position_from_url):
+                print("Position mismatch:", user_position, self.position_from_url)
+                self.close()
+                return
+
+            self.accept()
+            self.send(text_data=json.dumps({
+                "type": "ready",
+                "position": self.position_from_url
+            }))
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
             self.close()
-            return
 
-        # Проверяем, что position пользователя совпадает с position в URL
-        if str(self.user.position) != str(self.position_from_url):
-            self.close()
-            return
-
-        self.accept()
-        self.send(text_data=json.dumps({
-            "type": "ready",
-            "position": self.position_from_url
-        }))
-
-    def receive(self, text_data=None, bytes_data=None):
-        # аналогично твоему коду — обрабатываем start/stop/чанки
-        pass
-
-    def disconnect(self, close_code):
-        print(f"Audio WS: disconnect {close_code}")
-        # закрываем файл, сохраняем запись
 
 
