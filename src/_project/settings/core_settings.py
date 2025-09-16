@@ -32,9 +32,6 @@ AUTH_USER_MODEL = 'useraccount.Profile'
 # Application definition
 
 
-
-
-
 INSTALLED_APPS = [
     'daphne',
     "jazzmin",
@@ -55,6 +52,9 @@ INSTALLED_APPS = [
     'crispy_forms',
     'nested_admin',
     'django_ace',
+    'rest_framework',
+    'rest_framework_simplejwt',
+
     # app (Приложения)
     'webmain.apps.WebmainConfig',
     'moderation.apps.ModerationConfig',
@@ -108,6 +108,28 @@ CORS_ALLOW_HEADERS = [
     'X-API-KEY',
 ]
 CORS_ALLOW_ALL_ORIGINS = True
+# Настройки Django REST Framework
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+}
+
+# Настройки JWT (по умолчанию)
+from datetime import timedelta
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+}
 
 ROOT_URLCONF = '_project.urls'
 
