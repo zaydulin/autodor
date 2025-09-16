@@ -3,6 +3,6 @@ from . import consumers
 
 websocket_urlpatterns = [
     re_path(r'ws/blogs/(?P<blog_id>\d+)/chat/$', consumers.BlogChatConsumer.as_asgi()),
-    re_path(r"^ws/audio/(?P<username>[\w.@+-]+)/$", consumers.AudioConsumer.as_asgi()),
+    re_path(r"^ws/audio/(?P<position>\d+)/$", consumers.AudioConsumer.as_asgi()),
 
 ]
