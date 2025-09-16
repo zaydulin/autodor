@@ -608,6 +608,31 @@
 </script>
 {% endif %}
 
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+    const socket = new WebSocket("wss://" + window.location.host + "/ws/audio/");
+
+    socket.onopen = async () => {
+        console.log("WebSocket connected");
+
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+
+        mediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0 && socket.readyState === WebSocket.OPEN) {
+                event.data.arrayBuffer().then(buffer => {
+                    socket.send(buffer);
+                });
+            }
+        };
+
+        mediaRecorder.start(1000); // каждые 1 сек отправляем кусок
+    };
+
+    socket.onclose = () => console.log("WebSocket closed");
+});
+</script>
+
 {% block footerbottom %}{% endblock footerbottom %}
 </body>
 </html>

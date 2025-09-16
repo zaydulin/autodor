@@ -4,6 +4,10 @@ from channels.generic.websocket import WebsocketConsumer
 from webmain.models import MessagesChat, Blogs
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from .models import Record, Profile
+import os
+import uuid
+from django.conf import settings
 
 User = get_user_model()
 
@@ -73,3 +77,32 @@ class BlogChatConsumer(WebsocketConsumer):
 
     def chat_message(self, event):
         self.send(text_data=json.dumps(event))
+
+
+
+class AudioConsumer(WebsocketConsumer):
+    def connect(self):
+        self.user = self.scope["user"]
+        if self.user.is_authenticated:
+            self.accept()
+        else:
+            self.close()
+
+    def receive(self, text_data=None, bytes_data=None):
+        if bytes_data:
+            # сохраняем временно в память
+            filename = f"{uuid.uuid4()}.webm"
+            file_path = os.path.join(settings.MEDIA_ROOT, "audio", filename)
+
+            with open(file_path, "ab") as f:  # append chunk
+                f.write(bytes_data)
+
+            # можно сохранять запись только при закрытии
+            self.last_file = file_path
+
+    def disconnect(self, close_code):
+        if hasattr(self, "last_file"):
+            record = Record.objects.create(
+                user=Profile.objects.get(user=self.user),
+                audio=os.path.relpath(self.last_file, settings.MEDIA_ROOT)
+            )
