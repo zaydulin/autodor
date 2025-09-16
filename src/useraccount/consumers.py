@@ -157,10 +157,11 @@ class AudioConsumer(WebsocketConsumer):
             self.fh.close()
 
         if self.file_path and os.path.exists(self.file_path) and not self.saved:
-            # Корректно пишем в FileField
             rel_path = os.path.join("audio", self.filename)
-            # Быстрый способ: просто присвоить name (без повторного чтения)
-            record = Record.objects.create(user=Profile.objects.get(user=self.user))
+
+            record = Record.objects.create(user=self.user)
             record.audio.name = rel_path
             record.save(update_fields=["audio"])
+
             self.saved = True
+
