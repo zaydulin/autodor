@@ -3,7 +3,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer, WebsocketConsumer
 from channels.db import database_sync_to_async
 from .models import CallSession
 from django.conf import settings
-import os, uuid, json
+import os, uuid, json, time
 from useraccount.models import Record
 
 class CallConsumer(AsyncWebsocketConsumer):
@@ -71,29 +71,41 @@ class CallConsumer(AsyncWebsocketConsumer):
 AUDIO_DIR = os.path.join(settings.MEDIA_ROOT, "audio")
 
 class AudioConsumer(WebsocketConsumer):
+    MAX_DURATION = 15 * 60  # 15 минут в секундах
+
     def connect(self):
         self.user = self.scope.get("user")
         self.user_id_from_url = self.scope['url_route']['kwargs'].get("user_id")
         print("Audio WS: connect", self.user, self.user_id_from_url)
 
-        # проверим авторизацию
         if not self.user or not self.user.is_authenticated:
             self.close()
             return
 
-        # сверим id пользователя
         if str(self.user.id) != str(self.user_id_from_url):
-            print("Audio WS: mismatch user_id")
             self.close()
             return
 
         os.makedirs(AUDIO_DIR, exist_ok=True)
         self.fh = None
         self.filename = None
+        self.start_time = None
         self.saved = False
 
         self.accept()
-        self.send(text_data=json.dumps({"type": "ready", "user_id": self.user_id_from_url}))
+        self.send(text_data=json.dumps({"type": "ready"}))
+
+    def _open_new_file(self, ext="webm"):
+        """Создать новый файл и открыть дескриптор"""
+        if self.fh and not self.fh.closed:
+            self._finalize_record()
+
+        self.filename = f"{uuid.uuid4()}.{ext}"
+        self.file_path = os.path.join(AUDIO_DIR, self.filename)
+        self.fh = open(self.file_path, "ab")
+        self.start_time = time.time()
+        self.saved = False
+        print("Audio WS: new file started ->", self.filename)
 
     def receive(self, text_data=None, bytes_data=None):
         if text_data:
@@ -101,15 +113,11 @@ class AudioConsumer(WebsocketConsumer):
                 data = json.loads(text_data)
             except Exception:
                 data = {}
-
             action = data.get("action")
 
-            if action == "start" and self.fh is None:
+            if action == "start":
                 ext = "webm" if data.get("mime") == "audio/webm" else "ogg"
-                self.filename = f"{uuid.uuid4()}.{ext}"
-                self.file_path = os.path.join(AUDIO_DIR, self.filename)
-                self.fh = open(self.file_path, "ab")
-                print("Audio WS: started ->", self.filename)
+                self._open_new_file(ext)
                 self.send(text_data=json.dumps({"type": "started", "filename": self.filename}))
                 return
 
@@ -121,10 +129,13 @@ class AudioConsumer(WebsocketConsumer):
 
         if bytes_data:
             if self.fh is None:
-                # на всякий случай создаём файл, если пришли байты до "start"
-                self.filename = f"{uuid.uuid4()}.webm"
-                self.file_path = os.path.join(AUDIO_DIR, self.filename)
-                self.fh = open(self.file_path, "ab")
+                self._open_new_file("webm")
+
+            # Проверка длительности
+            if time.time() - self.start_time >= self.MAX_DURATION:
+                print("Audio WS: 15 min reached, rotating file")
+                self._open_new_file("webm")
+
             self.fh.write(bytes_data)
 
     def disconnect(self, close_code):
