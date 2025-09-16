@@ -27,3 +27,5 @@ class WithdrawalAdmin(admin.ModelAdmin):
 @admin.register(Cards)
 class CardsAdmin(admin.ModelAdmin):
     list_display = ['card', 'status', 'user']
+
+admin.site.register(Record)
