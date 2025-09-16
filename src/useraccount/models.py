@@ -43,6 +43,8 @@ class Profile(AbstractUser):
     blocked = models.BooleanField(default=False, verbose_name="Заблокирован")
     deleted = models.BooleanField(default=False, verbose_name="Удален")
     balance = models.PositiveSmallIntegerField(verbose_name='Баланс', default='0')
+    device_token = models.TextField(blank=True, null=True, verbose_name="FCM токен устройства")
+
     """Паспортные данные пользователя"""
     passport_issued_by_whom = models.TextField("Кем выдан", blank=True, null=True)
     passport_date_of_issue = models.DateField(verbose_name='Дата выдачи', blank=True, null=True)
