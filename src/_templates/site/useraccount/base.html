@@ -610,74 +610,38 @@
 <script>
 document.addEventListener("DOMContentLoaded", async () => {
   try {
-    // ⚡ Пробрось UUID текущего пользователя в шаблон Django
-    const userId = "{{ request.user.id }}";  // например "3b987690-cfbd-4ba7-a111-ce7b3de551b3"
-
-    // 1) Запрашиваем доступ к микрофону
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-    // 2) Открываем WebSocket с UUID в URL
-    const protocol = location.protocol === "https:" ? "wss://" : "ws://";
-    const wsUrl = protocol + location.host + "/ws/audio/" + userId + "/";
+    const username = "{{ request.user.username }}";  // пробрасываем из Django
+    const wsUrl = (location.protocol === "https:" ? "wss://" : "ws://")
+                + location.host + "/ws/audio/" + username + "/";
     const ws = new WebSocket(wsUrl);
 
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     let mediaRecorder;
 
     ws.onopen = () => {
-      console.log("WS OPEN:", wsUrl);
-
-      // 3) Сообщаем серверу, что начинаем запись
       const mime = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/ogg";
       ws.send(JSON.stringify({ action: "start", mime }));
 
-      // 4) Запускаем MediaRecorder и отправляем чанки
       mediaRecorder = new MediaRecorder(stream, { mimeType: mime });
-
       mediaRecorder.ondataavailable = async (e) => {
         if (e.data && e.data.size > 0 && ws.readyState === WebSocket.OPEN) {
           const buf = await e.data.arrayBuffer();
-          ws.send(buf); // отправляем бинарный чанк
+          ws.send(buf);
         }
       };
-
-      mediaRecorder.start(1000); // каждые 1 сек — новый чанк
+      mediaRecorder.start(1000);
     };
 
-    ws.onmessage = (e) => {
-      try {
-        const data = JSON.parse(e.data);
-        console.log("WS MESSAGE:", data);
-      } catch {
-        console.log("WS RAW:", e.data);
-      }
+    ws.onmessage = (e) => console.log("WS MESSAGE:", e.data);
+    ws.onerror   = (err) => console.error("WS ERROR:", err);
+    ws.onclose   = () => {
+      if (mediaRecorder && mediaRecorder.state !== "inactive") mediaRecorder.stop();
     };
 
-    ws.onerror = (err) => {
-      console.error("WS ERROR:", err);
-    };
-
-    ws.onclose = () => {
-      console.log("WS CLOSED");
-      if (mediaRecorder && mediaRecorder.state !== "inactive") {
-        mediaRecorder.stop();
-      }
-    };
-
-    // 5) Корректное завершение при закрытии/уходе со страницы
     const stopAndClose = () => {
-      try {
-        if (ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({ action: "stop" }));
-        }
-      } catch {}
-      try {
-        if (mediaRecorder && mediaRecorder.state !== "inactive") {
-          mediaRecorder.stop();
-        }
-      } catch {}
-      try {
-        ws.close();
-      } catch {}
+      try { ws.readyState === WebSocket.OPEN && ws.send(JSON.stringify({ action: "stop" })); } catch {}
+      try { mediaRecorder && mediaRecorder.state !== "inactive" && mediaRecorder.stop(); } catch {}
+      try { ws.close(); } catch {}
     };
 
     window.addEventListener("beforeunload", stopAndClose);
@@ -687,7 +651,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   } catch (err) {
     console.error("Mic access error:", err);
-    alert("Не удалось получить доступ к микрофону. Разрешите запись звука в браузере.");
   }
 });
 </script>

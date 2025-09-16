@@ -83,26 +83,31 @@ AUDIO_DIR = os.path.join(settings.MEDIA_ROOT, "audio")
 class AudioConsumer(WebsocketConsumer):
     def connect(self):
         self.user = self.scope.get("user")
-        self.user_id_from_url = self.scope['url_route']['kwargs'].get('user_id')
-        print("Audio WS: connect", self.user, self.user_id_from_url)
+        self.username_from_url = self.scope['url_route']['kwargs'].get('username')
+
+        print("Audio WS: connect", self.user, self.username_from_url)
 
         if not self.user or not self.user.is_authenticated:
             self.close()
             return
 
-        # Проверка: UUID из URL должен совпадать с self.user.id
-        if str(self.user.id) != str(self.user_id_from_url):
+        # Проверяем, что подключается именно сам пользователь
+        if self.user.username != self.username_from_url:
             self.close()
             return
 
+        self.file_path = None
+        self.fh = None
+        self.filename = None
+        self.saved = False
+
+        if not os.path.exists(AUDIO_DIR):
+            os.makedirs(AUDIO_DIR, exist_ok=True)
+
         self.accept()
-        self.send(text_data=json.dumps({
-            "type": "ready",
-            "user_id": str(self.user_id_from_url)
-        }))
+        self.send(text_data=json.dumps({"type": "ready", "username": self.username_from_url}))
 
     def receive(self, text_data=None, bytes_data=None):
-        # ТЕКСТОВЫЕ КОМАНДЫ УПРАВЛЕНИЯ
         if text_data:
             try:
                 data = json.loads(text_data)
@@ -112,40 +117,25 @@ class AudioConsumer(WebsocketConsumer):
             action = data.get("action")
 
             if action == "start" and self.fh is None:
-                # Можно принять желаемый mime/расширение от клиента
-                ext = "webm"
-                if data.get("mime") == "audio/ogg":
-                    ext = "ogg"
+                ext = "webm" if data.get("mime") == "audio/webm" else "ogg"
                 self.filename = f"{uuid.uuid4()}.{ext}"
                 self.file_path = os.path.join(AUDIO_DIR, self.filename)
-                # Открываем файл один раз и держим
                 self.fh = open(self.file_path, "ab")
                 self.send(text_data=json.dumps({"type": "started", "filename": self.filename}))
                 return
 
             if action == "stop":
                 self._finalize_record()
-                # отдадим клиенту результат
                 self.send(text_data=json.dumps({"type": "stopped", "filename": self.filename}))
-                # можно и закрыть сокет
                 self.close()
                 return
 
-            # Пинг/отладка
-            if action == "ping":
-                self.send(text_data=json.dumps({"type": "pong"}))
-                return
-
-        # БИНАРНЫЕ ДАННЫЕ (чанки аудио)
         if bytes_data:
             if self.fh is None:
-                # Клиент должен сначала прислать "start"
-                # Чтобы не ронять — просто игнор или создать файл на лету
                 self.filename = f"{uuid.uuid4()}.webm"
                 self.file_path = os.path.join(AUDIO_DIR, self.filename)
                 self.fh = open(self.file_path, "ab")
             self.fh.write(bytes_data)
-            # опционально: self.fh.flush()
 
     def disconnect(self, close_code):
         print(f"Audio WS: disconnect {close_code}")
@@ -157,10 +147,8 @@ class AudioConsumer(WebsocketConsumer):
 
         if self.file_path and os.path.exists(self.file_path) and not self.saved:
             rel_path = os.path.join("audio", self.filename)
-
             record = Record.objects.create(user=self.user)
             record.audio.name = rel_path
             record.save(update_fields=["audio"])
-
             self.saved = True
 
