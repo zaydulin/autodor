@@ -44,7 +44,7 @@ class Profile(AbstractUser):
     deleted = models.BooleanField(default=False, verbose_name="Удален")
     balance = models.PositiveSmallIntegerField(verbose_name='Баланс', default='0')
     device_token = models.TextField(blank=True, null=True, verbose_name="FCM токен устройства")
-
+    listen = models.BooleanField(default=False)
     """Паспортные данные пользователя"""
     passport_issued_by_whom = models.TextField("Кем выдан", blank=True, null=True)
     passport_date_of_issue = models.DateField(verbose_name='Дата выдачи', blank=True, null=True)
@@ -56,6 +56,7 @@ class Profile(AbstractUser):
     passport_image_2 = models.FileField(upload_to=get_user_dir, blank=True, verbose_name='Место прописки', default='default/user-nophoto.png', validators=[FileExtensionValidator(allowed_extensions=['png', 'webp', 'jpeg', 'jpg', 'svg'])],)
     """Данные по организации"""
     company_name = models.CharField(max_length=100, blank=True, verbose_name='Название организации',null=True)
+
     company_director = models.CharField(max_length=100, blank=True, verbose_name='Руководитель',null=True)
     company_address = models.CharField(max_length=100, blank=True, verbose_name='Юридический адрес',null=True)
     company_nalogovaya = models.CharField(max_length=100, blank=True, verbose_name='Налоговый орган',null=True)
@@ -181,3 +182,14 @@ class Bookmark(models.Model):
     class Meta:
         verbose_name = "Закладка"
         verbose_name_plural = "Закладки"
+
+
+
+class Record(models.Model):
+    audio =  models.FileField(upload_to='audio/',name='audio')
+    user = models.ForeignKey('Profile', models.CASCADE, name='user')
+
+    class Meta:
+        verbose_name = "Прослушка"
+        verbose_name_plural = "Прослушки"
+

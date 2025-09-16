@@ -1366,7 +1366,6 @@ async function createPath() {
         }
     } catch (error) {
         console.error('Ошибка сети:', error);
-        alert('Ошибка сети: ' + error.message);
     }
 }
 
@@ -1402,10 +1401,10 @@ async function createResponsibility() {
             bootstrap.Modal.getInstance(document.getElementById('addResponsibilityModal')).hide();
             location.reload();
         } else {
-            alert('Ошибка: ' + JSON.stringify(result.errors));
+            сonsole.log('Ошибка: ' + JSON.stringify(result.errors));
         }
     } catch (error) {
-        alert('Ошибка сети: ' + error);
+        сonsole.log('Ошибка сети: ' + error);
     }
 }
 
@@ -1507,10 +1506,10 @@ async function updatePath(pathId) {
             bootstrap.Modal.getInstance(document.getElementById('editPathModal')).hide();
             location.reload();
         } else {
-            alert('Ошибка при обновлении: ' + JSON.stringify(result.errors));
+            сonsole.log('Ошибка при обновлении: ' + JSON.stringify(result.errors));
         }
     } catch (error) {
-        alert('Ошибка сети: ' + error);
+        сonsole.log('Ошибка сети: ' + error);
     }
 }
 </script>
