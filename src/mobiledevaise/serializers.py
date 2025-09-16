@@ -1,4 +1,4 @@
-from rest_framework import serializers
+from mobiledevaise import serializers
 from useraccount.models import Profile
 
 class DeviceTokenSerializer(serializers.ModelSerializer):
