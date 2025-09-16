@@ -85,86 +85,30 @@ class AudioConsumer(WebsocketConsumer):
             self.user = self.scope.get("user")
             self.position_from_url = self.scope["url_route"]["kwargs"].get("position")
 
-            # лог для отладки
-            print("Audio WS: connect user=", self.user, "pos=", self.position_from_url)
+            print("Audio WS: connect", self.user, "pos_from_url:", self.position_from_url)
 
-            # 1) проверка авторизации до доступа к атрибутам
+            # Проверяем, авторизован ли пользователь
             if not getattr(self.user, "is_authenticated", False):
-                print("Audio WS: anonymous -> close")
+                print("Anonymous user -> close")
                 self.close()
                 return
 
-            # 2) сравнение position БЕЗ падений
+            # Сверяем position
             user_position = getattr(self.user, "position", None)
             if str(user_position) != str(self.position_from_url):
-                print("Audio WS: position mismatch:", user_position, self.position_from_url)
+                print("Position mismatch:", user_position, self.position_from_url)
                 self.close()
                 return
 
-            os.makedirs(AUDIO_DIR, exist_ok=True)
-            self.fh = None
-            self.filename = None
-            self.saved = False
-
             self.accept()
-            self.send(text_data=json.dumps({"type": "ready", "position": self.position_from_url}))
-
-        except Exception as e:
-            import traceback; traceback.print_exc()
-            self.close()
-
-    def receive(self, text_data=None, bytes_data=None):
-        try:
-            if text_data:
-                data = {}
-                try:
-                    data = json.loads(text_data)
-                except Exception:
-                    pass
-                action = data.get("action")
-
-                if action == "start" and self.fh is None:
-                    ext = "webm" if data.get("mime") == "audio/webm" else "ogg"
-                    self.filename = f"{uuid.uuid4()}.{ext}"
-                    self.file_path = os.path.join(AUDIO_DIR, self.filename)
-                    self.fh = open(self.file_path, "ab")
-                    self.send(text_data=json.dumps({"type": "started", "filename": self.filename}))
-                    return
-
-                if action == "stop":
-                    self._finalize_record()
-                    self.send(text_data=json.dumps({"type": "stopped", "filename": self.filename}))
-                    self.close()
-                    return
-
-            if bytes_data:
-                if self.fh is None:
-                    # подстрахуемся: если байты пришли до start
-                    self.filename = f"{uuid.uuid4()}.webm"
-                    self.file_path = os.path.join(AUDIO_DIR, self.filename)
-                    self.fh = open(self.file_path, "ab")
-                self.fh.write(bytes_data)
+            self.send(text_data=json.dumps({
+                "type": "ready",
+                "position": self.position_from_url
+            }))
 
         except Exception:
             import traceback; traceback.print_exc()
             self.close()
 
-    def disconnect(self, close_code):
-        print(f"Audio WS: disconnect {close_code}")
-        self._finalize_record()
-
-    def _finalize_record(self):
-        try:
-            if getattr(self, "fh", None) and not self.fh.closed:
-                self.fh.close()
-            if getattr(self, "filename", None) and not getattr(self, "saved", False):
-                from .models import Record  # чтобы не падать на импорте при старте
-                rel_path = os.path.join("audio", self.filename)
-                rec = Record.objects.create(user=self.user)
-                rec.audio.name = rel_path
-                rec.save(update_fields=["audio"])
-                self.saved = True
-        except Exception:
-            import traceback; traceback.print_exc()
 
 
