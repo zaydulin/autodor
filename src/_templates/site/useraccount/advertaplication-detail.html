@@ -94,18 +94,22 @@
     }
 
     button {
-      padding: 10px 20px;
-      font-size: 16px;
-      cursor: pointer;
-      border: none;
-      border-radius: 6px;
-      background: #4caf50;
-      color: #fff;
+        background-color: #4fa0cb;
+        border: none; /* или оставить, если есть граница */
+        color: #fff; /* цвет текста, по желанию */
+        transition: background-color 0.2s ease;
     }
 
+    /* Цвет при наведении (чуть темнее) */
     button:hover {
-      background: #43a047;
+        background-color: #3a8ab3;
     }
+
+    /* Цвет при нажатии (еще темнее) */
+    button:active {
+        background-color: #3270a0;
+    }
+
 .arrow-line {
       display: flex;
       flex-wrap: nowrap;
@@ -233,7 +237,7 @@ body {
             transform: scale(1.1);
         }
         .add-phase-btn {
-            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            background: #4fa0cb;
             color: white;
             border: none;
             border-radius: 8px;
