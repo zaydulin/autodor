@@ -7,6 +7,14 @@
 {% block propertyimage %}{{ seo_propertydescription }}{% endblock propertyimage %}
 {% block head %}{% endblock head %}
 {% block content %}
+<style>
+    @media (max-width: 1000px) {
+    img:not([draggable]), embed, object, video {
+    margin-top: 1px !important;
+    }
+    }
+</style>
+
 {{ homepage.description|safe }}
 {% endblock content %}
 {% block footer %}{% endblock footer %}

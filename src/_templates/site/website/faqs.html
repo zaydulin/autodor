@@ -8,6 +8,14 @@
 {% block head %}{% endblock head %}
 
 {% block content %}
+<style>
+.accordion .accordion-button:not(.collapsed):after {
+    background-image: none !important;
+}
+.accordion .accordion-button:after {
+    background-image: none !important;
+}
+</style>
 <section class="page_banner" style="background-image: url('assets/images/shapes/tyre_print_3.svg');">
     <div class="container">
         <ul class="breadcrumb_nav unordered_list">
@@ -48,6 +56,8 @@
         {% endfor %}
     </div>
 </section>
+
+
 
 {% endblock content %}
 {% block footer %}{% endblock footer %}

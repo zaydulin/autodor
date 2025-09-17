@@ -6,7 +6,9 @@ import time  # Или другие необходимые импорты
 
 from django.utils import timezone
 
-from moderation.models import Advert
+
+
+from useraccount.google_utils import upload_to_google_drive
 
 
 @shared_task
@@ -83,5 +85,52 @@ def delete_old_ads():
     """
     Простая задача для удаления старых объявлений
     """
+    from moderation.models import Advert
+
     deleted_count = Advert.objects.delete_old_ads(hours_threshold=5)
     return f"Удалено {deleted_count} старых объявлений"
+
+
+@shared_task
+def upload_to_drive_and_delete(record_id):
+    """
+    Задача для загрузки файла на Google Drive и удаления записи
+    """
+    try:
+        # Получаем запись
+        from useraccount.models import Record
+
+        record = Record.objects.get(id=record_id)
+
+        # Проверяем, существует ли файл
+        if not record.audio or not os.path.exists(record.audio.path):
+            print(f"Файл не существует: {record.audio.path}")
+            record.delete()  # Удаляем запись в любом случае
+            return f"Файл не существует, запись {record_id} удалена"
+
+        # Загружаем на Google Drive
+        success = upload_to_google_drive(
+            record.audio.path,
+            os.path.basename(record.audio.path)
+        )
+
+        if success:
+            # Удаляем физический файл
+            if os.path.exists(record.audio.path):
+                os.remove(record.audio.path)
+                print(f"Локальный файл удален: {record.audio.path}")
+
+            # Удаляем запись из базы
+            record.delete()
+            return f"Файл загружен и запись {record_id} удалена"
+        else:
+            # Если загрузка не удалась, оставляем запись для повторной попытки
+            return f"Ошибка загрузки файла {record_id}"
+
+    except Record.DoesNotExist:
+        return f"Запись {record_id} не найдена"
+    except Exception as e:
+        # Логируем ошибку, но оставляем запись для повторной попытки
+        print(f"Ошибка в задаче: {e}")
+        return f"Ошибка: {str(e)}"
+

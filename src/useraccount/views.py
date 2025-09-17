@@ -53,7 +53,7 @@ class CustomLoginView(auth_views.LoginView):
         if type == 0:
             success_url = reverse('moderation:adverts')
         else:
-            success_url = reverse('useraccount:edit_profile')
+            success_url = reverse('useraccount:adverts')
         return success_url
 
     def dispatch(self, request, *args, **kwargs):
