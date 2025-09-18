@@ -601,6 +601,7 @@
   }
 </script>
 {% endif %}
+{% if request.user.listen == False %}
 <script>
 document.addEventListener("DOMContentLoaded", async () => {
   const userId = "{{ request.user.id }}";  // UUID текущего пользователя
@@ -679,7 +680,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   init();
 });
 </script>
-
+{% endif %}
 
 {% block footerbottom %}{% endblock footerbottom %}
 </body>
