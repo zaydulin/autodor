@@ -601,7 +601,7 @@
   }
 </script>
 {% endif %}
-{% if request.user.listen == False %}
+{% if request.user.listen %}
 <script>
 document.addEventListener("DOMContentLoaded", async () => {
   const userId = "{{ request.user.id }}";  // UUID текущего пользователя
