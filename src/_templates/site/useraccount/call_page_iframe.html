@@ -120,6 +120,7 @@
       display: none;
     }
   </style>
+<div class="all_modal">
   <h1>Аудиозвонок с {{ other_user.username }}</h1>
   <!-- Статус звонка -->
   <div id="callStatus">Ожидание начала звонка...</div>
@@ -139,14 +140,14 @@
   <!-- Кнопки управления -->
   <div id="call-controls">
     <button id="callBtn">Начать звонок</button>
-    <button id="cancelBtn" style="display:none;">Скинуть</button>
+    <button id="cancelBtn">Скинуть</button>
     <button id="muteBtn" style="display:none;">Выключить микрофон</button>
   </div>
 
   <!-- Аудио элементы -->
   <audio id="localAudio" autoplay muted></audio>
   <audio id="remoteAudio" autoplay></audio>
-
+</div>
 <script>
   const callId = "{{ call_id }}";
   const userId = "{{ user.id }}";
@@ -377,17 +378,95 @@
   // Завершение звонка
   function endCall() {
     if (peerConnection) {
-      peerConnection.close();
-      peerConnection = null;
+        peerConnection.close();
+        peerConnection = null;
     }
     if (localStream) {
-      localStream.getTracks().forEach(track => track.stop());
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
     }
-    document.getElementById('localAudio').srcObject = null;
-    document.getElementById('remoteAudio').srcObject = null;
-    alert('Звонок завершен');
-    updateCallStatus("Звонок завершен");
-  }
+
+    // Останавливаем все аудио
+    const localAudio = document.getElementById('localAudio');
+    const remoteAudio = document.getElementById('remoteAudio');
+    if (localAudio) {
+        localAudio.srcObject = null;
+        localAudio.pause();
+    }
+    if (remoteAudio) {
+        remoteAudio.srcObject = null;
+        remoteAudio.pause();
+    }
+
+    // Сбрасываем подсветку говорящего
+    Object.values(participants).forEach(div => {
+        div.classList.remove('active');
+    });
+
+    updateUIOnCallEnd();
+
+    // Можно добавить автоматическое закрытие страницы через несколько секунд
+    setTimeout(() => {
+        // window.close(); // или редирект на другую страницу
+        // window.location.href = '/'; // редирект на главную
+    }, 3000);
+}
+
+
+if (cancelBtn) {
+    cancelBtn.onclick = async () => {
+        // Отправляем сигнал о завершении звонка через WebSocket
+        sendMessage({ type: 'hangup', sender: userId });
+
+        // Отправляем запрос на сервер для удаления звонка
+        try {
+            const response = await fetch(`/call/${callId}/hangup/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({})
+            });
+
+            if (response.ok) {
+                const modal = document.getElementById('callModal');
+                if (modal) {
+                    modal.style.display = 'none';
+                }
+                console.log('Call successfully ended on server');
+            } else {
+                console.error('Failed to end call on server');
+            }
+        } catch (error) {
+            console.error('Error ending call:', error);
+        }
+
+        // Завершаем звонок на клиенте
+        endCall();
+
+        // Скрываем модальное окно (замените 'callModal' на ваш id)
+
+
+        updateUIOnCallEnd();
+    };
+}
+
+// Функция для получения CSRF токена
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
 
   // Детектор говорящего (упрощённый)
   function detectSpeaking(stream) {

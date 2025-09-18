@@ -821,3 +821,21 @@ def check_active_call(request):
         return JsonResponse({'has_active_call': True, 'call_id': str(active_call.application.id), 'calle_id': str(active_call.callee.id)})
     else:
         return JsonResponse({'has_active_call': False})
+
+
+@csrf_exempt
+def hangup_call(request, call_id):
+    try:
+        call_session = CallSession.objects.get(id=call_id)
+
+        # Проверяем, имеет ли пользователь право удалить этот звонок
+        if request.user not in [call_session.caller, call_session.callee]:
+            return JsonResponse({'status': 'error', 'message': 'Permission denied'}, status=403)
+
+        # Удаляем звонок
+        call_session.delete_call()
+
+        return JsonResponse({'status': 'success', 'message': 'Call ended'})
+
+    except CallSession.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Call not found'}, status=404)
