@@ -25,9 +25,9 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-12">
-                <div class="row">
+                <div class="row" id="blog-items-container">
                     {% for blog in blogs %}
-                    <div class="col-md-4 col-sm-6">
+                    <div class="col-md-4 col-sm-6 phone blog-card">
                         <div class="blog_item mb-5">
                             <a class="item_image" href="{% url 'webmain:blog' blog.slug %}">
                                 <img src="{{blog.previev.url}}" alt="ProMotors - Blog Image">
@@ -42,7 +42,6 @@
                                 <ul class="post_meta unordered_list">
                                     <li>{{blog.create}}</li>
                                 </ul>
-
                             </div>
                         </div>
                     </div>
@@ -53,5 +52,49 @@
         </div>
     </div>
 </section>
+
+<script>
+// Функция для определения мобильного устройства
+function isMobileDevice() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
+// Функция для применения стилей к карточкам блога
+function applyMobileStyles() {
+    const blogCards = document.querySelectorAll('.blog-card');
+
+    if (isMobileDevice()) {
+        blogCards.forEach(card => {
+            card.style.width = '100%';
+            card.style.flex = '0 0 100%';
+            card.style.maxWidth = '100%';
+            card.style.marginLeft = '0';
+            card.style.marginRight = '0';
+        });
+
+        // Также можно изменить контейнер для лучшего отображения
+        const container = document.getElementById('blog-items-container');
+        if (container) {
+            container.style.marginLeft = '0';
+            container.style.marginRight = '0';
+        }
+    }
+}
+
+// Применяем стили при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    applyMobileStyles();
+});
+
+// Также применяем при изменении ориентации устройства
+window.addEventListener('orientationchange', function() {
+    setTimeout(applyMobileStyles, 100);
+});
+
+// И при изменении размера окна (на всякий случай)
+window.addEventListener('resize', function() {
+    setTimeout(applyMobileStyles, 100);
+});
+</script>
 {% endblock content %}
 {% block footer %}{% endblock footer %}
