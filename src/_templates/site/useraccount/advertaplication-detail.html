@@ -408,12 +408,13 @@ body {
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Расходы</h5>
                         <span style="padding: 10px;" class="badge bg-primary">Итого: {{ total_price }} {{ advert.currency }}</span>
-                        {% if request.user in application.user_menager.all or request.user.employee == 4 %}
-                            <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addExpenseModal">
-                                <i class="bi bi-plus"></i> Добавить расход
-                            </button>
-                        {% endif %}
+
                     </div>
+                    {% if request.user in application.user_menager.all or request.user.employee == 4 %}
+                        <button type="button" style="margin-top: 10px;" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addExpenseModal">
+                            <i class="bi bi-plus"></i> Добавить расход
+                        </button>
+                    {% endif %}
                     <div class="card-body">
                         {% if expenses %}
                             <table class="table table-sm align-middle">
