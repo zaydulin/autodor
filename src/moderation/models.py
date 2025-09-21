@@ -273,6 +273,13 @@ class CallSession(models.Model):
     callee_ice_candidates = models.TextField(default='[]')
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def delete_call(self):
+        """Удаляет звонок и связанные данные"""
+        self.is_active = False
+        self.save()
+        # Дополнительная логика очистки, если нужна
+        # self.delete()  # если нужно полностью удалить запись
+
 
 class ChatMessage(models.Model):
     STATUS_CHOICES = [

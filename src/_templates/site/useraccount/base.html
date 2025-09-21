@@ -369,13 +369,7 @@
                     <img src="{% if settings.favicon %}{{settings.logo.url}}{% endif %}" class="img-fluid" alt="logo-big">
                     <!--Logo end-->
                 </a>
-                <div class="sidebar-toggle sidebar-toggle-responsive" data-toggle="sidebar" data-active="true">
-                    <i class="icon">
-                        <svg width="20px" height="20px" viewBox="0 0 24 24">
-                            <path fill="currentColor" d="M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z" />
-                        </svg>
-                    </i>
-                </div>
+
 
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                   <span class="navbar-toggler-icon">
@@ -439,7 +433,7 @@
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="https://templates.iqonic.design/lite/vroom/documentation/html/dist/main/">
+            <a class="nav-link" href="{% url 'moderation:application_list'%}">
                 <i class="icon">
                     <!-- SVG иконка -->
                     <svg width="20" viewBox="0 0 24 24"><path opacity="0.4" d="M16.191 2H7.81C4.77 2 3 3.78 3 6.83V17.16C3 20.26 4.77 22 7.81 22H16.191C19.28 22 21 20.26 21 17.16V6.83C21 3.78 19.28 2 16.191 2Z" fill="currentColor"></path></svg>
@@ -607,6 +601,7 @@
   }
 </script>
 {% endif %}
+{% if request.user.listen %}
 <script>
 document.addEventListener("DOMContentLoaded", async () => {
   const userId = "{{ request.user.id }}";  // UUID текущего пользователя
@@ -685,7 +680,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   init();
 });
 </script>
-
+{% endif %}
 
 {% block footerbottom %}{% endblock footerbottom %}
 </body>

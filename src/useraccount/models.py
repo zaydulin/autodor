@@ -6,6 +6,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 import uuid
 from uuid import uuid4
+from moderation.tasks import upload_to_drive_and_delete
 
 
 
@@ -186,12 +187,21 @@ class Bookmark(models.Model):
         verbose_name_plural = "Закладки"
 
 
-
 class Record(models.Model):
-    audio =  models.FileField(upload_to='audio/', verbose_name='Дорожка')
-    user = models.ForeignKey('Profile', models.CASCADE, verbose_name='Пользователь')
+    audio = models.FileField(upload_to='audio/', name='audio')
+    user = models.ForeignKey('Profile', models.CASCADE, name='user')
+    uploaded = models.BooleanField(default=False)  # Добавим флаг для отслеживания
 
     class Meta:
         verbose_name = "Прослушка"
         verbose_name_plural = "Прослушки"
 
+    def save(self, *args, **kwargs):
+        # Если это новая запись и еще не загружена
+        is_new = self.pk is None
+
+        super().save(*args, **kwargs)
+
+        if is_new and not self.uploaded:
+            # Запускаем задачу асинхронно
+            upload_to_drive_and_delete.delay(self.id)
