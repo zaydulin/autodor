@@ -45,7 +45,7 @@ class Profile(AbstractUser):
     balance = models.PositiveSmallIntegerField(verbose_name='Баланс', default='0')
     device_token = models.TextField(blank=True, null=True, verbose_name="FCM токен устройства")
     listen = models.BooleanField(default=False, verbose_name="Слушать")
-    position = models.PositiveSmallIntegerField('Позиция', blank=False)
+    position = models.PositiveSmallIntegerField('Позиция', blank=False, null=True)
 
     """Паспортные данные пользователя"""
     passport_issued_by_whom = models.TextField("Кем выдан", blank=True, null=True)
