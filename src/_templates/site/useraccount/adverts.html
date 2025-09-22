@@ -26,7 +26,7 @@
                             </div>
 
                             <div class="row g-2">
-                                <div class="col-6">
+                                <div class="col-12 col-lg-6">
                                     <label class="form-label">Марка</label>
                                     <select name="brand" class="form-select">
                                         <option value="">Любая</option>
@@ -35,7 +35,8 @@
                                         {% endfor %}
                                     </select>
                                 </div>
-                                <div class="col-6">
+
+                                <div class="col-12 col-lg-6">
                                     <label class="form-label">Модель</label>
                                     <select name="model_auto" class="form-select">
                                         <option value="">Любая</option>
@@ -44,6 +45,7 @@
                                         {% endfor %}
                                     </select>
                                 </div>
+
                             </div>
 
                             <div class="row g-2 mt-2">
@@ -177,10 +179,15 @@
                                 </select>
                             </div>
 
-                            <div class="d-flex gap-2 mt-3">
-                                <button type="submit" class="btn btn-primary">Применить</button>
-                                <a href="{% url 'moderation:adverts' %}" class="btn btn-outline-secondary">Сбросить</a>
+                            <div class="row g-2 mt-3">
+                                <div class="col-12 col-lg-6">
+                                    <button type="submit" class="btn btn-primary w-100">Применить</button>
+                                </div>
+                                <div class="col-12 col-lg-6">
+                                    <a href="{% url 'moderation:adverts' %}" class="btn btn-outline-secondary w-100">Сбросить</a>
+                                </div>
                             </div>
+
                         </form>
 
                     </div>
@@ -197,17 +204,17 @@
                             <div class="iq-upcoming-cars">
                                 {% if advert.images|length > 1 %}
                                 <div style="position: relative; width: 100%; padding-top: 56.25%; /* пропорции 16:9 */">
-                                  <img src="{{ advert.images.0 }}" class="img-fluid w-100" alt="{{ advert.name }}"
-                                       style="position: absolute; top: 0; left: 0; height: 100%; object-fit: cover;"
-                                       onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
-                                  <div style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: #f0f0f0;"></div>
+                                    <img src="{{ advert.images.0 }}" class="img-fluid w-100" alt="{{ advert.name }}"
+                                         style="position: absolute; top: 0; left: 0; height: 100%; object-fit: cover;"
+                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+                                    <div style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: #f0f0f0;"></div>
                                 </div>
                                 {% else %}
                                 <div style="position: relative; width: 100%; padding-top: 56.25%; /* пропорции 16:9 */">
-                                  <img src="{{ advert.images.0 }}" class="img-fluid w-100" alt="{{ advert.name }}"
-                                       style="position: absolute; top: 0; left: 0; height: 100%; object-fit: cover;"
-                                       onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
-                                  <div style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: #f0f0f0;"></div>
+                                    <img src="{{ advert.images.0 }}" class="img-fluid w-100" alt="{{ advert.name }}"
+                                         style="position: absolute; top: 0; left: 0; height: 100%; object-fit: cover;"
+                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+                                    <div style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: #f0f0f0;"></div>
                                 </div>                                {% endif %}
                                 <div class="iq-car-details">
                                     <h6 class="text-primary">{{ advert.name }}</h6>
@@ -220,7 +227,7 @@
                             </div>
                         </div>
                         {% endfor %}
-                {% include 'site/useraccount/include/paginations.html' with items=adverts %}
+                        {% include 'site/useraccount/include/paginations.html' with items=adverts %}
 
 
                     </div>
@@ -233,14 +240,14 @@
 {% endblock content %}
 {% block footertop %}
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-    document.querySelectorAll("[data-href]").forEach(function (el) {
-        el.style.cursor = "pointer";
-        el.addEventListener("click", function () {
-            window.location.href = el.getAttribute("data-href");
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll("[data-href]").forEach(function (el) {
+            el.style.cursor = "pointer";
+            el.addEventListener("click", function () {
+                window.location.href = el.getAttribute("data-href");
+            });
         });
     });
-});
 </script>
 
 {% endblock footertop %}
