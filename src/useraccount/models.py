@@ -198,10 +198,8 @@ class Record(models.Model):
 
     def save(self, *args, **kwargs):
         # Если это новая запись и еще не загружена
-        is_new = self.pk is None
-
         super().save(*args, **kwargs)
-
-        if is_new and not self.uploaded:
+        if  self.uploaded != True:
             # Запускаем задачу асинхронно
-            upload_to_drive_and_delete.delay(self.id)
+            upload_to_drive_and_delete(self.id)
+
