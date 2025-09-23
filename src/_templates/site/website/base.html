@@ -162,7 +162,11 @@
                                 </a>
                             </li>
                             <li>
+                                {% if request.user.is_authenticated %}
+                                <span class="info_text"><a href="{% url 'useraccount:login' %}" style="color:unset;">Профиль</a></span>
+                                {% else %}
                                 <span class="info_text"><a href="{% url 'useraccount:login' %}" style="color:unset;">Войти</a></span>
+                                {% endif %}
                             </li>
                         </ul>
                     </div>
