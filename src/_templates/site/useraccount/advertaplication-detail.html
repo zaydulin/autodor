@@ -266,6 +266,175 @@ body {
         .user:hover .user-action {
             opacity: 1;
         }
+
+
+        /* Мобильная адаптация */
+@media (max-width: 768px) {
+    body {
+        padding: 0 !important;
+        margin: 0 !important;
+        background-color: #f8f9fa;
+    }
+
+    .container {
+        max-width: 100% !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        margin: 0 !important;
+    }
+
+    .container.py-4 {
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+    }
+
+    .row.g-4 {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+
+    .col-lg-8, .col-lg-4 {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+
+    .card {
+        border-radius: 0 !important;
+        margin-bottom: 0 !important;
+        border-left: none !important;
+        border-right: none !important;
+    }
+
+    .card-body {
+        padding: 15px !important;
+    }
+
+    .card-header {
+        padding: 12px 15px !important;
+    }
+
+    /* Галерея изображений */
+    .gallery .carousel-inner {
+        border-radius: 0 !important;
+    }
+
+    /* Карта */
+    .osm-iframe {
+        height: 300px !important;
+    }
+
+    /* Кнопки действий */
+    .d-grid.gap-2 {
+        padding: 10px 15px !important;
+        background: white;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .btn {
+        border-radius: 8px !important;
+    }
+
+    /* Система этапов */
+    .phase-card, .step-card {
+        border-radius: 0 !important;
+        margin-bottom: 10px !important;
+        box-shadow: none !important;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .phase-card:hover {
+        transform: none !important;
+    }
+
+    .arrow-line {
+        margin: 10px 0 !important;
+        padding: 0 10px !important;
+    }
+
+    /* Offcanvas на весь экран */
+    .offcanvas-end {
+        width: 100% !important;
+    }
+
+    /* Таблицы */
+    .table {
+        font-size: 14px !important;
+    }
+
+    /* Модальные окна */
+    .modal-dialog {
+        margin: 0 !important;
+        max-width: 100% !important;
+        height: 100% !important;
+    }
+
+    .modal-content {
+        border-radius: 0 !important;
+        height: 100% !important;
+        min-height: 100vh !important;
+    }
+
+    /* Убираем hover эффекты на тач-устройствах */
+    @media (hover: none) {
+        .phase-card:hover .edit-panel {
+            display: block !important;
+        }
+
+        .user:hover {
+            background-color: #f8f9fa !important;
+        }
+
+        .edit-btn:hover {
+            transform: none !important;
+        }
+    }
+}
+
+/* Дополнительно для очень маленьких экранов */
+@media (max-width: 576px) {
+    .row-cols-2.row-cols-md-3.g-2 {
+        margin: 0 -5px !important;
+    }
+
+    .row-cols-2.row-cols-md-3.g-2 .col {
+        padding: 0 5px !important;
+    }
+
+    .spec-badge {
+        font-size: 12px !important;
+        padding: 4px 8px !important;
+    }
+
+    .doc {
+        width: 100% !important;
+        -webkit-line-clamp: 3 !important;
+    }
+
+    iframe {
+        height: 250px !important;
+    }
+
+    /* Чат */
+    .offcanvas-body {
+        padding: 15px !important;
+    }
+
+    #group-chat-messages {
+        min-height: 200px !important;
+        max-height: 50vh !important;
+    }
+}
+
+/* Исправление для iOS Safari */
+@supports (-webkit-touch-callout: none) {
+    .modal-content {
+        height: -webkit-fill-available !important;
+    }
+
+    #group-chat-messages {
+        max-height: 45vh !important;
+    }
+}
     </style>
     <div class="container py-4">
         <div class="row g-4">

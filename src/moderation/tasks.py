@@ -8,7 +8,8 @@ from django.utils import timezone
 
 
 
-from useraccount.google_utils import upload_to_google_drive
+from useraccount.yandex_disk_utils import upload_to_yandex_disk
+
 
 
 @shared_task
@@ -91,27 +92,29 @@ def delete_old_ads():
     return f"Удалено {deleted_count} старых объявлений"
 
 
-@shared_task
-def upload_to_drive_and_delete(record_id):
+@shared_task(bind=True, max_retries=3, default_retry_delay=300)
+def upload_to_drive_and_delete(self, record_id):
     """
     Задача для загрузки файла на Google Drive и удаления записи
     """
     try:
-        # Получаем запись
-        from useraccount.models import Record
+        from .models import Record
 
         record = Record.objects.get(id=record_id)
+        record.upload_attempts += 1
+        record.save()
 
-        # Проверяем, существует ли файл
+        # Проверяем существование файла
         if not record.audio or not os.path.exists(record.audio.path):
             print(f"Файл не существует: {record.audio.path}")
-            record.delete()  # Удаляем запись в любом случае
+            record.delete()
             return f"Файл не существует, запись {record_id} удалена"
 
-        # Загружаем на Google Drive
-        success = upload_to_google_drive(
-            record.audio.path,
-            os.path.basename(record.audio.path)
+        # Загружаем на Яндекс.Диск
+        success = upload_to_yandex_disk(
+            file_path=record.audio.path,
+            file_name=os.path.basename(record.audio.path),
+            folder_path='audio_records'  # Папка на Яндекс.Диске
         )
 
         if success:
@@ -122,15 +125,18 @@ def upload_to_drive_and_delete(record_id):
 
             # Удаляем запись из базы
             record.delete()
-            return f"Файл загружен и запись {record_id} удалена"
+            return f"Файл загружен на Яндекс.Диск и запись {record_id} удалена"
         else:
-            # Если загрузка не удалась, оставляем запись для повторной попытки
-            return f"Ошибка загрузки файла {record_id}"
+            # Если загрузка не удалась, пробуем снова
+            if record.upload_attempts < 3:
+                raise self.retry(exc=Exception("Ошибка загрузки на Яндекс.Диск"))
+            else:
+                print(f"Превышено количество попыток загрузки для записи {record_id}")
+                return f"Ошибка загрузки после 3 попыток"
 
     except Record.DoesNotExist:
         return f"Запись {record_id} не найдена"
     except Exception as e:
-        # Логируем ошибку, но оставляем запись для повторной попытки
         print(f"Ошибка в задаче: {e}")
-        return f"Ошибка: {str(e)}"
+        raise self.retry(exc=e)
 

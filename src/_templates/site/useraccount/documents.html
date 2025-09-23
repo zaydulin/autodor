@@ -10,28 +10,59 @@
 {% block content %}
 
 <style>
-    .table {
-        width: 100%;
-        margin-bottom: 1rem;
-        border-collapse: collapse;
+    /* Стили для карточек на мобильных */
+    .applications-cards {
+        display: none;
     }
 
-    .table th,
-    .table td {
-        padding: 0.75rem;
-        vertical-align: top;
-        border-top: 1px solid #dee2e6;
+    .application-card {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
 
-    .table-striped tbody tr:nth-of-type(odd) {
-        background-color: #f8f9fa;
+    .card-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        align-items: center;
     }
 
-    .pagination {
-        margin-top: 1rem;
+    .card-label {
+        font-weight: 600;
+        color: #666;
+        font-size: 14px;
+    }
+
+    .card-value {
+        font-size: 14px;
+    }
+
+    .application-id {
+        font-family: 'Courier New', monospace;
+        color: #666;
+    }
+
+    .documents-compact {
+        max-height: 100px;
+        overflow-y: auto;
+    }
+
+    @media (max-width: 768px) {
+        .table-container {
+            display: none;
+        }
+
+        .applications-cards {
+            display: block;
+        }
     }
 </style>
 <h2>Список заявок</h2>
+<div class="table-container">
 
 <table class="table table-striped">
     <thead>
@@ -76,6 +107,52 @@
     {%endif %}
     </tbody>
 </table>
+</div>
+<div class="applications-cards">
+    {% if page_obj %}
+        {% for application in page_obj %}
+        <div class="application-card">
+            <div class="card-row">
+                <span class="card-label">№ Заявки:</span>
+                <span class="card-value application-id">#{{ application.id|slice:":8" }}{% if application.id|length > 8 %}...{% endif %}</span>
+            </div>
+
+            <div class="card-row">
+                <span class="card-label">Статус:</span>
+                <span class="status-badge">{{ application.get_status_display }}</span>
+            </div>
+
+            <div class="card-row">
+                <span class="card-label">Стоимость:</span>
+                <span class="card-value" style="font-weight: 600; color: #28a745;">
+                    {{ application.price }} {{ application.advert.currency|default:"руб." }}
+                </span>
+            </div>
+
+            <div class="card-row" style="align-items: flex-start;">
+                <span class="card-label">Документы:</span>
+                <div class="card-value documents-compact">
+                    {% for document in application.documents.all %}
+                    <div style="margin-bottom: 5px; font-size: 12px;">
+                        {{ document.name|truncatechars:20 }}
+                        {% if document.file %}
+                            <a href="{{ document.file.url }}" style="margin-left: 5px;">📥</a>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <span style="color: #6c757d; font-style: italic;">Нет документов</span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div style="text-align: center; padding: 2rem; color: #6c757d;">
+            Нет заявок для отображения
+        </div>
+    {% endif %}
+</div>
+
 
 <!-- Пагинация -->
 <div class="pagination">
