@@ -8,6 +8,8 @@ urlpatterns = [
     path("adverts/", views.AdvertView.as_view(), name="adverts"),
     path("adverts/<int:pk>/", views.AdvertDetailView.as_view(), name="advert_detail"),
     path('create-application/<int:advert_id>/', views.create_application, name='create_application'),
+    path("advert/<int:advert_id>/", views.create_application_view, name="advert_apply"),
+
     path("my-applications/", views.AdvertAplicationListView.as_view(), name="my_applications"),
     path("my-applications/<uuid:pk>/", views.AdvertAplicationDetailView.as_view(), name="application_detail"),
     path('chat/<uuid:app_id>/send/', views.send_message, name='send_message'),

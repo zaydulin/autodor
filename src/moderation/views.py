@@ -505,6 +505,7 @@ class FaqsModerView(ListView):
         return context
 
 
+
 def create_application(request, advert_id):
     if request.method == 'POST':
         try:
@@ -517,16 +518,13 @@ def create_application(request, advert_id):
                 price=0,
             )
 
-            settings = SettingsGlobale.objects.first()  # или другой способ получения нужного экземпляра
+            settings = SettingsGlobale.objects.first()
 
             # Перебираем номера файлов от 1 до 8
             for i in range(1, 9):
-                # Получаем название поля, например 'document_file_1'
                 file_field_name = f'document_file_{i}'
-                # Получаем файл из модели
-                file_obj = getattr(settings, file_field_name)
+                file_obj = getattr(settings, file_field_name, None)
                 if file_obj:
-                    # Создаем документ
                     AdvertDocument.objects.create(
                         aplication=application,
                         file=file_obj,
@@ -534,12 +532,12 @@ def create_application(request, advert_id):
                         type=i,
                         name=file_obj.name,
                     )
-            admin_users = Profile.objects.filter(employee=4)
 
-            # Добавляем всех админов к заявке
-            application.user.add(*admin_users)
-            application.user.add(request.user)
-            application.save()
+            # 🔹 Админы (берём user из Profile)
+            admin_users = [profile.user for profile in Profile.objects.filter(employee=4)]
+
+            # Добавляем всех админов и текущего пользователя
+            application.user.add(*admin_users, request.user)
 
             return JsonResponse({'success': True, 'application_id': str(application.id)})
 
@@ -547,8 +545,26 @@ def create_application(request, advert_id):
             return JsonResponse({'success': False, 'error': 'Объявление не найдено'})
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
+
     return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
+
+@login_required
+def create_application_view(request, advert_id):
+    """Создание заявки для текущего пользователя"""
+    advert = get_object_or_404(Advert, id=advert_id)
+
+    # Создаем заявку
+    application = AdvertAplication.objects.create(
+        advert=advert,
+        price=0,  # если нужна какая-то логика расчета — добавь сюда
+        status=AdvertAplication.Status.NEW,
+    )
+
+    # Добавляем текущего пользователя в список пользователей заявки
+    application.user.add(request.user)
+
+    return redirect("moderation:my_applications")
 
 
 def application_list(request):

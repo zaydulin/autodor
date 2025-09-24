@@ -75,7 +75,7 @@
                 </tbody>
             </table>
             {% if request.user.employee == 0 %}
-                <button id="btn-take" class="button_take">создать заявку на покупку</button>
+                <a href="{% url 'moderation:advert_apply' advert.id %}" class="button_take w-100">создать заявку на покупку</a>
             {% endif %}
         </div>
     </div>

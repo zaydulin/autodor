@@ -205,6 +205,9 @@
         font-weight: 600;
         margin-left: 10px;
     }
+.container {
+  overflow-x: hidden;
+}
 
     .status-pending { background: #fff3cd; color: #856404; }
     .status-approved { background: #d4edda; color: #155724; }
@@ -213,7 +216,7 @@
 <div class="container">
     {% if advertaplications %}
     {% for advertaplication in advertaplications %}
-    <div  style="margin-bottom: 10%; background: white;" data-href="{% url 'moderation:application_detail' advertaplication.id %}">
+    <div  style="padding-bottom: 10%; background: white;" data-href="{% url 'moderation:application_detail' advertaplication.id %}">
         <div style="padding:5%" class="row d-flex align-items-center pb-3 "  >
             <div class="col-lg-6 d-flex justify-content-center align-items-center" style="height:300px;">
                 {% if advertaplication.advert.images %}
@@ -232,67 +235,67 @@
                 <h4 class="text-primary"> {{ advertaplication.advert.price }} {{ advertaplication.advert.currency }}</h4>
             </div>
         </div>
-        <div class="info-block">
-                    <div class="d-flex align-items-center">
-                        <svg width="33" viewBox="0 0 33 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M25.1642 13.7914L17.3418 1.57336C17.2514 1.43207 17.1268 1.31581 16.9797 1.23528C16.8325 1.15476 16.6674 1.11255 16.4996 1.11255C16.3319 1.11255 16.1668 1.15476 16.0196 1.23528C15.8725 1.31581 15.7479 1.43207 15.6575 1.57336L7.8349 13.7916C6.47874 15.6313 5.74989 17.8582 5.7559 20.1437C5.7559 26.0678 10.5755 30.8875 16.4996 30.8875C22.4238 30.8875 27.2434 26.0679 27.2434 20.1437C27.2494 17.8581 26.5205 15.6311 25.1642 13.7914ZM16.4996 28.8875C11.6784 28.8875 7.7559 24.9651 7.7559 20.1437C7.75078 18.2746 8.34972 16.4538 9.46346 14.9526C9.47675 14.9346 9.48942 14.9162 9.50146 14.8974L16.4996 3.96718L23.4976 14.8974C23.5096 14.9163 23.5223 14.9347 23.5356 14.9527C24.6494 16.4538 25.2484 18.2746 25.2434 20.1437C25.2434 24.965 21.3209 28.8875 16.4996 28.8875Z" fill="#131313"></path>
-                        </svg>
-                        <div class="info-content ms-3">
-                            <h4>Пробег</h4>
-                            <p class="mb-0">{{ advertaplication.advert.mileage }} км</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="info-block">
-                    <div class="d-flex align-items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none">
-                            <path d="M15.5 31C23.5084 31 30 24.5084 30 16.5C30 8.49165 23.5084 2 15.5 2C7.49165 2 1 8.49165 1 16.5C1 24.5084 7.49165 31 15.5 31Z" stroke="#131313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-                            <path d="M15.5 31V22.3" stroke="#131313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-                            <path d="M1 16.5H9.7" stroke="#131313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-                            <path d="M29.9988 16.5H21.2988" stroke="#131313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-                            <path d="M21.2992 16.5C21.2992 18.0382 20.6881 19.5135 19.6004 20.6012C18.5127 21.6889 17.0375 22.3 15.4992 22.3C13.961 22.3 12.4857 21.6889 11.398 20.6012C10.3103 19.5135 9.69922 18.0382 9.69922 16.5C9.69922 14.9617 10.3103 13.4864 11.398 12.3987C12.4857 11.311 13.961 10.7 15.4992 10.7C17.0375 10.7 18.5127 11.311 19.6004 12.3987C20.6881 13.4864 21.2992 14.9617 21.2992 16.5V16.5Z" stroke="#131313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-                        </svg>
-                        <div class="info-content ms-3">
-                            <h4>Адрес отправки</h4>
-                            <p class="mb-0">{{ advertaplication.advert.address }}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="info-block">
-                    <div class="d-flex align-items-center">
-                        <svg width="33" viewBox="0 0 33 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M25.1642 13.7914L17.3418 1.57336C17.2514 1.43207 17.1268 1.31581 16.9797 1.23528C16.8325 1.15476 16.6674 1.11255 16.4996 1.11255C16.3319 1.11255 16.1668 1.15476 16.0196 1.23528C15.8725 1.31581 15.7479 1.43207 15.6575 1.57336L7.8349 13.7916C6.47874 15.6313 5.74989 17.8582 5.7559 20.1437C5.7559 26.0678 10.5755 30.8875 16.4996 30.8875C22.4238 30.8875 27.2434 26.0679 27.2434 20.1437C27.2494 17.8581 26.5205 15.6311 25.1642 13.7914ZM16.4996 28.8875C11.6784 28.8875 7.7559 24.9651 7.7559 20.1437C7.75078 18.2746 8.34972 16.4538 9.46346 14.9526C9.47675 14.9346 9.48942 14.9162 9.50146 14.8974L16.4996 3.96718L23.4976 14.8974C23.5096 14.9163 23.5223 14.9347 23.5356 14.9527C24.6494 16.4538 25.2484 18.2746 25.2434 20.1437C25.2434 24.965 21.3209 28.8875 16.4996 28.8875Z" fill="#131313"></path>
-                        </svg>
-                        <div class="info-content ms-3">
-                            <h4>Мощность</h4>
-                            <p class="mb-0">{{ advertaplication.advert.power }} кВт</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="info-block">
-                    <div class="d-flex align-items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none">
-                            <path d="M15.5 31C23.5084 31 30 24.5084 30 16.5C30 8.49165 23.5084 2 15.5 2C7.49165 2 1 8.49165 1 16.5C1 24.5084 7.49165 31 15.5 31Z" stroke="#131313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-                            <path d="M15.5 31V22.3" stroke="#131313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-                            <path d="M1 16.5H9.7" stroke="#131313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-                            <path d="M29.9988 16.5H21.2988" stroke="#131313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-                            <path d="M21.2992 16.5C21.2992 18.0382 20.6881 19.5135 19.6004 20.6012C18.5127 21.6889 17.0375 22.3 15.4992 22.3C13.961 22.3 12.4857 21.6889 11.398 20.6012C10.3103 19.5135 9.69922 18.0382 9.69922 16.5C9.69922 14.9617 10.3103 13.4864 11.398 12.3987C12.4857 11.311 13.961 10.7 15.4992 10.7C17.0375 10.7 18.5127 11.311 19.6004 12.3987C20.6881 13.4864 21.2992 14.9617 21.2992 16.5V16.5Z" stroke="#131313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-                        </svg>
-                        <div class="info-content ms-3">
-                            <h4>Объём двигателя</h4>
-                            <p class="mb-0">{{ advertaplication.advert.engine_volume }} л</p>
-                        </div>
-                    </div>
+        <div class="info-block" style=" margin: 5px;">
+            <div class="d-flex align-items-center">
+                <svg width="33" viewBox="0 0 33 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M25.1642 13.7914L17.3418 1.57336C17.2514 1.43207 17.1268 1.31581 16.9797 1.23528C16.8325 1.15476 16.6674 1.11255 16.4996 1.11255C16.3319 1.11255 16.1668 1.15476 16.0196 1.23528C15.8725 1.31581 15.7479 1.43207 15.6575 1.57336L7.8349 13.7916C6.47874 15.6313 5.74989 17.8582 5.7559 20.1437C5.7559 26.0678 10.5755 30.8875 16.4996 30.8875C22.4238 30.8875 27.2434 26.0679 27.2434 20.1437C27.2494 17.8581 26.5205 15.6311 25.1642 13.7914ZM16.4996 28.8875C11.6784 28.8875 7.7559 24.9651 7.7559 20.1437C7.75078 18.2746 8.34972 16.4538 9.46346 14.9526C9.47675 14.9346 9.48942 14.9162 9.50146 14.8974L16.4996 3.96718L23.4976 14.8974C23.5096 14.9163 23.5223 14.9347 23.5356 14.9527C24.6494 16.4538 25.2484 18.2746 25.2434 20.1437C25.2434 24.965 21.3209 28.8875 16.4996 28.8875Z" fill="#131313"></path>
+                </svg>
+                <div class="info-content ms-3">
+                    <h4>Пробег</h4>
+                    <p class="mb-0">{% if advertaplication.advert.mileage %}{{ advertaplication.advert.mileage }}{% else %}Смотрите в описании{% endif %} км</p>
                 </div>
             </div>
         </div>
-    {% endfor %}
-    {% else %}
-    <h4 style="display: flex; justify-content: center;">У вас нет заявок, выберите машину в разделе объявления</h4>
-    {% endif %}
+
+        <div class="info-block" style=" margin: 5px;">
+            <div class="d-flex align-items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none">
+                    <path d="M15.5 31C23.5084 31 30 24.5084 30 16.5C30 8.49165 23.5084 2 15.5 2C7.49165 2 1 8.49165 1 16.5C1 24.5084 7.49165 31 15.5 31Z" stroke="#131313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                    <path d="M15.5 31V22.3" stroke="#131313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                    <path d="M1 16.5H9.7" stroke="#131313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                    <path d="M29.9988 16.5H21.2988" stroke="#131313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                    <path d="M21.2992 16.5C21.2992 18.0382 20.6881 19.5135 19.6004 20.6012C18.5127 21.6889 17.0375 22.3 15.4992 22.3C13.961 22.3 12.4857 21.6889 11.398 20.6012C10.3103 19.5135 9.69922 18.0382 9.69922 16.5C9.69922 14.9617 10.3103 13.4864 11.398 12.3987C12.4857 11.311 13.961 10.7 15.4992 10.7C17.0375 10.7 18.5127 11.311 19.6004 12.3987C20.6881 13.4864 21.2992 14.9617 21.2992 16.5V16.5Z" stroke="#131313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                </svg>
+                <div class="info-content ms-3">
+                    <h4>Адрес отправки</h4>
+                    <p class="mb-0">{% if advertaplication.advert.address %}{{ advertaplication.advert.address }}{% else %}Смотрите в описании{% endif %}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-block" style=" margin: 5px;">
+            <div class="d-flex align-items-center">
+                <svg width="33" viewBox="0 0 33 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M25.1642 13.7914L17.3418 1.57336C17.2514 1.43207 17.1268 1.31581 16.9797 1.23528C16.8325 1.15476 16.6674 1.11255 16.4996 1.11255C16.3319 1.11255 16.1668 1.15476 16.0196 1.23528C15.8725 1.31581 15.7479 1.43207 15.6575 1.57336L7.8349 13.7916C6.47874 15.6313 5.74989 17.8582 5.7559 20.1437C5.7559 26.0678 10.5755 30.8875 16.4996 30.8875C22.4238 30.8875 27.2434 26.0679 27.2434 20.1437C27.2494 17.8581 26.5205 15.6311 25.1642 13.7914ZM16.4996 28.8875C11.6784 28.8875 7.7559 24.9651 7.7559 20.1437C7.75078 18.2746 8.34972 16.4538 9.46346 14.9526C9.47675 14.9346 9.48942 14.9162 9.50146 14.8974L16.4996 3.96718L23.4976 14.8974C23.5096 14.9163 23.5223 14.9347 23.5356 14.9527C24.6494 16.4538 25.2484 18.2746 25.2434 20.1437C25.2434 24.965 21.3209 28.8875 16.4996 28.8875Z" fill="#131313"></path>
+                </svg>
+                <div class="info-content ms-3">
+                    <h4>Мощность</h4>
+                    <p class="mb-0">{% if advertaplication.advert.power %}{{ advertaplication.advert.power }}{% else %}Смотрите в описании{% endif %} кВт</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-block" style=" margin: 5px;">
+            <div class="d-flex align-items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none">
+                    <path d="M15.5 31C23.5084 31 30 24.5084 30 16.5C30 8.49165 23.5084 2 15.5 2C7.49165 2 1 8.49165 1 16.5C1 24.5084 7.49165 31 15.5 31Z" stroke="#131313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                    <path d="M15.5 31V22.3" stroke="#131313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                    <path d="M1 16.5H9.7" stroke="#131313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                    <path d="M29.9988 16.5H21.2988" stroke="#131313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                    <path d="M21.2992 16.5C21.2992 18.0382 20.6881 19.5135 19.6004 20.6012C18.5127 21.6889 17.0375 22.3 15.4992 22.3C13.961 22.3 12.4857 21.6889 11.398 20.6012C10.3103 19.5135 9.69922 18.0382 9.69922 16.5C9.69922 14.9617 10.3103 13.4864 11.398 12.3987C12.4857 11.311 13.961 10.7 15.4992 10.7C17.0375 10.7 18.5127 11.311 19.6004 12.3987C20.6881 13.4864 21.2992 14.9617 21.2992 16.5V16.5Z" stroke="#131313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                </svg>
+                <div class="info-content ms-3">
+                    <h4>Объём двигателя</h4>
+                    <p class="mb-0">{% if advertaplication.advert.engine_volume  %}{{ advertaplication.advert.engine_volume }}{% else %}Смотрите в описании{% endif %} л</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% else %}
+<h4 style="display: flex; justify-content: center;">У вас нет заявок, выберите машину в разделе объявления</h4>
+{% endif %}
 </div>
 {% include 'site/useraccount/include/paginations.html' with items=adverts %}
 
