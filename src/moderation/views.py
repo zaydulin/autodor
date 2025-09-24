@@ -550,6 +550,7 @@ def create_application(request, advert_id):
     return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
 
+
 def application_list(request):
     # Получаем все заявки с документами
     applications = AdvertAplication.objects.all().prefetch_related(
@@ -557,7 +558,7 @@ def application_list(request):
         'user_drivers'
     )
 
-    # Добавляем пагинацию
+    # Создаем пагинатор
     paginator = Paginator(applications, 10)  # 10 заявок на страницу
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -566,7 +567,9 @@ def application_list(request):
         request,
         'site/useraccount/documents.html',
         {
-            'page_obj': page_obj
+            'page_obj': page_obj,
+            'paginator': paginator,
+            'documents': page_obj,  # для совместимости с шаблоном
         }
     )
 
