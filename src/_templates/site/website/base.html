@@ -285,7 +285,7 @@
                                 </li>
 
                                 <li>
-                                    <a href="{% url 'useraccount:login' %}">
+                                    <a href="{% if request.user.is_authenticated %}{% url 'useraccount:edit_profile' %}{% else %}{% url 'useraccount:login' %}{% endif %}">
                                         <span class="info_text">Профиль</span>
                                     </a>
                                 </li>
