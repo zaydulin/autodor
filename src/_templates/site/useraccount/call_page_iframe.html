@@ -2,6 +2,7 @@
 <style>
 
 
+
     h1 {
       font-size: 24px;
       margin-bottom: 10px;
@@ -120,8 +121,56 @@
       display: none;
     }
   </style>
+
+
+  <style>
+    /* Стиль для кнопки "Назад" */
+    .back-button {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      display: flex;
+      align-items: center;
+      padding: 8px 12px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 24px;
+      color: #2c3e50;
+      z-index: 1000;
+    }
+
+    /* Стиль стрелочки */
+    .back-button svg {
+      margin-right: 8px;
+      width: 24px;
+      height: 24px;
+      fill: currentColor;
+    }
+
+    /* Обертка для заголовка, чтобы не перекрывать кнопку */
+    .header-container {
+      position: relative;
+      padding-top: 60px; /* чтобы было место для кнопки */
+    }
+  </style>
+
+
+
+
 <div class="all_modal">
-  <h1>Аудиозвонок с {{ other_user.username }}</h1>
+    <div class="header-container">
+    <!-- Кнопка "Назад" с SVG стрелкой -->
+    <button class="back-button" onclick="history.back()" aria-label="Вернуться назад">
+      <!-- SVG стрелки влево -->
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Назад
+    </button>
+
+    <h1>Аудиозвонок с {{ other_user.username }}</h1>
+  </div>
   <!-- Статус звонка -->
   <div id="callStatus">Ожидание начала звонка...</div>
 
@@ -404,12 +453,6 @@
     });
 
     updateUIOnCallEnd();
-
-    // Можно добавить автоматическое закрытие страницы через несколько секунд
-    setTimeout(() => {
-        // window.close(); // или редирект на другую страницу
-        // window.location.href = '/'; // редирект на главную
-    }, 3000);
 }
 
 
@@ -432,7 +475,7 @@ if (cancelBtn) {
             if (response.ok) {
                 const modal = document.getElementById('callModal');
                 if (modal) {
-                    modal.style.display = 'none';
+                    modal.style.display = 'none'; // Скрываем модальное окно сразу
                 }
                 console.log('Call successfully ended on server');
             } else {
@@ -445,10 +488,9 @@ if (cancelBtn) {
         // Завершаем звонок на клиенте
         endCall();
 
-        // Скрываем модальное окно (замените 'callModal' на ваш id)
-
-
-        updateUIOnCallEnd();
+        // Можно сразу закрывать или редиректить
+        // Например, редирект:
+        // window.location.href = '/';
     };
 }
 
@@ -482,7 +524,7 @@ function getCookie(name) {
       const rms = Math.sqrt(dataArray.reduce((sum, val) => sum + (val - 128) ** 2, 0) / dataArray.length);
       // Предположим, что говорящий — это текущий пользователь
       highlightSpeaker(userId);
-      setTimeout(analyze, 1000);
+      setTimeout(analyze, 10);
     }
     analyze();
   }
