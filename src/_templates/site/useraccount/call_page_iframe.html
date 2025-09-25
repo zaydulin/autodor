@@ -458,12 +458,21 @@
 
 if (cancelBtn) {
     cancelBtn.onclick = async () => {
+        // Немедленно закрываем модальное окно
+        const modal = document.getElementById('callModal');
+        if (modal) {
+            const bootstrapModal = bootstrap.Modal.getInstance(modal);
+            if (bootstrapModal) {
+                bootstrapModal.hide(); // закрываем модалку сразу
+            }
+        }
+
         // Отправляем сигнал о завершении звонка через WebSocket
         sendMessage({ type: 'hangup', sender: userId });
 
-        // Отправляем запрос на сервер для удаления звонка
+        // Запускаем асинхронные операции в фоне
         try {
-            const response = await fetch(`/call/${callId}/hangup/`, {
+            await fetch(`/call/${callId}/hangup/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -471,28 +480,18 @@ if (cancelBtn) {
                 },
                 body: JSON.stringify({})
             });
-
-            if (response.ok) {
-                const modal = document.getElementById('callModal');
-                if (modal) {
-                    modal.style.display = 'none'; // Скрываем модальное окно сразу
-                }
-                console.log('Call successfully ended on server');
-            } else {
-                console.error('Failed to end call on server');
-            }
+            console.log('Call successfully ended on server');
         } catch (error) {
-            console.error('Error ending call:', error);
+            console.error('Error ending call on server:', error);
         }
 
         // Завершаем звонок на клиенте
         endCall();
 
-        // Можно сразу закрывать или редиректить
-        // Например, редирект:
-        // window.location.href = '/';
+        // Можно делать редирект или ничего не делать
     };
 }
+
 
 // Функция для получения CSRF токена
 function getCookie(name) {
