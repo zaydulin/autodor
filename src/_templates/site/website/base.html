@@ -30,12 +30,19 @@
 
 </head>
 <body>
+<script>
+    window.addEventListener('load', function() {
+  setTimeout(function() {
+    var cursorElement = document.querySelector('.cb-cursor');
+    if (cursorElement) {
+      cursorElement.remove();  // Удаляем элемент
+    }
+  }, 2000);  // 2000 миллисекунд = 2 секунды
+});
+
+</script>
 <style>
-    @media (max-width: 768px) {
-  .cb-cursor {
-    display: none;
-  }
-}
+
 
     * {
     font-family: Mulish !important;
