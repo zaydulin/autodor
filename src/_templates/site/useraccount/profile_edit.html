@@ -28,11 +28,11 @@
             <h4 class="card-title">{% trans 'Редактирование профиля' %}</h4>
         </div>
         <div class="card-body">
-            <div class="d-flex" style="justify-content: space-between;">
+            <div class="d-flex flex-column flex-md-row" style="justify-content: space-between;">
                 <!-- Вкладки -->
-                <ul class="nav nav-tabs" id="profileTabs" role="tablist">
+                <ul class="nav nav-tabs flex-column flex-md-row" id="profileTabs" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab" aria-controls="profile" aria-selected="true">
+                        <button class="nav-link mob active" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab" aria-controls="profile" aria-selected="true">
                             Мой профиль
                         </button>
                     </li>
@@ -47,14 +47,17 @@
                         </button>
                     </li>
                 </ul>
+
                 <ul class="nav nav-tabs" id="passwordTabs" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                        <button type="button" class="btn text-primary"  style=" margin: 0; padding: 0px 14px; font-size: 16px; " data-bs-toggle="modal" data-bs-target="#changePasswordModal">
                             {% trans 'Сменить пароль' %}
                         </button>
                     </li>
                 </ul>
             </div>
+
+
             <form method="post"  class="account__main-info" enctype="multipart/form-data">
                 {% csrf_token %}
                 <div class="tab-content mt-4" id="profileTabsContent">
@@ -302,43 +305,46 @@
                     </div>
                 </div>
                 <div style="width: 100%;justify-content: flex-end; display: flex;">
-                <button type="submit" class="btn  btn-primary" >
-                    {% trans 'Сохранить' %}
-                </button>
+                    <button type="submit" class="btn  btn-primary" >
+                        {% trans 'Сохранить' %}
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="changePasswordModalLabel">{% trans 'Сменить пароль' %}</h5>
-      </div>
-      <div class="modal-body">
-        <form method="post">
-            {% csrf_token %}
-            <div class="mb-3">
-                <label for="id_old_password" class="form-label">{% trans 'Старый пароль' %}</label>
-                {{ password_form.old_password }}
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="changePasswordModalLabel">{% trans 'Сменить пароль' %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+
             </div>
-            <div class="mb-3">
-                <label for="id_new_password1" class="form-label">{% trans 'Новый пароль' %}</label>
-                {{ password_form.new_password1 }}
+            <div class="modal-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="id_old_password" class="form-label">{% trans 'Старый пароль' %}</label>
+                        {{ password_form.old_password }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_new_password1" class="form-label">{% trans 'Новый пароль' %}</label>
+                        {{ password_form.new_password1 }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_new_password2" class="form-label">{% trans 'Новый пароль' %}</label>
+                        {{ password_form.new_password2 }}
+                    </div>
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary">{% trans 'Изменить пароль' %}</button>
+                    </div>
+                </form>
             </div>
-            <div class="mb-3">
-                <label for="id_new_password2" class="form-label">{% trans 'Подтверждение нового пароля' %}</label>
-                {{ password_form.new_password2 }}
-            </div>
-            <div class="d-flex justify-content-end">
-                <button type="submit" class="btn btn-primary">{% trans 'Изменить пароль' %}</button>
-            </div>
-        </form>
-      </div>
+        </div>
     </div>
-  </div>
-</div><style>
+</div>
+<style>
     .form-control[type="file"]:not(:disabled):not([readonly]) {
         --tw-border-opacity: 1;
         border-color: rgb(226 232 240 / var(--tw-border-opacity));
