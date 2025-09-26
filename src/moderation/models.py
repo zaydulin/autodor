@@ -13,6 +13,9 @@ from useraccount.models import Profile
 class Advert(models.Model):
     # Основные
     name = models.CharField("Название", max_length=255)
+    car_brand = models.ForeignKey('CarBrand', on_delete=models.CASCADE, null=True, blank=True)
+    car_model = models.ForeignKey('CarModel', on_delete=models.CASCADE, null=True, blank=True)
+
     brand = models.CharField("марка", max_length=255)
     model_auto = models.CharField("модель", max_length=255)
     link = models.URLField("Ссылка", max_length=500)
