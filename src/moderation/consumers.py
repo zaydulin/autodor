@@ -1,10 +1,10 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer, WebsocketConsumer
 from channels.db import database_sync_to_async
-from .models import CallSession
+from .models import CallSession, ChatMessage, AdvertAplication
 from django.conf import settings
 import os, uuid, json, time
-from useraccount.models import Record
+from useraccount.models import Record,Profile
 
 class CallConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -68,6 +68,7 @@ class CallConsumer(AsyncWebsocketConsumer):
         return CallSession.objects.filter(id=self.call_id).exists()
 
 AUDIO_DIR = os.path.join(settings.MEDIA_ROOT, "audio")
+
 
 class AudioConsumer(WebsocketConsumer):
     MAX_DURATION = 15 * 60  # 15 минут в секундах
