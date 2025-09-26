@@ -1,0 +1,1 @@
+[{"model": "moderation.carmodel", "pk": 1, "fields": {"name": "V40 II 2.0 Drive-E 120KM diesel, 2016, nawigacja, ksenony", "brand": 2}}, {"model": "moderation.carmodel", "pk": 2, "fields": {"name": "A 180 CDI", "brand": 1}}, {"model": "moderation.carbrand", "pk": 1, "fields": {"name": "Mercedes-Benz"}}, {"model": "moderation.carbrand", "pk": 2, "fields": {"name": "Volvo"}}]

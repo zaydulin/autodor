@@ -53,6 +53,8 @@ admin.site.register(ChatMessage)
 admin.site.register(AdvertDocument)
 admin.site.register(Path)
 admin.site.register(PathResponsibility)
+admin.site.register(CarModel)
+admin.site.register(CarBrand)
 
 
 
