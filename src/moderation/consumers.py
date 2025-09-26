@@ -1,10 +1,11 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer, WebsocketConsumer
 from channels.db import database_sync_to_async
-from .models import CallSession, ChatMessage, AdvertAplication
+from .models import CallSession
 from django.conf import settings
 import os, uuid, json, time
-from useraccount.models import Record,Profile
+from useraccount.models import Record
+from django.core.files import File
 
 class CallConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -67,8 +68,8 @@ class CallConsumer(AsyncWebsocketConsumer):
     def call_session_exists(self):
         return CallSession.objects.filter(id=self.call_id).exists()
 
-AUDIO_DIR = os.path.join(settings.MEDIA_ROOT, "audio")
 
+AUDIO_DIR = os.path.join(settings.MEDIA_ROOT, "audio")
 
 class AudioConsumer(WebsocketConsumer):
     MAX_DURATION = 15 * 60  # 15 минут в секундах
@@ -177,10 +178,13 @@ class AudioConsumer(WebsocketConsumer):
                 return
 
             try:
-                record = Record.objects.create(user=self.user)
-                record.audio.name = rel_path
-                record.save(update_fields=["audio"])
-                print(f"Audio WS: Record saved -> {rel_path}")
+                # Открываем файл через Django для корректного сохранения
+                with open(self.file_path, 'rb') as f:
+                    record = Record.objects.create(user=self.user)
+                    record.audio.save(self.filename, File(f), save=True)
+                    print(f"Audio WS: Record saved -> {rel_path}")
                 self.saved = True
             except Exception as e:
                 print(f"Failed to save record: {e}")
+
+
