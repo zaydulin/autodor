@@ -166,6 +166,38 @@ class AdvertDocument(models.Model):
         super().save(*args, **kwargs)
 
 
+class CarBrand(models.Model):
+    """Марка автомобиля"""
+    name = models.CharField(max_length=100, verbose_name="Название марки")
+
+    class Meta:
+        verbose_name = "Марка автомобиля"
+        verbose_name_plural = "Марки автомобилей"
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+
+class CarModel(models.Model):
+    """Модель автомобиля"""
+    name = models.CharField(max_length=100, verbose_name="Название модели")
+    brand = models.ForeignKey(
+        CarBrand,
+        on_delete=models.CASCADE,
+        verbose_name="Марка автомобиля",
+        related_name="models"  # позволяет получать все модели марки через brand.models.all()
+    )
+
+    class Meta:
+        verbose_name = "Модель автомобиля"
+        verbose_name_plural = "Модели автомобилей"
+        ordering = ['brand__name', 'name']
+        # Запрещаем дублирование моделей в рамках одной марки
+        unique_together = ['brand', 'name']
+
+    def __str__(self):
+        return f"{self.brand.name} {self.name}"
 
 
 class AdvertExpense(models.Model):
@@ -293,6 +325,7 @@ class ChatMessage(models.Model):
     content = models.TextField(verbose_name="Сообщение")
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name="Автор", blank=True, null=True)
     views = models.ManyToManyField(settings.AUTH_USER_MODEL, verbose_name='Пользователи', related_name='viewsmessage')
+    timestamp = models.DateTimeField(auto_now_add=True,null=True)
 
     class Meta:
         verbose_name = "Сообщение"

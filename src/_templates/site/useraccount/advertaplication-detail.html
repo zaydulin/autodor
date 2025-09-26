@@ -676,13 +676,16 @@ body {
             <!-- Поле ввода и кнопка -->
             <form class="d-flex gap-2" id="group-chat-form">
                 {% csrf_token %}
-                <input type="text" id="group-chat-input" class="form-control" placeholder="Написать сообщение…">
+                <input type="text" id="group-chat-input" class="form-control" placeholder="Написать сообщение…" autocomplete="off">
                 <button type="submit" class="btn btn-primary">Отправить</button>
             </form>
-    <input type="hidden" id="last-message-id" name="last-message-id" value="{{ last_message_id }}">
-
         </div>
     </div>
+
+    <!-- Скрытое поле для ID приложения -->
+    <input type="hidden" id="application-id" value="{{ application.id }}">
+    <input type="hidden" id="user-id" value="{{ request.user.id }}">
+    <input type="hidden" id="user-name" value="{{ request.user.first_name }} {{ request.user.last_name }}">
 
 <div class="modal fade" id="addExpenseModal" tabindex="-1" aria-labelledby="addExpenseModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-sm">
@@ -989,98 +992,167 @@ body {
     </script>
 
     <script>
-    document.addEventListener("DOMContentLoaded", () => {
+    document.addEventListener("DOMContentLoaded", function() {
+        // Элементы DOM
         const chatContainer = document.getElementById('group-chat-messages');
         const messageInput = document.getElementById('group-chat-input');
         const messageForm = document.getElementById('group-chat-form');
+        const applicationId = document.getElementById('application-id').value;
+        const userId = document.getElementById('user-id').value;
+        const userName = document.getElementById('user-name').value;
 
-        // Объявляем переменную lastMessageId и инициализируем значением из скрытого поля
-        let lastMessageId = document.getElementById('last-message-id') ? document.getElementById('last-message-id').value : null;
+        // WebSocket соединение
+        const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+        const chatSocket = new WebSocket(
+            `${protocol}://${window.location.host}/ws/chat/${applicationId}/`
+        );
 
-        // Если у вас есть скрытое поле, добавьте его в шаблон
-        // Например, внутри формы:
-        // <input type="hidden" id="last-message-id" name="last-message-id" value="{{ last_message_id }}">
+        // Обработчик открытия соединения
+        chatSocket.onopen = function(e) {
+            console.log('WebSocket соединение установлено');
+            // Отправляем сообщение о подключении пользователя
+            chatSocket.send(JSON.stringify({
+                'type': 'user_joined',
+                'user_id': userId,
+                'user_name': userName
+            }));
+        };
 
-        const csrfToken = document.querySelector('form#group-chat-form input[name="csrfmiddlewaretoken"]').value;
+        // Обработчик получения сообщений
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+
+            switch(data.type) {
+                case 'chat_message':
+                    displayMessage(data.message);
+                    break;
+
+                case 'user_joined':
+                    showSystemMessage(`${data.user_name} присоединился к чату`);
+                    break;
+
+                case 'user_left':
+                    showSystemMessage(`${data.user_name} покинул чат`);
+                    break;
+
+                case 'message_history':
+                    // Загрузка истории сообщений при подключении
+                    data.messages.forEach(message => {
+                        if (!document.querySelector(`[data-message-id="${message.id}"]`)) {
+                            displayMessage(message);
+                        }
+                    });
+                    break;
+            }
+        };
+
+        // Обработчик закрытия соединения
+        chatSocket.onclose = function(e) {
+            console.log('WebSocket соединение закрыто');
+            // Пытаемся переподключиться через 5 секунд
+            setTimeout(function() {
+                console.log('Попытка переподключения...');
+                // Здесь можно реализовать переподключение
+            }, 5000);
+        };
+
+        // Обработчик ошибок
+        chatSocket.onerror = function(e) {
+            console.error('WebSocket ошибка:', e);
+        };
+
+        // Функция отображения сообщения
+        function displayMessage(message) {
+            const isOwnMessage = parseInt(userId) === message.author_id;
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `d-flex mb-2 ${isOwnMessage ? 'justify-content-end' : ''}`;
+            messageDiv.setAttribute('data-message-id', message.id);
+
+            const messageContent = document.createElement('div');
+            messageContent.className = isOwnMessage ?
+                'bg-light p-2 rounded' : 'bg-primary text-white p-2 rounded';
+            messageContent.style.maxWidth = '75%';
+
+            messageContent.innerHTML = `
+                <div class="fw-bold small">${message.author_name}</div>
+                <div>${escapeHtml(message.content)}</div>
+                <div class="small text-end text-muted">${formatTime(message.timestamp)}</div>
+            `;
+
+            messageDiv.appendChild(messageContent);
+            chatContainer.appendChild(messageDiv);
+
+            // Прокрутка к последнему сообщению
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Функция для системных сообщений
+        function showSystemMessage(text) {
+            const systemDiv = document.createElement('div');
+            systemDiv.className = 'text-center text-muted small my-2';
+            systemDiv.textContent = text;
+            chatContainer.appendChild(systemDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Функция экранирования HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Функция форматирования времени
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            return `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+        }
 
         // Обработка отправки сообщения
         messageForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            const content = messageInput.value.trim();
-            if (!content) return;
 
-            $.ajax({
-                url: "{% url 'moderation:send_message' application.id %}", // замените на ваш урл
-                type: "POST",
-                headers: {'X-CSRFToken': csrfToken},
-                data: {
-                    content: content
-                },
-                success: function(data) {
-                    const html = `
-                        <div class="d-flex justify-content-end mb-2" data-message-id="${data.id}">
-                            <div class="bg-light p-2 rounded" style="max-width: 75%;">
-                                <div class="fw-bold small">{{ request.user.first_name }} {{ request.user.last_name }}</div>
-                                <div>${data.content}</div>
-                                <div class="small text-end text-muted">${data.date}</div>
-                            </div>
-                        </div>
-                    `;
-                    chatContainer.insertAdjacentHTML('beforeend', html);
-                    messageInput.value = '';
-                    chatContainer.scrollTop = chatContainer.scrollHeight;
-                    lastMessageId = data.id;
-                    if (document.getElementById('last-message-id')) {
-                        document.getElementById('last-message-id').value = lastMessageId;
-                    }
-                },
-                error: function() {
-                    alert('Ошибка при отправке сообщения.');
-                }
-            });
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            // Отправка сообщения через WebSocket
+            chatSocket.send(JSON.stringify({
+                'type': 'chat_message',
+                'message': message,
+                'user_id': userId,
+                'user_name': userName
+            }));
+
+            // Очистка поля ввода
+            messageInput.value = '';
         });
 
-        // Функция получения новых сообщений
-        function fetchNewMessages() {
-            $.ajax({
-                url: "{% url 'moderation:get_new_messages' application.id %}", // замените на ваш урл
-                type: "GET",
-                data: {
-                    last_message_id: lastMessageId
-                },
-                success: function(data) {
-                    data.messages.forEach(function(msg) {
-                        // Проверяем, что сообщение еще не добавлено
-                        if ($('#group-chat-messages div[data-message-id="' + msg.id + '"]').length === 0) {
-                            // Не показываем свои сообщения
-                            if (msg.author !== "{{ request.user.username }}") {
-                                const html = `
-                                    <div class="d-flex mb-2" data-message-id="${msg.id}">
-                                        <div class="bg-primary text-white p-2 rounded" style="max-width: 75%;">
-                                            <div class="fw-bold small">${msg.author}</div>
-                                            <div>${msg.content}</div>
-                                            <div class="small text-end text-muted">${msg.date}</div>
-                                        </div>
-                                    </div>
-                                `;
-                                chatContainer.insertAdjacentHTML('beforeend', html);
-                                lastMessageId = msg.id;
-                                if (document.getElementById('last-message-id')) {
-                                    document.getElementById('last-message-id').value = lastMessageId;
-                                }
-                                chatContainer.scrollTop = chatContainer.scrollHeight;
-                            }
-                        }
-                    });
-                }
-            });
-        }
+        // Обработка нажатия Enter (без Shift)
+        messageInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                messageForm.dispatchEvent(new Event('submit'));
+            }
+        });
 
-        // Запускаем периодическую проверку
-        setInterval(fetchNewMessages, 3000);
+        // Автофокус на поле ввода при открытии чата
+        const chatOffcanvas = document.getElementById('offcanvasChat');
+        chatOffcanvas.addEventListener('shown.bs.offcanvas', function() {
+            messageInput.focus();
+        });
+
+        // Отправка сообщения о выходе при закрытии страницы
+        window.addEventListener('beforeunload', function() {
+            if (chatSocket.readyState === WebSocket.OPEN) {
+                chatSocket.send(JSON.stringify({
+                    'type': 'user_left',
+                    'user_id': userId,
+                    'user_name': userName
+                }));
+            }
+        });
     });
-
-
     </script>
     <script>
     document.addEventListener("DOMContentLoaded", () => {
