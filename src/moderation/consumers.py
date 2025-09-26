@@ -5,6 +5,7 @@ from .models import CallSession
 from django.conf import settings
 import os, uuid, json, time
 from useraccount.models import Record
+from django.core.files import File
 
 class CallConsumer(AsyncWebsocketConsumer):
     async def connect(self):
