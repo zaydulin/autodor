@@ -113,24 +113,28 @@ class AudioConsumer(WebsocketConsumer):
         if getattr(self, "fh", None) and not self.fh.closed:
             self.fh.close()
 
-        # Проверка существования файла перед сохранением
-        if getattr(self, "file_path", None):
-            print(f"Checking if file exists at: {self.file_path}")
+        if getattr(self, "file_path", None) and os.path.exists(self.file_path) and not getattr(self, "saved", False):
+            # Используйте относительный путь от MEDIA_ROOT
+            rel_path = os.path.join("audio", self.filename)  # Путь относительно MEDIA_ROOT
+
+            # Проверка на существование файла перед сохранением
             if not os.path.exists(self.file_path):
                 print(f"File does not exist: {self.file_path}")
                 return
 
-            # Если файл существует, откроем его и сохраним через Django FileField
+            # Сохраняем файл с помощью Django FileField
             try:
                 with open(self.file_path, 'rb') as f:
                     print(f"File exists and is being saved: {self.file_path}")
                     # Создаем объект Record и сохраняем файл в поле audio
                     record = Record.objects.create(user=self.user)
-                    record.audio.save(self.filename, File(f), save=True)
-                    print(f"Audio WS: Record saved -> {self.file_path}")
+                    record.audio.save(self.filename, File(f), save=True)  # Используем относительный путь
+                    print(f"Audio WS: Record saved -> {rel_path}")
                 self.saved = True
             except Exception as e:
                 print(f"Failed to save record: {e}")
+
+
 
 
 
