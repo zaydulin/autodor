@@ -133,7 +133,53 @@
       display: none;
     }
   </style>
-  <h1>Аудиозвонок с {{ other_user.username }}</h1>
+
+  <style>
+    /* Стиль для кнопки "Назад" */
+    .back-button {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      display: flex;
+      align-items: center;
+      padding: 8px 12px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 24px;
+      color: #2c3e50;
+      z-index: 1000;
+    }
+
+    /* Стиль стрелочки */
+    .back-button svg {
+      margin-right: 8px;
+      width: 24px;
+      height: 24px;
+      fill: currentColor;
+    }
+
+    /* Обертка для заголовка, чтобы не перекрывать кнопку */
+    .header-container {
+      position: relative;
+      padding-top: 60px; /* чтобы было место для кнопки */
+    }
+  </style>
+
+
+  <div class="header-container">
+    <!-- Кнопка "Назад" с SVG стрелкой -->
+    <button class="back-button" onclick="history.back()" aria-label="Вернуться назад">
+      <!-- SVG стрелки влево -->
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Назад
+    </button>
+
+    <h1>Аудиозвонок с {{ other_user.username }}</h1>
+  </div>
+
   <!-- Статус звонка -->
   <div id="callStatus">Ожидание начала звонка...</div>
 
@@ -380,7 +426,6 @@
     }
     document.getElementById('localAudio').srcObject = null;
     document.getElementById('remoteAudio').srcObject = null;
-    alert('Звонок завершен');
     updateCallStatus("Звонок завершен");
   }
 
@@ -398,7 +443,7 @@
       const rms = Math.sqrt(dataArray.reduce((sum, val) => sum + (val - 128) ** 2, 0) / dataArray.length);
       // Предположим, что говорящий — это текущий пользователь
       highlightSpeaker(userId);
-      setTimeout(analyze, 1000);
+      setTimeout(analyze, 10);
     }
     analyze();
   }

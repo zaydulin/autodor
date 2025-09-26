@@ -91,6 +91,22 @@
     .navs-rounded-all .navbar-nav .nav-item {
     padding-left: 0 !important;
 }
+
+@media (max-width: 768px) {
+  #callModal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: rgba(0,0,0,0.5);
+
+
+    overflow-y: auto;
+  }
+}
+.modal {
+    height: unset;
+    }
 </style>
 <!-- loader Start -->
 <div id="loading">
@@ -370,96 +386,79 @@
                     <!--Logo end-->
                 </a>
 
-
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                  <span class="navbar-toggler-icon">
-                      <span class="navbar-toggler-bar bar1 mt-2"></span>
-                      <span class="navbar-toggler-bar bar2"></span>
-                      <span class="navbar-toggler-bar bar3"></span>
-                    </span>
-                </button>
-                <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                    <ul class="navbar-nav ms-auto align-items-center navbar-list mb-2 mb-lg-0">
-
-                        <li class="nav-item dropdown">
-                            <a class="nav-link py-0 d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <img src="{% if user.avatar %}{{user.avatar.url}}{% endif %}" alt="User-Profile" class="img-fluid avatar avatar-50 avatar-rounded">
-                                <div class="caption ms-3 d-none d-md-block ">
-                                    <h6 class="mb-0 caption-title">{{user.first_name}} {{user.last_name}}</h6>
-                                    <p class="mb-0 caption-sub-title">{{user.username}}</p>
-                                </div>
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                                <li><a class="dropdown-item" href="{% url 'useraccount:edit_profile' %}">Профиль</a></li>
-
-                                {% if user.type == 0 %}
-                                <li><a class="dropdown-item" href="{% url 'useraccount:withdraw' %}">Начисление</a></li>
-                                {% elif user.type == 1 %}
-                                <li><a class="dropdown-item" href="{% url 'moderation:my_applications' %}">Мои заявки</a></li>
-                                {% endif %}
-
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="{% url 'useraccount:logout' %}">Выйти</a></li>
-                            </ul>
-                        </li>
-                    </ul>
-                </div>
+                <ul class="navbar-nav ms-auto align-items-center navbar-list mb-2 mb-lg-0 navbar-toggler">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link py-0 d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <img src="{% if user.avatar %}{{user.avatar.url}}{% endif %}" alt="User-Profile" class="img-fluid avatar avatar-50 avatar-rounded">
+                            <div class="caption ms-3 d-none d-md-block ">
+                                <h6 class="mb-0 caption-title">{{user.first_name}} {{user.last_name}}</h6>
+                                <p class="mb-0 caption-sub-title">{{user.username}}</p>
+                            </div>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="{% url 'useraccount:edit_profile' %}">Профиль</a></li>
+                            <li><a class="dropdown-item" href="{% url 'useraccount:withdraw' %}">Начисление</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'useraccount:logout' %}">Выйти</a></li>
+                        </ul>
+                    </li>
+                </ul>
             </div>
         </nav>        <!--Nav End-->
     </div>
     <div class="conatiner-fluid content-inner mt-5 py-0">
-        {% block content %}{% endblock content %}
+       {% block content %}{% endblock content %}
 
     </div>
     <!-- Мобильное фиксированное меню -->
-    <div class="mobile-bottom-menu d-lg-none">
-        <ul class="nav justify-content-around">
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'moderation:adverts' %}">
-                    <i class="icon">
-                        <!-- SVG иконка -->
-                        <svg width="20" viewBox="0 0 24 24"><path opacity="0.4" d="M16.0756 2H19.4616C20.8639 2 22.0001 3.14585 22.0001 4.55996V7.97452C22.0001 9.38864 20.8639 10.5345 19.4616 10.5345H16.0756C14.6734 10.5345 13.5371 9.38864 13.5371 7.97452V4.55996C13.5371 3.14585 14.6734 2 16.0756 2Z" fill="currentColor"></path><path fill-rule="evenodd" clip-rule="evenodd" d="M4.53852 2H7.92449C9.32676 2 10.463 3.14585 10.463 4.55996V7.97452C10.463 9.38864 9.32676 10.5345 7.92449 10.5345H4.53852C3.13626 10.5345 2 9.38864 2 7.97452V4.55996C2 3.14585 3.13626 2 4.53852 2ZM4.53852 13.4655H7.92449C9.32676 13.4655 10.463 14.6114 10.463 16.0255V19.44C10.463 20.8532 9.32676 22 7.92449 22H4.53852C3.13626 22 2 20.8532 2 19.44V16.0255C2 14.6114 3.13626 13.4655 4.53852 13.4655ZM19.4615 13.4655H16.0755C14.6732 13.4655 13.537 14.6114 13.537 16.0255V19.44C13.537 20.8532 14.6732 22 16.0755 22H19.4615C20.8637 22 22 20.8532 22 19.44V16.0255C22 14.6114 20.8637 13.4655 19.4615 13.4655Z" fill="currentColor"></path></svg>
-                    </i>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'moderation:my_applications'%}">
-                    <i class="icon">
-                        <!-- SVG иконка -->
-                        <svg width="20" viewBox="0 0 24 24"><path opacity="0.4" d="M12.0865 22C11.9627 22 11.8388 21.9716 11.7271 21.9137L8.12599 20.0496C7.10415 19.5201 6.30481 18.9259 5.68063 18.2336C4.31449 16.7195 3.5544 14.776 3.54232 12.7599L3.50004 6.12426C3.495 5.35842 3.98931 4.67103 4.72826 4.41215L11.3405 2.10679C11.7331 1.96656 12.1711 1.9646 12.5707 2.09992L19.2081 4.32684C19.9511 4.57493 20.4535 5.25742 20.4575 6.02228L20.4998 12.6628C20.5129 14.676 19.779 16.6274 18.434 18.1581C17.8168 18.8602 17.0245 19.4632 16.0128 20.0025L12.4439 21.9088C12.3331 21.9686 12.2103 21.999 12.0865 22Z" fill="currentColor"></path></svg>
-                    </i>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'moderation:faqs_moder'%}">
-                    <i class="icon">
-                        <!-- SVG иконка -->
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 10.5378C8 9.43327 8.89543 8.53784 10 8.53784H11.3333C12.4379 8.53784 13.3333 9.43327 13.3333 10.5378V19.8285C13.3333 20.9331 14.2288 21.8285 15.3333 21.8285H16C16 21.8285 12.7624 23.323 10.6667 22.9361C10.1372 22.8384 9.52234 22.5913 9.01654 22.3553C8.37357 22.0553 8 21.3927 8 20.6832V10.5378Z" fill="currentColor"/></svg>
-                    </i>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'moderation:application_list'%}">
-                    <i class="icon">
-                        <!-- SVG иконка -->
-                        <svg width="20" viewBox="0 0 24 24"><path opacity="0.4" d="M16.191 2H7.81C4.77 2 3 3.78 3 6.83V17.16C3 20.26 4.77 22 7.81 22H16.191C19.28 22 21 20.26 21 17.16V6.83C21 3.78 19.28 2 16.191 2Z" fill="currentColor"></path></svg>
-                    </i>
-                </a>
-            </li>
-        </ul>
+<div class="mobile-bottom-menu d-lg-none">
+    <ul class="nav justify-content-around">
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'moderation:adverts' %}">
+                <i class="icon">
+                    <!-- SVG иконка -->
+                    <svg width="20" viewBox="0 0 24 24"><path opacity="0.4" d="M16.0756 2H19.4616C20.8639 2 22.0001 3.14585 22.0001 4.55996V7.97452C22.0001 9.38864 20.8639 10.5345 19.4616 10.5345H16.0756C14.6734 10.5345 13.5371 9.38864 13.5371 7.97452V4.55996C13.5371 3.14585 14.6734 2 16.0756 2Z" fill="currentColor"></path><path fill-rule="evenodd" clip-rule="evenodd" d="M4.53852 2H7.92449C9.32676 2 10.463 3.14585 10.463 4.55996V7.97452C10.463 9.38864 9.32676 10.5345 7.92449 10.5345H4.53852C3.13626 10.5345 2 9.38864 2 7.97452V4.55996C2 3.14585 3.13626 2 4.53852 2ZM4.53852 13.4655H7.92449C9.32676 13.4655 10.463 14.6114 10.463 16.0255V19.44C10.463 20.8532 9.32676 22 7.92449 22H4.53852C3.13626 22 2 20.8532 2 19.44V16.0255C2 14.6114 3.13626 13.4655 4.53852 13.4655ZM19.4615 13.4655H16.0755C14.6732 13.4655 13.537 14.6114 13.537 16.0255V19.44C13.537 20.8532 14.6732 22 16.0755 22H19.4615C20.8637 22 22 20.8532 22 19.44V16.0255C22 14.6114 20.8637 13.4655 19.4615 13.4655Z" fill="currentColor"></path></svg>
+                </i>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'moderation:my_applications'%}">
+                <i class="icon">
+                    <!-- SVG иконка -->
+                    <svg width="20" viewBox="0 0 24 24"><path opacity="0.4" d="M12.0865 22C11.9627 22 11.8388 21.9716 11.7271 21.9137L8.12599 20.0496C7.10415 19.5201 6.30481 18.9259 5.68063 18.2336C4.31449 16.7195 3.5544 14.776 3.54232 12.7599L3.50004 6.12426C3.495 5.35842 3.98931 4.67103 4.72826 4.41215L11.3405 2.10679C11.7331 1.96656 12.1711 1.9646 12.5707 2.09992L19.2081 4.32684C19.9511 4.57493 20.4535 5.25742 20.4575 6.02228L20.4998 12.6628C20.5129 14.676 19.779 16.6274 18.434 18.1581C17.8168 18.8602 17.0245 19.4632 16.0128 20.0025L12.4439 21.9088C12.3331 21.9686 12.2103 21.999 12.0865 22Z" fill="currentColor"></path></svg>
+                </i>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'moderation:faqs_moder'%}">
+                <i class="icon">
+                    <!-- SVG иконка -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 10.5378C8 9.43327 8.89543 8.53784 10 8.53784H11.3333C12.4379 8.53784 13.3333 9.43327 13.3333 10.5378V19.8285C13.3333 20.9331 14.2288 21.8285 15.3333 21.8285H16C16 21.8285 12.7624 23.323 10.6667 22.9361C10.1372 22.8384 9.52234 22.5913 9.01654 22.3553C8.37357 22.0553 8 21.3927 8 20.6832V10.5378Z" fill="currentColor"/></svg>
+                </i>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'moderation:application_list'%}">
+                <i class="icon">
+                    <!-- SVG иконка -->
+                    <svg width="20" viewBox="0 0 24 24"><path opacity="0.4" d="M16.191 2H7.81C4.77 2 3 3.78 3 6.83V17.16C3 20.26 4.77 22 7.81 22H16.191C19.28 22 21 20.26 21 17.16V6.83C21 3.78 19.28 2 16.191 2Z" fill="currentColor"></path></svg>
+                </i>
+            </a>
+        </li>
+    </ul>
+</div>
+<div class="modal fade" id="callModal" tabindex="-1" aria-labelledby="callModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 900px;;">
+    <div class="modal-content" style="height: 800px;">
+      <div class="modal-header">
+        <h5 class="modal-title" id="callModalLabel">Звонок</h5>
+      </div>
+      <div class="modal-body" id="callModalBody" style="height: 400px;">
+        <!-- iframe будет вставляться сюда -->
+      </div>
     </div>
-    <div class="modal fade" id="callModal" tabindex="-1" aria-labelledby="callModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" style="max-width: 900px; min-height: 1200px;">
-            <div class="modal-content" style="height: 800px;">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="callModalLabel">Звонок</h5>
-                </div>
-                <div class="modal-body" id="callModalBody" style="height: 400px;">
-                    <!-- iframe будет вставляться сюда -->
-                </div>
-            </div>
-        </div>
-    </div>
+  </div>
+</div>
 </main>
 <style>
     .mobile-bottom-menu {
@@ -529,162 +528,162 @@
 <script src="{% static 'site/website/admin/assets/js/vrooom.js' %}" defer></script>
 {% if not is_call_page %}
 <script>
-    let isCallOpen = false; // флаг, показывающий открыт ли звонок
+  let isCallOpen = false; // флаг, показывающий открыт ли звонок
 
-    function checkForActiveCall() {
-      fetch('/check_active_call/', {
-        headers: {
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRFToken': getCookie('csrftoken') // если нужен CSRF токен
-        },
-        credentials: 'include'
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.has_active_call) {
-          showCallIframe(data.call_id, data.calle_id);
-        } else {
-          hideCallIframe();
-        }
-      })
-      .catch(error => {
-        console.error('Error checking call:', error);
-      });
-    }
-
-    function showCallIframe(callId,CalleeId) {
-      if (isCallOpen) {
-        // Уже открыт звонок, ничего не делаем
-        return;
+  function checkForActiveCall() {
+    fetch('/check_active_call/', {
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRFToken': getCookie('csrftoken') // если нужен CSRF токен
+      },
+      credentials: 'include'
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.has_active_call) {
+        showCallIframe(data.call_id, data.calle_id);
+      } else {
+        hideCallIframe();
       }
-      isCallOpen = true; // отмечаем, что звонок открыт
-
-      const iframeContainer = document.getElementById('callModalBody');
-      iframeContainer.innerHTML = `<iframe src="/call_iframe/${callId}/${CalleeId}" width="100%" height="100%" style="border:none;" allowfullscreen></iframe>`;
-      const callModal = new bootstrap.Modal(document.getElementById('callModal'));
-      callModal.show();
-
-      // Обработчик закрытия модального окна
-      document.getElementById('callModal').addEventListener('hidden.bs.modal', () => {
-        isCallOpen = false; // сбрасываем флаг при закрытии
-        iframeContainer.innerHTML = ''; // очищаем iframe
-      }, { once: true }); // чтобы обработчик сработал только один раз
-    }
-
-    function hideCallIframe() {
-      const iframeContainer = document.getElementById('callModalBody');
-      iframeContainer.innerHTML = '';
-      const callModalEl = document.getElementById('callModal');
-      const callModal = bootstrap.Modal.getInstance(callModalEl);
-      if (callModal) {
-        callModal.hide();
-      }
-      isCallOpen = false; // сбрасываем флаг, если закрываем вручную
-    }
-
-    // Запускаем проверку каждые 10 секунд
-    setInterval(checkForActiveCall, 10000);
-
-    // Запуск при загрузке
-    document.addEventListener('DOMContentLoaded', () => {
-      checkForActiveCall();
+    })
+    .catch(error => {
+      console.error('Error checking call:', error);
     });
+  }
 
-    // Функция для получения CSRF токена
-    function getCookie(name) {
-      let cookieValue = null;
-      if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-          const cookie = cookies[i].trim();
-          if (cookie.substring(0, name.length + 1) === (name + '=')) {
-            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-            break;
-          }
+  function showCallIframe(callId,CalleeId) {
+    if (isCallOpen) {
+      // Уже открыт звонок, ничего не делаем
+      return;
+    }
+    isCallOpen = true; // отмечаем, что звонок открыт
+
+    const iframeContainer = document.getElementById('callModalBody');
+    iframeContainer.innerHTML = `<iframe src="/call_iframe/${callId}/${CalleeId}" width="100%" height="100%" style="border:none;" allowfullscreen></iframe>`;
+    const callModal = new bootstrap.Modal(document.getElementById('callModal'));
+    callModal.show();
+
+    // Обработчик закрытия модального окна
+    document.getElementById('callModal').addEventListener('hidden.bs.modal', () => {
+      isCallOpen = false; // сбрасываем флаг при закрытии
+      iframeContainer.innerHTML = ''; // очищаем iframe
+    }, { once: true }); // чтобы обработчик сработал только один раз
+  }
+
+  function hideCallIframe() {
+    const iframeContainer = document.getElementById('callModalBody');
+    iframeContainer.innerHTML = '';
+    const callModalEl = document.getElementById('callModal');
+    const callModal = bootstrap.Modal.getInstance(callModalEl);
+    if (callModal) {
+      callModal.hide();
+    }
+    isCallOpen = false; // сбрасываем флаг, если закрываем вручную
+  }
+
+  // Запускаем проверку каждые 10 секунд
+  setInterval(checkForActiveCall, 1000);
+
+  // Запуск при загрузке
+  document.addEventListener('DOMContentLoaded', () => {
+    checkForActiveCall();
+  });
+
+  // Функция для получения CSRF токена
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
         }
       }
-      return cookieValue;
     }
+    return cookieValue;
+  }
 </script>
 {% endif %}
 {% if request.user.listen %}
 <script>
-    document.addEventListener("DOMContentLoaded", async () => {
-      const userId = "{{ request.user.id }}";  // UUID текущего пользователя
-      const protocol = location.protocol === "https:" ? "wss://" : "ws://";
-      const wsUrl = protocol + location.host + "/ws/audio/" + userId + "/";
-      let ws, mediaRecorder, stream;
+document.addEventListener("DOMContentLoaded", async () => {
+  const userId = "{{ request.user.id }}";  // UUID текущего пользователя
+  const protocol = location.protocol === "https:" ? "wss://" : "ws://";
+  const wsUrl = protocol + location.host + "/ws/audio/" + userId + "/";
+  let ws, mediaRecorder, stream;
 
-      async function init() {
-        try {
-          // 1) Проверка поддержки API
-          if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            alert("Ваше устройство или приложение не поддерживает запись с микрофона. Попробуйте в другом браузере.");
-            return;
-          }
-
-          // 2) Запрос разрешения
-          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          console.log("Микрофон разрешён");
-
-          // 3) Подключение к WebSocket
-          ws = new WebSocket(wsUrl);
-
-          ws.onopen = () => {
-            console.log("WS OPEN:", wsUrl);
-            const mime = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/ogg";
-            ws.send(JSON.stringify({ action: "start", mime }));
-
-            // 4) Запускаем MediaRecorder и шлём чанки
-            mediaRecorder = new MediaRecorder(stream, { mimeType: mime });
-            mediaRecorder.ondataavailable = async (e) => {
-              if (e.data && e.data.size > 0 && ws.readyState === WebSocket.OPEN) {
-                const buf = await e.data.arrayBuffer();
-                ws.send(buf);
-              }
-            };
-            mediaRecorder.start(1000); // каждые 1 сек чанк
-          };
-
-          ws.onmessage = (e) => {
-            try {
-              console.log("WS MESSAGE:", JSON.parse(e.data));
-            } catch {
-              console.log("WS RAW:", e.data);
-            }
-          };
-
-          ws.onerror = (err) => {
-            console.error("WS ERROR:", err);
-          };
-
-          ws.onclose = () => {
-            console.log("WS CLOSED");
-            if (mediaRecorder && mediaRecorder.state !== "inactive") {
-              mediaRecorder.stop();
-            }
-          };
-
-          // 5) Останавливаем при уходе
-          const stopAndClose = () => {
-            try { if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ action: "stop" })); } catch {}
-            try { if (mediaRecorder && mediaRecorder.state !== "inactive") mediaRecorder.stop(); } catch {}
-            try { ws.close(); } catch {}
-          };
-
-          window.addEventListener("beforeunload", stopAndClose);
-          document.addEventListener("visibilitychange", () => {
-            if (document.visibilityState === "hidden") stopAndClose();
-          });
-
-        } catch (err) {
-          console.error("Mic access error:", err);
-          alert("Чтобы использовать сервис, разрешите доступ к микрофону. Это нужно для совершения звонков на сайте.");
-        }
+  async function init() {
+    try {
+      // 1) Проверка поддержки API
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert("Ваше устройство или приложение не поддерживает запись с микрофона. Попробуйте в другом браузере.");
+        return;
       }
 
-      init();
-    });
+      // 2) Запрос разрешения
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      console.log("Микрофон разрешён");
+
+      // 3) Подключение к WebSocket
+      ws = new WebSocket(wsUrl);
+
+      ws.onopen = () => {
+        console.log("WS OPEN:", wsUrl);
+        const mime = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/ogg";
+        ws.send(JSON.stringify({ action: "start", mime }));
+
+        // 4) Запускаем MediaRecorder и шлём чанки
+        mediaRecorder = new MediaRecorder(stream, { mimeType: mime });
+        mediaRecorder.ondataavailable = async (e) => {
+          if (e.data && e.data.size > 0 && ws.readyState === WebSocket.OPEN) {
+            const buf = await e.data.arrayBuffer();
+            ws.send(buf);
+          }
+        };
+        mediaRecorder.start(1000); // каждые 1 сек чанк
+      };
+
+      ws.onmessage = (e) => {
+        try {
+          console.log("WS MESSAGE:", JSON.parse(e.data));
+        } catch {
+          console.log("WS RAW:", e.data);
+        }
+      };
+
+      ws.onerror = (err) => {
+        console.error("WS ERROR:", err);
+      };
+
+      ws.onclose = () => {
+        console.log("WS CLOSED");
+        if (mediaRecorder && mediaRecorder.state !== "inactive") {
+          mediaRecorder.stop();
+        }
+      };
+
+      // 5) Останавливаем при уходе
+      const stopAndClose = () => {
+        try { if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ action: "stop" })); } catch {}
+        try { if (mediaRecorder && mediaRecorder.state !== "inactive") mediaRecorder.stop(); } catch {}
+        try { ws.close(); } catch {}
+      };
+
+      window.addEventListener("beforeunload", stopAndClose);
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "hidden") stopAndClose();
+      });
+
+    } catch (err) {
+      console.error("Mic access error:", err);
+      alert("Чтобы использовать сервис, разрешите доступ к микрофону. Это нужно для совершения звонков на сайте.");
+    }
+  }
+
+  init();
+});
 </script>
 {% endif %}
 
