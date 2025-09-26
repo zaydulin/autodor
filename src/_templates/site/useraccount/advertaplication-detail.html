@@ -435,6 +435,9 @@ body {
         max-height: 45vh !important;
     }
 }
+    .chat_date {
+     color: white !important;
+    }
     </style>
     <div class="container py-4">
         <div class="row g-4">
@@ -658,7 +661,7 @@ body {
                         <div class="bg-primary text-white p-2 rounded" style="max-width: 75%;">
                             <div class="fw-bold small">{{ message.author.first_name }} {{ message.author.last_name }}</div>
                             <div>{{ message.content }}</div>
-                            <div class="small text-end text-muted">{{ message.date|date:"d.m H:i" }}</div>
+                            <div class="small chat_date text-end text-muted">{{ message.date|date:"d.m H:i" }}</div>
                         </div>
                     </div>
                     {% else %}
@@ -666,7 +669,7 @@ body {
                         <div class="bg-light p-2 rounded" style="max-width: 75%;">
                             <div class="fw-bold small">{{ message.author.first_name }} {{ message.author.last_name }}</div>
                             <div>{{ message.content }}</div>
-                            <div class="small text-end text-muted">{{ message.date|date:"d.m H:i" }}</div>
+                            <div class="small chat_date text-end text-muted">{{ message.date|date:"d.m H:i" }}</div>
                         </div>
                     </div>
                     {% endif %}
@@ -1010,17 +1013,12 @@ body {
         // Обработчик открытия соединения
         chatSocket.onopen = function(e) {
             console.log('WebSocket соединение установлено');
-            // Отправляем сообщение о подключении пользователя
-            chatSocket.send(JSON.stringify({
-                'type': 'user_joined',
-                'user_id': userId,
-                'user_name': userName
-            }));
         };
 
         // Обработчик получения сообщений
         chatSocket.onmessage = function(e) {
             const data = JSON.parse(e.data);
+            console.log('Получено сообщение:', data);
 
             switch(data.type) {
                 case 'chat_message':
@@ -1048,7 +1046,7 @@ body {
 
         // Обработчик закрытия соединения
         chatSocket.onclose = function(e) {
-            console.log('WebSocket соединение закрыто');
+            console.log('WebSocket соединение закрыто:', e);
             // Пытаемся переподключиться через 5 секунд
             setTimeout(function() {
                 console.log('Попытка переподключения...');
@@ -1075,9 +1073,9 @@ body {
             messageContent.style.maxWidth = '75%';
 
             messageContent.innerHTML = `
-                <div class="fw-bold small">${message.author_name}</div>
+                <div class="fw-bold small">${escapeHtml(message.author_name)}</div>
                 <div>${escapeHtml(message.content)}</div>
-                <div class="small text-end text-muted">${formatTime(message.timestamp)}</div>
+                <div class="small chat_date text-end text-muted">${formatTime(message.timestamp)}</div>
             `;
 
             messageDiv.appendChild(messageContent);
@@ -1116,16 +1114,22 @@ body {
             const message = messageInput.value.trim();
             if (!message) return;
 
-            // Отправка сообщения через WebSocket
-            chatSocket.send(JSON.stringify({
-                'type': 'chat_message',
-                'message': message,
-                'user_id': userId,
-                'user_name': userName
-            }));
+            // Проверяем, что WebSocket открыт
+            if (chatSocket.readyState === WebSocket.OPEN) {
+                // Отправка сообщения через WebSocket
+                chatSocket.send(JSON.stringify({
+                    'type': 'chat_message',
+                    'message': message,
+                    'user_id': userId,
+                    'user_name': userName
+                }));
 
-            // Очистка поля ввода
-            messageInput.value = '';
+                // Очистка поля ввода
+                messageInput.value = '';
+            } else {
+                console.error('WebSocket не подключен');
+                alert('Соединение с чатом потеряно. Попробуйте перезагрузить страницу.');
+            }
         });
 
         // Обработка нажатия Enter (без Shift)
@@ -1138,9 +1142,11 @@ body {
 
         // Автофокус на поле ввода при открытии чата
         const chatOffcanvas = document.getElementById('offcanvasChat');
-        chatOffcanvas.addEventListener('shown.bs.offcanvas', function() {
-            messageInput.focus();
-        });
+        if (chatOffcanvas) {
+            chatOffcanvas.addEventListener('shown.bs.offcanvas', function() {
+                messageInput.focus();
+            });
+        }
 
         // Отправка сообщения о выходе при закрытии страницы
         window.addEventListener('beforeunload', function() {
