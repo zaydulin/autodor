@@ -17,6 +17,8 @@ import logging
 
 from moderation.models import Advert
 from moderation.views import _to_decimal, _to_int
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
 
 logger = logging.getLogger(__name__)
 
@@ -172,12 +174,18 @@ class FaqsView(ListView):
         return context
 
 
-
 class AdvertViewFree(ListView):
     template_name = 'site/website/advertsfree.html'
     context_object_name = 'adverts'
     model = Advert
     paginate_by = 15
+
+    def get(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            # Переадресовываем на страницу с объявлениями, если пользователь уже авторизован
+            return redirect('moderation:adverts')
+        return super().get(request, *args, **kwargs)
+
 
     def get_queryset(self):
         qs = Advert.objects.all().order_by('-created_at')
