@@ -67,9 +67,7 @@ class CallConsumer(AsyncWebsocketConsumer):
     def call_session_exists(self):
         return CallSession.objects.filter(id=self.call_id).exists()
 
-
 AUDIO_DIR = os.path.join(settings.MEDIA_ROOT, "audio")
-
 
 class AudioConsumer(WebsocketConsumer):
     MAX_DURATION = 15 * 60  # 15 минут в секундах
@@ -90,7 +88,16 @@ class AudioConsumer(WebsocketConsumer):
             self.close()
             return
 
-        os.makedirs(AUDIO_DIR, exist_ok=True)
+        # Проверяем и создаём директорию, если её нет
+        if not os.path.exists(AUDIO_DIR):
+            print(f"Audio directory does not exist. Creating: {AUDIO_DIR}")
+            try:
+                os.makedirs(AUDIO_DIR, exist_ok=True)
+            except Exception as e:
+                print(f"Failed to create audio directory: {e}")
+                self.close()
+                return
+
         self.fh = None
         self.filename = None
         self.start_time = None
@@ -108,6 +115,7 @@ class AudioConsumer(WebsocketConsumer):
         self.filename = f"{uuid.uuid4()}.{ext}"
         self.file_path = os.path.join(AUDIO_DIR, self.filename)
         try:
+            # Пытаемся создать файл
             self.fh = open(self.file_path, "ab")
             self.start_time = time.time()
             self.saved = False
