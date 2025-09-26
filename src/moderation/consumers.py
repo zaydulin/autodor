@@ -59,12 +59,13 @@ class AudioConsumer(WebsocketConsumer):
 
         self.filename = f"{uuid.uuid4()}.{ext}"
         self.file_path = os.path.join(AUDIO_DIR, self.filename)
+
         try:
             # Пытаемся создать файл
             self.fh = open(self.file_path, "ab")
             self.start_time = time.time()
             self.saved = False
-            print(f"Audio WS: new file started -> {self.filename}")
+            print(f"Audio WS: new file started -> {self.filename} at {self.file_path}")
         except Exception as e:
             print(f"Failed to open file {self.file_path}: {e}")
             self.close()
