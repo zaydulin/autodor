@@ -1,73 +1,14 @@
 import json
-from channels.generic.websocket import AsyncWebsocketConsumer, WebsocketConsumer
-from channels.db import database_sync_to_async
-from .models import CallSession
-from django.conf import settings
-import os, uuid, json, time
-from useraccount.models import Record
+import os
+import uuid
+import time
+from channels.generic.websocket import WebsocketConsumer
 from django.core.files import File
-
-class CallConsumer(AsyncWebsocketConsumer):
-    async def connect(self):
-        self.call_id = self.scope['url_route']['kwargs']['call_id']
-        self.room_group_name = f'call_{self.call_id}'
-
-        # Проверяем существование сессии звонка
-        if await self.call_session_exists():
-            # Присоединяемся к группе
-            await self.channel_layer.group_add(
-                self.room_group_name,
-                self.channel_name
-            )
-            await self.accept()
-        else:
-            await self.close()
-
-    async def disconnect(self, close_code):
-        # Покидаем группу
-        await self.channel_layer.group_discard(
-            self.room_group_name,
-            self.channel_name
-        )
-
-    async def receive(self, text_data):
-        data = json.loads(text_data)
-        message_type = data.get('type')
-
-        if message_type == 'hangup':
-            # Обработка завершения звонка
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    'type': 'call_hangup',
-                    'message': {
-                        'type': 'hangup',
-                        'sender': data.get('sender'),
-                    }
-                }
-            )
-        else:
-            # Обработка других сигналов
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    'type': 'send_message',
-                    'message': data,
-                }
-            )
-
-    async def send_message(self, event):
-        # Отправляем сообщение клиенту
-        await self.send(text_data=json.dumps(event['message']))
-
-    async def call_hangup(self, event):
-        # Обработка события hangup
-        await self.send(text_data=json.dumps(event['message']))
-
-    @database_sync_to_async
-    def call_session_exists(self):
-        return CallSession.objects.filter(id=self.call_id).exists()
-
+from channels.db import database_sync_to_async
+from django.conf import settings
+from useraccount.models import Record
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
 
 AUDIO_DIR = os.path.join(settings.MEDIA_ROOT, "audio")
 
@@ -95,6 +36,7 @@ class AudioConsumer(WebsocketConsumer):
             print(f"Audio directory does not exist. Creating: {AUDIO_DIR}")
             try:
                 os.makedirs(AUDIO_DIR, exist_ok=True)
+                print(f"Created directory: {AUDIO_DIR}")
             except Exception as e:
                 print(f"Failed to create audio directory: {e}")
                 self.close()
@@ -169,22 +111,106 @@ class AudioConsumer(WebsocketConsumer):
         if getattr(self, "fh", None) and not self.fh.closed:
             self.fh.close()
 
+        # Проверка на существование файла перед сохранением
         if getattr(self, "file_path", None) and os.path.exists(self.file_path) and not getattr(self, "saved", False):
             rel_path = os.path.join("audio", self.filename)
 
-            # Проверка на существование файла перед сохранением
             if not os.path.exists(self.file_path):
                 print(f"File does not exist: {self.file_path}")
                 return
 
+            # Сохраняем файл с помощью Django FileField
             try:
-                # Открываем файл через Django для корректного сохранения
                 with open(self.file_path, 'rb') as f:
+                    # Создаем объект Record и сохраняем файл в поле audio
                     record = Record.objects.create(user=self.user)
                     record.audio.save(self.filename, File(f), save=True)
                     print(f"Audio WS: Record saved -> {rel_path}")
                 self.saved = True
             except Exception as e:
                 print(f"Failed to save record: {e}")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class CallConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.call_id = self.scope['url_route']['kwargs']['call_id']
+        self.room_group_name = f'call_{self.call_id}'
+
+        # Проверяем существование сессии звонка
+        if await self.call_session_exists():
+            # Присоединяемся к группе
+            await self.channel_layer.group_add(
+                self.room_group_name,
+                self.channel_name
+            )
+            await self.accept()
+        else:
+            await self.close()
+
+    async def disconnect(self, close_code):
+        # Покидаем группу
+        await self.channel_layer.group_discard(
+            self.room_group_name,
+            self.channel_name
+        )
+
+    async def receive(self, text_data):
+        data = json.loads(text_data)
+        message_type = data.get('type')
+
+        if message_type == 'hangup':
+            # Обработка завершения звонка
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'call_hangup',
+                    'message': {
+                        'type': 'hangup',
+                        'sender': data.get('sender'),
+                    }
+                }
+            )
+        else:
+            # Обработка других сигналов
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'send_message',
+                    'message': data,
+                }
+            )
+
+    async def send_message(self, event):
+        # Отправляем сообщение клиенту
+        await self.send(text_data=json.dumps(event['message']))
+
+    async def call_hangup(self, event):
+        # Обработка события hangup
+        await self.send(text_data=json.dumps(event['message']))
+
+    @database_sync_to_async
+    def call_session_exists(self):
+        return CallSession.objects.filter(id=self.call_id).exists()
 
 
