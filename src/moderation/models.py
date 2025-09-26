@@ -24,7 +24,6 @@ class Advert(models.Model):
     subtitle = models.CharField("Подзаголовок", max_length=255, blank=True, null=True)
     article = models.CharField("Артикул", max_length=100, blank=True, null=True)
     address = models.CharField('Адрес', max_length=100,blank=True,null=True)
-
     # Характеристики авто
     mileage = models.PositiveIntegerField("Километраж (км)", blank=True, null=True)
     color = models.CharField("Цвет", max_length=50, blank=True, null=True)

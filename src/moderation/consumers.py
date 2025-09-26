@@ -183,3 +183,7 @@ class AudioConsumer(WebsocketConsumer):
                 self.saved = True
             except Exception as e:
                 print(f"Failed to save record: {e}")
+
+
+class ChatConsumer:
+    pass
