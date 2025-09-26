@@ -102,17 +102,27 @@
                                     <input type="text" name="engine_volume_max" class="form-control" value="{{ params.engine_volume_max }}">
                                 </div>
                             </div>
-
-                            <div class="row g-2 mt-2">
-                                <div class="col-6">
-                                    <label class="form-label">Двери</label>
-                                    <input type="number" name="doors" class="form-control" value="{{ params.doors }}">
-                                </div>
-                                <div class="col-6">
-                                    <label class="form-label">Цвет</label>
-                                    <input type="text" name="color" class="form-control" placeholder="например, schwarz" value="{{ params.color }}">
-                                </div>
+                            <div class="row g-2">
+                            <div class="col-12 col-lg-6">
+                                <label class="form-label">Двери</label>
+                                <select name="brand" class="form-select">
+                                    <option value="">Любая</option>
+                                    {% for d in doors %}
+                                    <option value="{{ d }}" {% if params.doors == bc %}selected{% endif %}>{{ d }}</option>
+                                    {% endfor %}
+                                </select>
                             </div>
+                            <div class="col-12 col-lg-6">
+                                <label class="form-label">Цвет</label>
+                                <select name="brand" class="form-select">
+                                    <option value="">Любая</option>
+                                    {% for c in colors %}
+                                    <option value="{{ c }}" {% if params.color == bc %}selected{% endif %}>{{ c }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            </div>
+
 
                             <div class="mt-3 d-none" >
                                 <label class="form-label">Валюта</label>
