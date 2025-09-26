@@ -2,13 +2,14 @@ import json
 import os
 import uuid
 import time
-from channels.generic.websocket import WebsocketConsumer
+from channels.generic.websocket import WebsocketConsumer, AsyncWebsocketConsumer
 from django.core.files import File
 from channels.db import database_sync_to_async
 from django.conf import settings
 from useraccount.models import Record
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
+from moderation.models import CallSession
 
 AUDIO_DIR = os.path.join(settings.MEDIA_ROOT, "audio")
 
