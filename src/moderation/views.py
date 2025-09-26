@@ -29,7 +29,8 @@ from django.db.models import Q
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 from .forms import PathForm, PathResponsibilityForm
-from .models import AdvertAplication, ChatMessage, CallSession, AdvertDocument, AdvertExpense, AdvertApplicationImage
+from .models import AdvertAplication, ChatMessage, CallSession, AdvertDocument, AdvertExpense, AdvertApplicationImage, \
+    CarModel, CarBrand
 from moderation.models import Advert, AdvertAplication,Path,PathResponsibility
 from webmain.models import Faqs, Seo
 from useraccount.models import Profile
@@ -341,11 +342,11 @@ class AdvertView(ListView):
         # Марка/модель
         brand = g.get('brand')
         if brand:
-            qs = qs.filter(brand__iexact=brand)
+            qs = qs.filter(name__contains=brand)
 
         model_auto = g.get('model_auto')
         if model_auto:
-            qs = qs.filter(model_auto__iexact=model_auto)
+            qs = qs.filter(name__contains=model_auto)
 
         # Валюта
         currency = g.get('currency')
@@ -456,6 +457,9 @@ class AdvertView(ListView):
                              .distinct().order_by('currency'))
         ctx['colors'] = (Advert.objects.values_list('color',flat=True).exclude(currency__isnull=True).exclude(currency__exact='').distinct().order_by('color'))
         ctx['doors'] = (Advert.objects.values_list('doors',flat=True).exclude(currency__isnull=True).exclude(currency__exact='').distinct().order_by('doors'))
+        ctx['carmodels'] = (CarModel.objects.values_list('name',flat=True).distinct().order_by('name'))
+        ctx['carbrands'] = (CarBrand.objects.values_list('name',flat=True).distinct().order_by('name'))
+
         ctx['transmission_choices'] = Advert.TransmissionType.choices
         ctx['fuel_choices'] = Advert.FuelType.choices
         ctx['drive_choices'] = Advert.DriveType.choices
