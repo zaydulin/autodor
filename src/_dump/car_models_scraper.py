@@ -1,69 +1,34 @@
 import requests
 import json
 
-
-def get_all_car_brands():
-    # Получаем список всех марок автомобилей
-    url = "https://vpic.nhtsa.dot.gov/api/vehicles/getallmakes?format=json"
+def fetch_all_makes():
+    url = 'https://vpic.nhtsa.dot.gov/api/vehicles/getallmakes?format=json'
     response = requests.get(url)
+    return response.json()['Results'] if response.status_code == 200 else []
 
-    if response.status_code == 200:
-        try:
-            # Возвращаем список марок
-            return response.json()['Results']
-        except json.JSONDecodeError:
-            print("Ошибка при декодировании JSON")
-            return []
-    else:
-        print(f"Ошибка при получении марок: {response.status_code}")
-        return []
-
-
-def get_models_for_brand(brand):
-    # Получаем модели для конкретной марки
-    url = f"https://vpic.nhtsa.dot.gov/api/vehicles/getmodelsformake/{brand}?format=json"
+def fetch_models_for_make(make):
+    url = f'https://vpic.nhtsa.dot.gov/api/vehicles/getmodelsformake/{make}?format=json'
     response = requests.get(url)
+    return response.json()['Results'] if response.status_code == 200 else []
 
-    if response.status_code == 200:
-        try:
-            # Проверяем, если данные получены корректно
-            return response.json()['Results']
-        except json.JSONDecodeError:
-            print(f"Ошибка при декодировании JSON для марки {brand}")
-            return []
-    else:
-        print(f"Ошибка при получении моделей для {brand}: {response.status_code}")
-        return []
-
-
-def save_to_json(data, filename="car_brands_and_models_nhtsa.json"):
-    # Записываем данные в JSON файл
-    with open(filename, 'a', encoding='utf-8') as f:  # Используем 'a' для дозаписи в файл
+def save_to_json(data, filename):
+    with open(filename, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
-        f.write("\n")  # Добавляем новую строку после записи каждого объекта
-
 
 def main():
-    car_brands = get_all_car_brands()
+    makes = fetch_all_makes()  # Получаем все марки автомобилей
+    all_data = []
 
-    if car_brands:
-        # Создаем новый файл или открываем для дозаписи
-        for brand in car_brands:
-            brand_name = brand['Make_Name']
-            print(f"Загружаем модели для марки {brand_name}...")
+    # Получаем модели для каждой марки и сохраняем данные
+    for make in makes:
+        make_name = make['Make_Name']
+        print(f"Загружаем модели для марки {make_name}...")
 
-            models = get_models_for_brand(brand_name)
+        models = fetch_models_for_make(make_name)
+        all_data.append({'make': make_name, 'models': models})
 
-            if models:
-                data = {brand_name: models}
-                save_to_json(data)  # Записываем данные в файл сразу после запроса
-            else:
-                print(f"Нет данных о моделях для марки {brand_name}")
+    # Сохраняем данные в JSON файл
+    save_to_json(all_data, 'car_brands_and_models.json')
 
-        print("Данные успешно сохранены в car_brands_and_models_nhtsa.json")
-    else:
-        print("Не удалось получить данные о марках автомобилей.")
-
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
