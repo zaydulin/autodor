@@ -67,6 +67,7 @@ class CallConsumer(AsyncWebsocketConsumer):
     def call_session_exists(self):
         return CallSession.objects.filter(id=self.call_id).exists()
 
+
 AUDIO_DIR = os.path.join(settings.MEDIA_ROOT, "audio")
 
 class AudioConsumer(WebsocketConsumer):
@@ -176,10 +177,11 @@ class AudioConsumer(WebsocketConsumer):
                 return
 
             try:
-                record = Record.objects.create(user=self.user)
-                record.audio.name = rel_path
-                record.save(update_fields=["audio"])
-                print(f"Audio WS: Record saved -> {rel_path}")
+                # Открываем файл через Django для корректного сохранения
+                with open(self.file_path, 'rb') as f:
+                    record = Record.objects.create(user=self.user)
+                    record.audio.save(self.filename, File(f), save=True)
+                    print(f"Audio WS: Record saved -> {rel_path}")
                 self.saved = True
             except Exception as e:
                 print(f"Failed to save record: {e}")
