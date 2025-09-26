@@ -454,6 +454,8 @@ class AdvertView(ListView):
         ctx['currencies'] = (Advert.objects.values_list('currency', flat=True)
                              .exclude(currency__isnull=True).exclude(currency__exact='')
                              .distinct().order_by('currency'))
+        ctx['colors'] = (Advert.objects.values_list('color',flat=True).exclude(currency__isnull=True).exclude(currency__exact='').distinct().order_by('color'))
+        ctx['doors'] = (Advert.objects.values_list('doors',flat=True).exclude(currency__isnull=True).exclude(currency__exact='').distinct().order_by('doors'))
         ctx['transmission_choices'] = Advert.TransmissionType.choices
         ctx['fuel_choices'] = Advert.FuelType.choices
         ctx['drive_choices'] = Advert.DriveType.choices

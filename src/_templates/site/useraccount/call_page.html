@@ -13,8 +13,6 @@
 {% block content %}
 
   <style>
-
-
     h1 {
       font-size: 24px;
       margin-bottom: 10px;
@@ -203,8 +201,8 @@
   </div>
 
   <!-- Аудио элементы -->
-  <audio id="localAudio" autoplay muted></audio>
-  <audio id="remoteAudio" autoplay></audio>
+  <audio id="localAudio" muted></audio>
+  <audio id="remoteAudio" muted></audio>
 
 <script>
   const callId = "{{ call_id }}";
@@ -213,15 +211,16 @@
 
   const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
   const ws = new WebSocket(`${protocol}://${location.host}/ws/call/${callId}/`);
-  ws.onopen = () => console.log('Open');
-  ws.onerror = (e) => console.error('Error', e);
-  let localStream;
-  let peerConnection;
+
+  let localStream = null;
+  let peerConnection = null;
   let isWebSocketOpen = false;
   const messageQueue = [];
 
   const callerDiv = document.getElementById('caller');
   const calleeDiv = document.getElementById('callee');
+  const localAudio = document.getElementById('localAudio');
+  const remoteAudio = document.getElementById('remoteAudio');
 
   const participants = {
     [userId]: callerDiv,
@@ -233,34 +232,33 @@
   const cancelBtn = document.getElementById('cancelBtn');
   const muteBtn = document.getElementById('muteBtn');
   const callStatusDiv = document.getElementById('callStatus');
+
+  // Флаги состояния
+  let isCallActive = false;
+  let micMuted = false;
+
   // Функции обновления статуса
   function updateCallStatus(message) {
     callStatusDiv.textContent = message;
   }
 
   function updateUIOnCallStart() {
-
     if (callBtn) callBtn.style.display = 'none';
-    if (cancelBtn) {
-      cancelBtn.style.display = 'inline-block';
-      cancelBtn.style.display = 'inline-block';
-    }
+    if (cancelBtn) cancelBtn.style.display = 'inline-block';
     if (muteBtn) {
       muteBtn.style.display = 'inline-block';
       muteBtn.textContent = "Выключить микрофон";
     }
     updateCallStatus("Звонок активен");
+    isCallActive = true;
   }
 
   function updateUIOnCallEnd() {
     if (callBtn) callBtn.style.display = 'inline-block';
-    if (cancelBtn) {
-      cancelBtn.style.display = 'none';
-    }
-    if (muteBtn) {
-      muteBtn.style.display = 'none';
-    }
+    if (cancelBtn) cancelBtn.style.display = 'none';
+    if (muteBtn) muteBtn.style.display = 'none';
     updateCallStatus("Звонок завершен");
+    isCallActive = false;
   }
 
   // Функция подсветки говорящего
@@ -290,15 +288,7 @@
     while (messageQueue.length > 0) {
       ws.send(messageQueue.shift());
     }
-
-    initPeerConnection();
-    requestMicrophoneAccess();
-
-    // Если звонок уже начат, обновим UI
-    {% if call_started %}
-      updateUIOnCallStart();
-    {% endif %}
-    updateCallStatus("Ожидание соединения...");
+    updateCallStatus("Готов к звонку. Нажмите 'Начать звонок'");
   };
 
   ws.onmessage = async (event) => {
@@ -307,19 +297,20 @@
 
     switch (data.type) {
       case 'offer':
-        if (!peerConnection) {
-          initPeerConnection();
+        if (!isCallActive) {
+          // Автоматически принимаем входящий звонок
+          await acceptIncomingCall(data);
         }
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
-        const answer = await peerConnection.createAnswer();
-        await peerConnection.setLocalDescription(answer);
-        sendMessage({ type: 'answer', answer: peerConnection.localDescription, sender: userId });
         break;
       case 'answer':
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+        if (peerConnection) {
+          await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+        }
         break;
       case 'ice-candidate':
-        await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+        if (peerConnection) {
+          await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+        }
         break;
       case 'hangup':
         endCall();
@@ -327,69 +318,135 @@
     }
   };
 
+  // Принятие входящего звонка
+  async function acceptIncomingCall(data) {
+    if (!localStream) {
+      await requestMicrophoneAccess();
+    }
+
+    if (!peerConnection) {
+      initPeerConnection();
+    }
+
+    await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+    const answer = await peerConnection.createAnswer();
+    await peerConnection.setLocalDescription(answer);
+
+    updateUIOnCallStart();
+    enableAudio(); // Включаем звук при принятии звонка
+    sendMessage({ type: 'answer', answer: peerConnection.localDescription, sender: userId });
+  }
+
   // Инициализация PeerConnection
   function initPeerConnection() {
-    peerConnection = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+    peerConnection = new RTCPeerConnection({
+      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+    });
 
     peerConnection.onicecandidate = (event) => {
-      if (event.candidate) {
+      if (event.candidate && isCallActive) {
         sendMessage({ type: 'ice-candidate', candidate: event.candidate, sender: userId });
       }
     };
 
     peerConnection.ontrack = (event) => {
-      const remoteAudio = document.getElementById('remoteAudio');
       if (remoteAudio.srcObject !== event.streams[0]) {
         remoteAudio.srcObject = event.streams[0];
-        detectSpeaking(event.streams[0]);
+        if (isCallActive) {
+          detectSpeaking(event.streams[0]);
+        }
       }
     };
+
+    // Добавляем локальный поток, если он есть
+    if (localStream) {
+      localStream.getTracks().forEach(track => {
+        peerConnection.addTrack(track, localStream);
+      });
+    }
   }
 
-  // Запрос микрофона и добавление трека
-  function requestMicrophoneAccess() {
-    navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-      .then(stream => {
-        localStream = stream;
-        document.getElementById('localAudio').srcObject = stream;
-        if (peerConnection) {
-          stream.getTracks().forEach(track => peerConnection.addTrack(track, stream));
-        }
-      })
-      .catch(error => {
-        alert("Не удалось получить доступ к микрофону");
-        console.error(error);
+  // Запрос микрофона (без включения звука)
+  async function requestMicrophoneAccess() {
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: false
       });
+
+      // Сначала устанавливаем поток с выключенным звуком
+      localAudio.srcObject = localStream;
+      localAudio.muted = true; // Гарантируем, что локальный звук выключен
+
+      console.log('Микрофон получен, звук выключен');
+    } catch (error) {
+      alert("Не удалось получить доступ к микрофону");
+      console.error(error);
+      throw error;
+    }
+  }
+
+  // Включение аудио (после начала звонка)
+  function enableAudio() {
+    if (localAudio) {
+      localAudio.muted = false; // Включаем локальный звук (для мониторинга)
+    }
+    if (remoteAudio) {
+      remoteAudio.muted = false; // Включаем звук собеседника
+    }
+    console.log('Аудио включено');
+  }
+
+  // Выключение аудио
+  function disableAudio() {
+    if (localAudio) {
+      localAudio.muted = true;
+    }
+    if (remoteAudio) {
+      remoteAudio.muted = true;
+      remoteAudio.srcObject = null;
+    }
+    console.log('Аудио выключено');
   }
 
   // Обработчик для кнопки "Начать звонок"
   if (callBtn) {
-    callBtn.onclick = () => {
-      if (!peerConnection) {
-        initPeerConnection();
-      }
-      navigator.mediaDevices.getUserMedia({ audio: true, video: false }).then(stream => {
-        localStream = stream;
-        document.getElementById('localAudio').srcObject = stream;
-        stream.getTracks().forEach(track => peerConnection.addTrack(track, stream));
+    callBtn.onclick = async () => {
+      try {
+        updateCallStatus("Подготовка звонка...");
 
-        peerConnection.createOffer()
-          .then(offer => {
-            return peerConnection.setLocalDescription(offer);
-          })
-          .then(() => {
-            updateUIOnCallStart(); // Показываем "Скинуть" и "Выключить микрофон"
-            updateCallStatus("Звонок идет...");
-            sendMessage({ type: 'offer', offer: peerConnection.localDescription, sender: userId });
-          })
-          .catch(error => {
-            alert("Ошибка при создании предложения");
-            console.error(error);
-          });
-      }).catch(error => {
-        alert("Не удалось получить доступ к микрофону");
+        // Запрашиваем микрофон, но звук остается выключенным
+        if (!localStream) {
+          await requestMicrophoneAccess();
+        }
+
+        // Инициализируем соединение
+        if (!peerConnection) {
+          initPeerConnection();
+        }
+
+        // Создаем офер
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+
+        // Обновляем UI и включаем звук
+        updateUIOnCallStart();
+        enableAudio();
+
+        // Отправляем офер
+        sendMessage({
+          type: 'offer',
+          offer: peerConnection.localDescription,
+          sender: userId
+        });
+
+        updateCallStatus("Звонок идет...");
+
+      } catch (error) {
+        alert("Ошибка при начале звонка");
         console.error(error);
-      });
+        updateCallStatus("Ошибка начала звонка");
+      }
     };
   }
 
@@ -398,18 +455,18 @@
     cancelBtn.onclick = () => {
       endCall();
       sendMessage({ type: 'hangup', sender: userId });
-      updateUIOnCallEnd();
     };
   }
 
   // Обработчик для кнопки "Выключить микрофон"
   if (muteBtn) {
-    let micMuted = false;
     muteBtn.onclick = () => {
       if (!localStream) return;
+
       localStream.getAudioTracks().forEach(track => {
         track.enabled = !track.enabled;
       });
+
       micMuted = !micMuted;
       muteBtn.textContent = micMuted ? "Включить микрофон" : "Выключить микрофон";
     };
@@ -417,20 +474,30 @@
 
   // Завершение звонка
   function endCall() {
+    // Выключаем звук
+    disableAudio();
+
+    // Закрываем соединения
     if (peerConnection) {
       peerConnection.close();
       peerConnection = null;
     }
+
+    // Останавливаем треки микрофона
     if (localStream) {
       localStream.getTracks().forEach(track => track.stop());
+      localStream = null;
     }
-    document.getElementById('localAudio').srcObject = null;
-    document.getElementById('remoteAudio').srcObject = null;
+
+    // Обновляем UI
+    updateUIOnCallEnd();
     updateCallStatus("Звонок завершен");
   }
 
-  // Детектор говорящего (упрощённый)
+  // Детектор говорящего
   function detectSpeaking(stream) {
+    if (!isCallActive) return;
+
     const context = new AudioContext();
     const source = context.createMediaStreamSource(stream);
     const analyser = context.createAnalyser();
@@ -439,13 +506,35 @@
     const dataArray = new Uint8Array(analyser.fftSize);
 
     function analyze() {
+      if (!isCallActive) return;
+
       analyser.getByteTimeDomainData(dataArray);
       const rms = Math.sqrt(dataArray.reduce((sum, val) => sum + (val - 128) ** 2, 0) / dataArray.length);
-      // Предположим, что говорящий — это текущий пользователь
-      highlightSpeaker(userId);
-      setTimeout(analyze, 10);
+
+      // Подсвечиваем говорящего (в данном случае - собеседника)
+      if (rms > 10) { // Порог активации
+        highlightSpeaker(otherUserId);
+      } else {
+        highlightSpeaker(userId);
+      }
+
+      setTimeout(analyze, 100);
     }
     analyze();
   }
+
+  // Обработка закрытия страницы
+  window.addEventListener('beforeunload', () => {
+    if (isCallActive) {
+      sendMessage({ type: 'hangup', sender: userId });
+    }
+  });
+
+  // Инициализация при загрузке
+  document.addEventListener('DOMContentLoaded', () => {
+    // Звук изначально выключен
+    disableAudio();
+    updateCallStatus("Ожидание начала звонка");
+  });
 </script>
 {% endblock content %}
