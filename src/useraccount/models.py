@@ -196,10 +196,10 @@ class Record(models.Model):
         verbose_name = "Прослушка"
         verbose_name_plural = "Прослушки"
 
-    def save(self, *args, **kwargs):
-        # Если это новая запись и еще не загружена
-        super().save(*args, **kwargs)
-        if  self.uploaded != True:
-            # Запускаем задачу асинхронно
-            upload_to_drive_and_delete(self.id)
-
+    # def save(self, *args, **kwargs):
+    #     # Если это новая запись и еще не загружена
+    #     super().save(*args, **kwargs)
+    #     if  self.uploaded != True:
+    #         # Запускаем задачу асинхронно
+    #         upload_to_drive_and_delete(self.id)
+    #
