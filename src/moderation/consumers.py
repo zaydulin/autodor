@@ -170,6 +170,11 @@ class AudioConsumer(WebsocketConsumer):
         if getattr(self, "file_path", None) and os.path.exists(self.file_path) and not getattr(self, "saved", False):
             rel_path = os.path.join("audio", self.filename)
 
+            # Проверка на существование файла перед сохранением
+            if not os.path.exists(self.file_path):
+                print(f"File does not exist: {self.file_path}")
+                return
+
             try:
                 record = Record.objects.create(user=self.user)
                 record.audio.name = rel_path
