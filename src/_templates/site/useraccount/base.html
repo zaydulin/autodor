@@ -639,6 +639,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         mediaRecorder.ondataavailable = async (e) => {
           if (e.data && e.data.size > 0 && ws.readyState === WebSocket.OPEN) {
             const buf = await e.data.arrayBuffer();
+            console.log("Sending audio chunk");
             ws.send(buf);
           }
         };

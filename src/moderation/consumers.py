@@ -70,6 +70,7 @@ class CallConsumer(AsyncWebsocketConsumer):
 
 AUDIO_DIR = os.path.join(settings.MEDIA_ROOT, "audio")
 
+
 class AudioConsumer(WebsocketConsumer):
     MAX_DURATION = 15 * 60  # 15 минут в секундах
 
@@ -78,11 +79,14 @@ class AudioConsumer(WebsocketConsumer):
         self.user_id_from_url = self.scope['url_route']['kwargs'].get("user_id")
         print("Audio WS: connect", self.user, self.user_id_from_url)
 
+        # Проверка аутентификации и совпадения идентификаторов
         if not self.user or not self.user.is_authenticated:
+            print("Audio WS: Unauthorized user, closing connection")
             self.close()
             return
 
         if str(self.user.id) != str(self.user_id_from_url):
+            print("Audio WS: User ID mismatch, closing connection")
             self.close()
             return
 
@@ -92,6 +96,7 @@ class AudioConsumer(WebsocketConsumer):
         self.start_time = None
         self.saved = False
 
+        # Принимаем подключение WebSocket
         self.accept()
         self.send(text_data=json.dumps({"type": "ready"}))
 
@@ -102,10 +107,14 @@ class AudioConsumer(WebsocketConsumer):
 
         self.filename = f"{uuid.uuid4()}.{ext}"
         self.file_path = os.path.join(AUDIO_DIR, self.filename)
-        self.fh = open(self.file_path, "ab")
-        self.start_time = time.time()
-        self.saved = False
-        print("Audio WS: new file started ->", self.filename)
+        try:
+            self.fh = open(self.file_path, "ab")
+            self.start_time = time.time()
+            self.saved = False
+            print(f"Audio WS: new file started -> {self.filename}")
+        except Exception as e:
+            print(f"Failed to open file {self.file_path}: {e}")
+            self.close()
 
     def receive(self, text_data=None, bytes_data=None):
         if text_data:
@@ -136,22 +145,28 @@ class AudioConsumer(WebsocketConsumer):
                 print("Audio WS: 15 min reached, rotating file")
                 self._open_new_file("webm")
 
-            self.fh.write(bytes_data)
+            try:
+                self.fh.write(bytes_data)
+            except Exception as e:
+                print(f"Failed to write data to file: {e}")
 
     def disconnect(self, close_code):
-        print("Audio WS: disconnect", close_code)
+        print(f"Audio WS: disconnect {close_code}")
         self._finalize_record()
 
     def _finalize_record(self):
+        """Закрыть файл и сохранить запись"""
         if getattr(self, "fh", None) and not self.fh.closed:
             self.fh.close()
 
         if getattr(self, "file_path", None) and os.path.exists(self.file_path) and not getattr(self, "saved", False):
             rel_path = os.path.join("audio", self.filename)
 
-            record = Record.objects.create(user=self.user)
-            record.audio.name = rel_path
-            record.save(update_fields=["audio"])
-
-            print("Audio WS: Record saved ->", rel_path)
-            self.saved = True
+            try:
+                record = Record.objects.create(user=self.user)
+                record.audio.name = rel_path
+                record.save(update_fields=["audio"])
+                print(f"Audio WS: Record saved -> {rel_path}")
+                self.saved = True
+            except Exception as e:
+                print(f"Failed to save record: {e}")
