@@ -142,7 +142,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     def connect(self):
         print("WebSocket CONNECT")
         self.applications_id = self.scope['url_route']['kwargs']['applications_id']
-        self.application = AdvertAplication.objects.get(id=self.applications_id)
+        self.applications = AdvertAplication.objects.get(id=self.applications_id)
         self.room_group_name = f'apllication_chat_{self.applications_id}'
 
         user = self.scope['user']
@@ -157,7 +157,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.accept()
 
         # Отправляем все существующие сообщения
-        messages = ChatMessage.objects.filter(applications=self.application).order_by("date")
+        messages = ChatMessage.objects.filter(applications=self.applications).order_by("date")
         for message in messages:
             self.send(text_data=json.dumps({
                 'message_id': message.id,
@@ -184,7 +184,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             message = ChatMessage.objects.create(
                 content=content,
                 author=author,
-                applications=self.application
+                applications=self.applications
             )
 
             async_to_sync(self.channel_layer.group_send)(
