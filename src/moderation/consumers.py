@@ -142,33 +142,37 @@ class AudioConsumer(WebsocketConsumer):
 class ChatConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
-        print("WebSocket CONNECT")
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info("scope kwargs = %s", self.scope.get("url_route", {}).get("kwargs"))
 
-        self.applications_id = self.scope['url_route']['kwargs']['applications_id']
-        self.room_group_name = f"apllication_chat_{self.applications_id}"
+        try:
+            self.applications_id = self.scope['url_route']['kwargs']['applications_id']
+            self.room_group_name = f"apllication_chat_{self.applications_id}"
 
-        # Проверка авторизации
-        if not self.scope["user"].is_authenticated:
-            await self.close()
-            return
+            if not self.scope["user"].is_authenticated:
+                await self.close(code=4001)
+                return
 
-        # Загружаем заявку и историю сообщений
-        self.applications = await self.get_application(self.applications_id)
-        messages = await self.get_messages(self.applications)
+            self.applications = await self.get_application(self.applications_id)
+            messages = await self.get_messages(self.applications)
 
-        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
-        await self.accept()
+            await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+            await self.accept()
 
-        # Отправляем историю
-        for m in messages:
-            await self.send(text_data=json.dumps({
-                "message_id": str(m.id),
-                "content": m.content,
-                "author": m.author.username if m.author else "",
-                "author_id": m.author.id if m.author else None,
-                "date": timezone.localtime(m.date).strftime("%H:%M"),
-                "applications_id": str(self.applications_id),
-            }))
+            for m in messages:
+                await self.send(text_data=json.dumps({
+                    "type": "chat_message",  # <<< добавили type
+                    "message_id": str(m.id),
+                    "content": m.content,
+                    "author": m.author.username if m.author else "",
+                    "author_id": m.author.id if m.author else None,
+                    "date": timezone.localtime(m.date).strftime("%H:%M"),
+                    "applications_id": str(self.applications_id),
+                }))
+        except Exception as e:
+            logger.exception("Ошибка при connect")
+            await self.close(code=1011)
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
