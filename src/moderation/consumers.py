@@ -139,71 +139,91 @@ class AudioConsumer(WebsocketConsumer):
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
-    def connect(self):
+    async def connect(self):
         print("WebSocket CONNECT")
         self.applications_id = self.scope['url_route']['kwargs']['applications_id']
-        self.applications = AdvertAplication.objects.get(id=self.applications_id)
-        self.room_group_name = f'apllication_chat_{self.applications_id}'
+        self.room_group_name = f"apllication_chat_{self.applications_id}"
 
-        user = self.scope['user']
+        user = self.scope["user"]
         if not user.is_authenticated:
-            self.close()
+            await self.close()
             return
 
-        async_to_sync(self.channel_layer.group_add)(
+        # Получаем заявку через sync_to_async
+        self.applications = await self.get_application(self.applications_id)
+
+        # Подключаем к группе
+        await self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name
         )
-        self.accept()
+        await self.accept()
 
         # Отправляем все существующие сообщения
-        messages = ChatMessage.objects.filter(applications=self.applications).order_by("date")
+        messages = await self.get_messages(self.applications)
         for message in messages:
-            self.send(text_data=json.dumps({
-                'message_id': message.id,
-                'content': message.content,
-                'author': message.author.username,
-                'author_id': message.author.id,
-                'date': timezone.localtime(message.date).strftime("%H:%M"),
-                'applications_id': self.applications_id
+            await self.send(text_data=json.dumps({
+                "message_id": message.id,
+                "content": message.content,
+                "author": message.author.username,
+                "author_id": message.author.id,
+                "date": timezone.localtime(message.date).strftime("%H:%M"),
+                "applications_id": str(self.applications_id),
             }))
 
-    def disconnect(self, close_code):
-        async_to_sync(self.channel_layer.group_discard)(
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(
             self.room_group_name,
             self.channel_name
         )
 
-    def receive(self, text_data):
+    async def receive(self, text_data):
         data = json.loads(text_data)
-        content = data.get('content')
-        author_id = data.get('author_id')
+        content = data.get("content")
+        author_id = data.get("author_id")
 
         try:
-            author = Profile.objects.get(id=author_id)
-            message = ChatMessage.objects.create(
-                content=content,
-                author=author,
-                applications=self.applications
-            )
+            author = await self.get_author(author_id)
+            message = await self.create_message(content, author, self.applications)
 
-            async_to_sync(self.channel_layer.group_send)(
+            await self.channel_layer.group_send(
                 self.room_group_name,
                 {
-                    'type': 'chat_message',
-                    'message_id': message.id,
-                    'content': content,
-                    'author': author.username,
-                    'author_id': author.id,
-                    'date': timezone.localtime(message.date).strftime("%H:%M"),
-                    'applications_id': self.applications_id
+                    "type": "chat_message",
+                    "message_id": message.id,
+                    "content": content,
+                    "author": author.username,
+                    "author_id": author.id,
+                    "date": timezone.localtime(message.date).strftime("%H:%M"),
+                    "applications_id": str(self.applications_id),
                 }
             )
         except Exception as e:
-            self.send(text_data=json.dumps({'error': str(e)}))
+            await self.send(text_data=json.dumps({"error": str(e)}))
 
-    def chat_message(self, event):
-        self.send(text_data=json.dumps(event))
+    async def chat_message(self, event):
+        await self.send(text_data=json.dumps(event))
+
+    # ========== ORM обёртки ==========
+    @database_sync_to_async
+    def get_application(self, app_id):
+        return AdvertAplication.objects.get(id=app_id)
+
+    @database_sync_to_async
+    def get_messages(self, application):
+        return list(ChatMessage.objects.filter(applications=application).order_by("date"))
+
+    @database_sync_to_async
+    def get_author(self, author_id):
+        return Profile.objects.get(id=author_id)
+
+    @database_sync_to_async
+    def create_message(self, content, author, application):
+        return ChatMessage.objects.create(
+            content=content,
+            author=author,
+            applications=application
+        )
 
 
 class CallConsumer(AsyncWebsocketConsumer):
