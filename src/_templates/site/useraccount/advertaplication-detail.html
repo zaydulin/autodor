@@ -995,171 +995,86 @@ body {
     </script>
 
     <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        // Элементы DOM
-        const chatContainer = document.getElementById('group-chat-messages');
-        const messageInput = document.getElementById('group-chat-input');
-        const messageForm = document.getElementById('group-chat-form');
-        const applicationId = document.getElementById('application-id').value;
-        const userId = document.getElementById('user-id').value;
-        const userName = document.getElementById('user-name').value;
+        document.addEventListener("DOMContentLoaded", function() {
+            const chatContainer = document.getElementById('group-chat-messages');
+            const messageInput  = document.getElementById('group-chat-input');
+            const messageForm   = document.getElementById('group-chat-form');
+            const applicationId = document.getElementById('application-id').value;
+            const userId        = document.getElementById('user-id').value;
+            const userName      = document.getElementById('user-name').value;
 
-        // WebSocket соединение
-        const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-        const chatSocket = new WebSocket(
-            `${protocol}://${window.location.host}/ws/chat/${applicationId}/`
-        );
+            const protocol  = location.protocol === 'https:' ? 'wss' : 'ws';
+            const chatSocket = new WebSocket(`${protocol}://${location.host}/ws/chat/${applicationId}/`);
 
-        // Обработчик открытия соединения
-        chatSocket.onopen = function(e) {
-            console.log('WebSocket соединение установлено');
-        };
+            chatSocket.onopen = () => console.log("WebSocket соединение установлено");
 
-        // Обработчик получения сообщений
-        chatSocket.onmessage = function(e) {
-            const data = JSON.parse(e.data);
-            console.log('Получено сообщение:', data);
+            chatSocket.onmessage = (e) => {
+                const data = JSON.parse(e.data);
+                console.log("Получено:", data);
 
-            switch(data.type) {
-                case 'chat_message':
-                    displayMessage(data.message);
-                    break;
+                if (data.type === "chat_message") {
+                    displayMessage(data);           // теперь рендерим сам event
+                } else if (data.error) {
+                    console.error("Ошибка:", data.error);
+                }
+            };
 
-                case 'user_joined':
-                    showSystemMessage(`${data.user_name} присоединился к чату`);
-                    break;
+            chatSocket.onclose = (e) => console.log("WebSocket закрыт:", e);
+            chatSocket.onerror = (e) => console.error("WebSocket ошибка:", e);
 
-                case 'user_left':
-                    showSystemMessage(`${data.user_name} покинул чат`);
-                    break;
-
-                case 'message_history':
-                    // Загрузка истории сообщений при подключении
-                    data.messages.forEach(message => {
-                        if (!document.querySelector(`[data-message-id="${message.id}"]`)) {
-                            displayMessage(message);
-                        }
-                    });
-                    break;
-            }
-        };
-
-        // Обработчик закрытия соединения
-        chatSocket.onclose = function(e) {
-            console.log('WebSocket соединение закрыто:', e);
-            // Пытаемся переподключиться через 5 секунд
-            setTimeout(function() {
-                console.log('Попытка переподключения...');
-                // Здесь можно реализовать переподключение
-            }, 5000);
-        };
-
-        // Обработчик ошибок
-        chatSocket.onerror = function(e) {
-            console.error('WebSocket ошибка:', e);
-        };
-
-        // Функция отображения сообщения
-        function displayMessage(message) {
-            const isOwnMessage = parseInt(userId) === message.author_id;
-
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `d-flex mb-2 ${isOwnMessage ? 'justify-content-end' : ''}`;
-            messageDiv.setAttribute('data-message-id', message.id);
-
-            const messageContent = document.createElement('div');
-            messageContent.className = isOwnMessage ?
-                'bg-light p-2 rounded' : 'bg-primary text-white p-2 rounded';
-            messageContent.style.maxWidth = '75%';
-
-            messageContent.innerHTML = `
-                <div class="fw-bold small">${escapeHtml(message.author_name)}</div>
-                <div>${escapeHtml(message.content)}</div>
-                <div class="small chat_date text-end text-muted">${formatTime(message.timestamp)}</div>
-            `;
-
-            messageDiv.appendChild(messageContent);
-            chatContainer.appendChild(messageDiv);
-
-            // Прокрутка к последнему сообщению
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        }
-
-        // Функция для системных сообщений
-        function showSystemMessage(text) {
-            const systemDiv = document.createElement('div');
-            systemDiv.className = 'text-center text-muted small my-2';
-            systemDiv.textContent = text;
-            chatContainer.appendChild(systemDiv);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        }
-
-        // Функция экранирования HTML
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        // Функция форматирования времени
-        function formatTime(timestamp) {
-            const date = new Date(timestamp);
-            return `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
-        }
-
-        // Обработка отправки сообщения
-        messageForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-
-            const message = messageInput.value.trim();
-            if (!message) return;
-
-            // Проверяем, что WebSocket открыт
-            if (chatSocket.readyState === WebSocket.OPEN) {
-                // Отправка сообщения через WebSocket
-                chatSocket.send(JSON.stringify({
-                    'type': 'chat_message',
-                    'message': message,
-                    'user_id': userId,
-                    'user_name': userName
-                }));
-
-                // Очистка поля ввода
-                messageInput.value = '';
-            } else {
-                console.error('WebSocket не подключен');
-                alert('Соединение с чатом потеряно. Попробуйте перезагрузить страницу.');
-            }
-        });
-
-        // Обработка нажатия Enter (без Shift)
-        messageInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
+            // Отправка
+            messageForm.addEventListener("submit", (e) => {
                 e.preventDefault();
-                messageForm.dispatchEvent(new Event('submit'));
-            }
-        });
+                const text = messageInput.value.trim();
+                if (!text) return;
 
-        // Автофокус на поле ввода при открытии чата
-        const chatOffcanvas = document.getElementById('offcanvasChat');
-        if (chatOffcanvas) {
-            chatOffcanvas.addEventListener('shown.bs.offcanvas', function() {
-                messageInput.focus();
+                if (chatSocket.readyState === WebSocket.OPEN) {
+                    chatSocket.send(JSON.stringify({
+                        type: "chat_message",
+                        content: text,          // <-- content
+                        author_id: userId       // <-- author_id
+                    }));
+                    messageInput.value = "";
+                } else {
+                    alert("Нет соединения с чатом");
+                }
             });
-        }
 
-        // Отправка сообщения о выходе при закрытии страницы
-        window.addEventListener('beforeunload', function() {
-            if (chatSocket.readyState === WebSocket.OPEN) {
-                chatSocket.send(JSON.stringify({
-                    'type': 'user_left',
-                    'user_id': userId,
-                    'user_name': userName
-                }));
+            messageInput.addEventListener("keydown", (e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    messageForm.dispatchEvent(new Event("submit"));
+                }
+            });
+
+            function displayMessage(m) {
+                const isOwn = String(userId) === String(m.author_id);
+                const div = document.createElement("div");
+                div.className = `d-flex mb-2 ${isOwn ? "justify-content-end" : ""}`;
+                div.dataset.messageId = m.message_id;
+
+                const bubble = document.createElement("div");
+                bubble.className = isOwn ? "bg-light p-2 rounded" : "bg-primary text-white p-2 rounded";
+                bubble.style.maxWidth = "75%";
+                bubble.innerHTML = `
+                    <div class="fw-bold small">${escapeHtml(m.author || "")}</div>
+                    <div>${escapeHtml(m.content || "")}</div>
+                    <div class="small chat_date text-end text-muted">${m.date || ""}</div>
+                `;
+
+                div.appendChild(bubble);
+                chatContainer.appendChild(div);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+
+            function escapeHtml(t) {
+                const div = document.createElement("div");
+                div.textContent = t ?? "";
+                return div.innerHTML;
             }
         });
-    });
-    </script>
+        </script>
+
     <script>
     document.addEventListener("DOMContentLoaded", () => {
       let isEditing = false;
