@@ -142,9 +142,7 @@ class AudioConsumer(WebsocketConsumer):
 class ChatConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.info("scope kwargs = %s", self.scope.get("url_route", {}).get("kwargs"))
+        print("scope kwargs = %s", self.scope.get("url_route", {}).get("kwargs"))
 
         try:
             self.applications_id = self.scope['url_route']['kwargs']['applications_id']
@@ -171,7 +169,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     "applications_id": str(self.applications_id),
                 }))
         except Exception as e:
-            logger.exception("Ошибка при connect")
+            print(("Ошибка при connect"))
             await self.close(code=1011)
 
     async def disconnect(self, close_code):
