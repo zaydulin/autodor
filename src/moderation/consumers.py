@@ -147,14 +147,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
             self.applications_id = self.scope['url_route']['kwargs']['applications_id']
             self.room_group_name = f"apllication_chat_{self.applications_id}"
 
-            # проверка пользователя
             if not self.scope["user"].is_authenticated:
                 print(">>> CONNECT: anonymous user -> close")
                 await self.close(code=4001)
                 return
             print(">>> CONNECT: user =", self.scope["user"].username)
 
-            # --- доступ к БД только через await ---
+            # загрузка
             self.applications = await self.get_application(self.applications_id)
             print(">>> CONNECT: AdvertApplication loaded id =", self.applications.id)
 
@@ -165,21 +164,22 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.accept()
             print(">>> CONNECT: accepted")
 
+            # отправляем историю
             for m in messages:
                 await self.send(text_data=json.dumps({
                     "type": "chat_message",
-                    "message_id": str(m.id),
+                    "message_id": str(m.id),  # <-- строка
                     "content": m.content,
                     "author": m.author.username if m.author else "",
-                    "author_id": m.author.id if m.author else None,
+                    "author_id": str(m.author.id) if m.author else None,  # <-- строка
                     "date": timezone.localtime(m.date).strftime("%H:%M"),
-                    "applications_id": str(self.applications_id),
+                    "applications_id": str(self.applications_id),  # <-- строка
                 }))
             print(">>> CONNECT: history sent")
 
         except Exception as e:
             print("!!! CONNECT ERROR:", repr(e))
-            await self.close(code=1011)
+            await self.close(code=1000)  # <-- корректный код
 
     async def disconnect(self, code):
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
@@ -200,7 +200,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     "message_id": str(msg.id),
                     "content": msg.content,
                     "author": author.username,
-                    "author_id": author.id,
+                    "author_id": str(author.id),  # <-- строка
                     "date": timezone.localtime(msg.date).strftime("%H:%M"),
                     "applications_id": str(self.applications_id),
                 }
