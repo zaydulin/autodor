@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.views.generic import ListView, DetailView, TemplateView, FormView
 from django.views.generic.list import MultipleObjectMixin
 from django.contrib import messages
-from django.db.models import Q
+from django.db.models import Q, Prefetch
 from django.shortcuts import render, redirect
 from django.urls import reverse
 
@@ -19,6 +19,8 @@ from moderation.models import Advert
 from moderation.views import _to_decimal, _to_int
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
+
+from moderation.models import CarModel, CarBrand
 
 logger = logging.getLogger(__name__)
 
@@ -328,6 +330,20 @@ class AdvertViewFree(ListView):
         ctx['selected_transmissions'] = g.getlist('transmission')
         ctx['selected_fuels'] = g.getlist('fuel')
         ctx['selected_drives'] = g.getlist('drive')
+        ctx['colors'] = (Advert.objects.values_list('color',flat=True).exclude(currency__isnull=True).exclude(currency__exact='').distinct().order_by('color'))
+        ctx['doors'] = (Advert.objects.values_list('doors',flat=True).exclude(currency__isnull=True).exclude(currency__exact='').distinct().order_by('doors'))
+        ctx['carmodels'] = (CarModel.objects.values_list('name',flat=True).distinct().order_by('name'))
+        ctx['carbrands'] = (CarBrand.objects.values_list('name',flat=True).distinct().order_by('name'))
+        carbrands_with_models = CarBrand.objects.prefetch_related(
+            Prefetch('models', queryset=CarModel.objects.order_by('name'))
+        ).order_by('name')
+
+        # Создаем словарь марка: [модели]
+        ctx['carmodels_dict'] = {
+            brand.name: list(brand.models.values_list('name', flat=True))
+            for brand in carbrands_with_models
+        }
+
 
         # для остальных полей оставим доступ к params.*
         ctx['params'] = g

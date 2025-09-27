@@ -38,24 +38,26 @@
                             </div>
 
                             <div class="row g-2">
-                                <div class="col-6">
+                                <div class="col-12 col-lg-6">
                                     <label class="form-label">Марка</label>
                                     <select name="brand" class="form-select">
                                         <option value="">Любая</option>
-                                        {% for b in brands %}
+                                        {% for b in carbrands %}
                                         <option value="{{ b }}" {% if params.brand == b %}selected{% endif %}>{{ b }}</option>
                                         {% endfor %}
                                     </select>
                                 </div>
-                                <div class="col-6">
+
+                                <div class="col-12 col-lg-6">
                                     <label class="form-label">Модель</label>
-                                    <select name="model_auto" class="form-select">
+                                    <select name="model_auto" id="model-select" class="form-select">
                                         <option value="">Любая</option>
-                                        {% for m in models %}
-                                        <option value="{{ m }}" {% if params.model_auto == m %}selected{% endif %}>{{ m }}</option>
-                                        {% endfor %}
+                                        {% if params.brand and params.model_auto %}
+                                            <option value="{{ params.model_auto }}" selected>{{ params.model_auto }}</option>
+                                        {% endif %}
                                     </select>
                                 </div>
+
                             </div>
 
                             <div class="row g-2 mt-2">
@@ -112,19 +114,29 @@
                                     <input type="text" name="engine_volume_max" class="form-control" value="{{ params.engine_volume_max }}">
                                 </div>
                             </div>
-
-                            <div class="row g-2 mt-2">
-                                <div class="col-6">
-                                    <label class="form-label">Двери</label>
-                                    <input type="number" name="doors" class="form-control" value="{{ params.doors }}">
-                                </div>
-                                <div class="col-6">
-                                    <label class="form-label">Цвет</label>
-                                    <input type="text" name="color" class="form-control" placeholder="например, schwarz" value="{{ params.color }}">
-                                </div>
+                            <div class="row g-2">
+                            <div class="col-12 col-lg-6">
+                                <label class="form-label">Двери</label>
+                                <select name="doors" class="form-select">
+                                    <option value="">Любая</option>
+                                    {% for d in doors %}
+                                    <option value="{{ d }}" {% if params.doors == bc %}selected{% endif %}>{{ d }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-12 col-lg-6">
+                                <label class="form-label">Цвет</label>
+                                <select name="color" class="form-select">
+                                    <option value="">Любая</option>
+                                    {% for c in colors %}
+                                    <option value="{{ c }}" {% if params.color == bc %}selected{% endif %}>{{ c }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
                             </div>
 
-                            <div class="mt-3 d-none">
+
+                            <div class="mt-3 d-none" >
                                 <label class="form-label">Валюта</label>
                                 <select name="currency" class="form-select">
                                     <option value="">Любая</option>
@@ -189,10 +201,15 @@
                                 </select>
                             </div>
 
-                            <div class="d-flex gap-2 mt-3">
-                                <button type="submit" class="btn btn-primary">Применить</button>
-                                <a href="{% url 'webmain:advertsfree' %}" class="btn btn-outline-secondary">Сбросить</a>
+                            <div class="row g-2 mt-3">
+                                <div class="col-12 col-lg-6">
+                                    <button type="submit" class="btn btn-primary w-100">Применить</button>
+                                </div>
+                                <div class="col-12 col-lg-6">
+                                    <a href="{% url 'moderation:adverts' %}" class="btn btn-outline-secondary w-100">Сбросить</a>
+                                </div>
                             </div>
+
                         </form>
 
                     </div>
@@ -255,4 +272,57 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 </script>
 </section>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Обработчик клика по элементам с data-href
+        document.querySelectorAll("[data-href]").forEach(function (el) {
+            el.style.cursor = "pointer";
+            el.addEventListener("click", function () {
+                window.location.href = el.getAttribute("data-href");
+            });
+        });
+
+        // Динамическое обновление моделей
+        const carModelsData = {{ carmodels_dict|safe }};
+        const brandSelect = document.querySelector('select[name="brand"]');
+        const modelSelect = document.getElementById('model-select');
+
+        if (brandSelect && modelSelect) {
+            function updateModelOptions() {
+                const selectedBrand = brandSelect.value;
+                const currentModel = '{{ params.model_auto }}';
+
+                // Очищаем select
+                modelSelect.innerHTML = '<option value="">Любая</option>';
+
+                let modelsToShow = [];
+
+                if (selectedBrand && carModelsData[selectedBrand]) {
+                    // Показываем только модели выбранной марки
+                    modelsToShow = carModelsData[selectedBrand];
+                } else {
+                    // Показываем все модели
+                    modelsToShow = [
+                        {% for m in carmodels %}
+                            '{{ m }}'{% if not forloop.last %},{% endif %}
+                        {% endfor %}
+                    ];
+                }
+
+                // Добавляем модели в select
+                modelsToShow.forEach(modelName => {
+                    const newOption = document.createElement('option');
+                    newOption.value = modelName;
+                    newOption.textContent = modelName;
+                    newOption.selected = (modelName === currentModel);
+                    modelSelect.appendChild(newOption);
+                });
+            }
+
+            brandSelect.addEventListener('change', updateModelOptions);
+            updateModelOptions(); // Инициализация
+        }
+    });
+</script>
 {% endblock footertop %}

@@ -152,9 +152,9 @@
                                     <li><a href="{% url 'webmain:blogs' %}">Новости</a></li>
                                     <li><a href="{% url 'webmain:faqs' %}">ЧаВо</a></li>
                                     {% if request.user.is_authenticated %}
-                                    <li><a href="{% url 'webmain:advertsfree' %}">Объявления</a></li>
+                                        <li><a href="{% url 'moderation:adverts' %}">Объявления</a></li>
                                     {% else %}
-                                    <li><a href="{% url 'moderation:adverts' %}">Объявления</a></li>
+                                        <li><a href="{% url 'webmain:advertsfree' %}">Объявления</a></li>
                                     {% endif %}
                                     <li><a href="{% url 'webmain:contacts' %}">Контакты</a></li>
                                 </ul>

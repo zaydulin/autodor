@@ -25,7 +25,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_http_methods
 from django.views.generic import ListView, DetailView, TemplateView, FormView
-from django.db.models import Q
+from django.db.models import Q, Prefetch
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 from .forms import PathForm, PathResponsibilityForm
@@ -459,6 +459,17 @@ class AdvertView(ListView):
         ctx['doors'] = (Advert.objects.values_list('doors',flat=True).exclude(currency__isnull=True).exclude(currency__exact='').distinct().order_by('doors'))
         ctx['carmodels'] = (CarModel.objects.values_list('name',flat=True).distinct().order_by('name'))
         ctx['carbrands'] = (CarBrand.objects.values_list('name',flat=True).distinct().order_by('name'))
+        carbrands_with_models = CarBrand.objects.prefetch_related(
+            Prefetch('models', queryset=CarModel.objects.order_by('name'))
+        ).order_by('name')
+
+        # Создаем словарь марка: [модели]
+        ctx['carmodels_dict'] = {
+            brand.name: list(brand.models.values_list('name', flat=True))
+            for brand in carbrands_with_models
+        }
+        print(ctx['carmodels_dict'])
+
 
         ctx['transmission_choices'] = Advert.TransmissionType.choices
         ctx['fuel_choices'] = Advert.FuelType.choices
