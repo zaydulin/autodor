@@ -4,7 +4,7 @@ from . import consumers
 websocket_urlpatterns = [
     re_path(r"ws/call/(?P<call_id>\d+)/$", consumers.CallConsumer.as_asgi()),
     re_path(
-        r'^ws/chat/(?P<application_id>[0-9a-fA-F-]{36})/$',
+        r'^ws/chat/(?P<applications_id>[0-9a-fA-F-]{36})/$',
         consumers.ChatConsumer.as_asgi()
     ),
     re_path(
