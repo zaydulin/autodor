@@ -139,36 +139,37 @@ class AudioConsumer(WebsocketConsumer):
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
+
     async def connect(self):
         print("WebSocket CONNECT")
+
         self.applications_id = self.scope['url_route']['kwargs']['applications_id']
+
+        # получаем объект из БД через database_sync_to_async
+        self.applications = await self.get_application(self.applications_id)
         self.room_group_name = f"apllication_chat_{self.applications_id}"
 
-        user = self.scope["user"]
+        user = self.scope['user']
         if not user.is_authenticated:
             await self.close()
             return
 
-        # Получаем заявку через sync_to_async
-        self.applications = await self.get_application(self.applications_id)
-
-        # Подключаем к группе
         await self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name
         )
         await self.accept()
 
-        # Отправляем все существующие сообщения
+        # Отправляем все сообщения
         messages = await self.get_messages(self.applications)
         for message in messages:
             await self.send(text_data=json.dumps({
-                "message_id": message.id,
-                "content": message.content,
-                "author": message.author.username,
-                "author_id": message.author.id,
-                "date": timezone.localtime(message.date).strftime("%H:%M"),
-                "applications_id": str(self.applications_id),
+                'message_id': message.id,
+                'content': message.content,
+                'author': message.author.username,
+                'author_id': message.author.id,
+                'date': timezone.localtime(message.date).strftime("%H:%M"),
+                'applications_id': self.applications_id
             }))
 
     async def disconnect(self, close_code):
@@ -179,8 +180,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def receive(self, text_data):
         data = json.loads(text_data)
-        content = data.get("content")
-        author_id = data.get("author_id")
+        content = data.get('content')
+        author_id = data.get('author_id')
 
         try:
             author = await self.get_author(author_id)
@@ -189,29 +190,31 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
-                    "type": "chat_message",
-                    "message_id": message.id,
-                    "content": content,
-                    "author": author.username,
-                    "author_id": author.id,
-                    "date": timezone.localtime(message.date).strftime("%H:%M"),
-                    "applications_id": str(self.applications_id),
+                    'type': 'chat_message',
+                    'message_id': message.id,
+                    'content': content,
+                    'author': author.username,
+                    'author_id': author.id,
+                    'date': timezone.localtime(message.date).strftime("%H:%M"),
+                    'applications_id': self.applications_id
                 }
             )
         except Exception as e:
-            await self.send(text_data=json.dumps({"error": str(e)}))
+            await self.send(text_data=json.dumps({'error': str(e)}))
 
     async def chat_message(self, event):
         await self.send(text_data=json.dumps(event))
 
-    # ========== ORM обёртки ==========
+    # ====================
+    # Синхронные ORM операции оборачиваем в database_sync_to_async
+    # ====================
     @database_sync_to_async
     def get_application(self, app_id):
         return AdvertAplication.objects.get(id=app_id)
 
     @database_sync_to_async
     def get_messages(self, application):
-        return list(ChatMessage.objects.filter(applications=application).order_by("date"))
+        return ChatMessage.objects.filter(applications=application).order_by("date")
 
     @database_sync_to_async
     def get_author(self, author_id):
