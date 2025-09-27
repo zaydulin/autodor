@@ -140,43 +140,34 @@ class AudioConsumer(WebsocketConsumer):
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
-
     async def connect(self):
-        print(">>> CONNECT: scope kwargs =", self.scope.get("url_route", {}).get("kwargs"))
+        print(">>> CONNECT: kwargs =", self.scope.get("url_route", {}).get("kwargs"))
 
         try:
             self.applications_id = self.scope['url_route']['kwargs']['applications_id']
-            print(">>> CONNECT: applications_id =", self.applications_id)
-
             self.room_group_name = f"apllication_chat_{self.applications_id}"
-            print(">>> CONNECT: room_group_name =", self.room_group_name)
 
-            # Проверка авторизации
+            # проверка пользователя
             if not self.scope["user"].is_authenticated:
-                print(">>> CONNECT: user is not authenticated, closing socket")
+                print(">>> CONNECT: anonymous user -> close")
                 await self.close(code=4001)
                 return
-            print(">>> CONNECT: user =", self.scope["user"])
+            print(">>> CONNECT: user =", self.scope["user"].username)
 
-            # Загружаем заявку и сообщения
+            # --- доступ к БД только через await ---
             self.applications = await self.get_application(self.applications_id)
-            print(">>> CONNECT: AdvertApplication =", self.applications)
+            print(">>> CONNECT: AdvertApplication loaded id =", self.applications.id)
 
             messages = await self.get_messages(self.applications)
-            print(f">>> CONNECT: loaded {len(messages)} messages")
+            print(f">>> CONNECT: messages loaded: {len(messages)}")
 
-            # Подключаем к группе
             await self.channel_layer.group_add(self.room_group_name, self.channel_name)
-            print(">>> CONNECT: added to group")
-
             await self.accept()
-            print(">>> CONNECT: socket accepted")
+            print(">>> CONNECT: accepted")
 
-            # Отправляем историю
             for m in messages:
-                print(">>> CONNECT: sending message from history id =", m.id)
                 await self.send(text_data=json.dumps({
-                    "type": "chat_message",  # нужно для клиента
+                    "type": "chat_message",
                     "message_id": str(m.id),
                     "content": m.content,
                     "author": m.author.username if m.author else "",
@@ -184,14 +175,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     "date": timezone.localtime(m.date).strftime("%H:%M"),
                     "applications_id": str(self.applications_id),
                 }))
-
-            print(">>> CONNECT: history sent successfully")
+            print(">>> CONNECT: history sent")
 
         except Exception as e:
             print("!!! CONNECT ERROR:", repr(e))
             await self.close(code=1011)
 
-    async def disconnect(self, close_code):
+    async def disconnect(self, code):
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
     async def receive(self, text_data):
@@ -221,19 +211,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def chat_message(self, event):
         await self.send(text_data=json.dumps(event))
 
-    # --------- ORM ----------
+    # --- обёртки для ORM ---
     @database_sync_to_async
     def get_application(self, app_id):
         return AdvertAplication.objects.get(id=app_id)
 
     @database_sync_to_async
     def get_messages(self, application):
-        return list(
-            ChatMessage.objects
-            .filter(applications=application)
-            .select_related("author")
-            .order_by("date")
-        )
+        return list(ChatMessage.objects.filter(applications=application)
+                    .select_related("author").order_by("date"))
 
     @database_sync_to_async
     def get_author(self, author_id):
