@@ -142,25 +142,41 @@ class AudioConsumer(WebsocketConsumer):
 class ChatConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
-        print("scope kwargs = %s", self.scope.get("url_route", {}).get("kwargs"))
+        print(">>> CONNECT: scope kwargs =", self.scope.get("url_route", {}).get("kwargs"))
 
         try:
             self.applications_id = self.scope['url_route']['kwargs']['applications_id']
-            self.room_group_name = f"apllication_chat_{self.applications_id}"
+            print(">>> CONNECT: applications_id =", self.applications_id)
 
+            self.room_group_name = f"apllication_chat_{self.applications_id}"
+            print(">>> CONNECT: room_group_name =", self.room_group_name)
+
+            # Проверка авторизации
             if not self.scope["user"].is_authenticated:
+                print(">>> CONNECT: user is not authenticated, closing socket")
                 await self.close(code=4001)
                 return
+            print(">>> CONNECT: user =", self.scope["user"])
 
+            # Загружаем заявку и сообщения
             self.applications = await self.get_application(self.applications_id)
+            print(">>> CONNECT: AdvertApplication =", self.applications)
+
             messages = await self.get_messages(self.applications)
+            print(f">>> CONNECT: loaded {len(messages)} messages")
 
+            # Подключаем к группе
             await self.channel_layer.group_add(self.room_group_name, self.channel_name)
-            await self.accept()
+            print(">>> CONNECT: added to group")
 
+            await self.accept()
+            print(">>> CONNECT: socket accepted")
+
+            # Отправляем историю
             for m in messages:
+                print(">>> CONNECT: sending message from history id =", m.id)
                 await self.send(text_data=json.dumps({
-                    "type": "chat_message",  # <<< добавили type
+                    "type": "chat_message",  # нужно для клиента
                     "message_id": str(m.id),
                     "content": m.content,
                     "author": m.author.username if m.author else "",
@@ -168,8 +184,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     "date": timezone.localtime(m.date).strftime("%H:%M"),
                     "applications_id": str(self.applications_id),
                 }))
+
+            print(">>> CONNECT: history sent successfully")
+
         except Exception as e:
-            print(("Ошибка при connect"))
+            print("!!! CONNECT ERROR:", repr(e))
             await self.close(code=1011)
 
     async def disconnect(self, close_code):
