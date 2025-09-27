@@ -191,15 +191,21 @@ class Record(models.Model):
     audio = models.FileField(upload_to='audio/', name='audio')
     user = models.ForeignKey('Profile', models.CASCADE, name='user')
     uploaded = models.BooleanField(default=False)  # Добавим флаг для отслеживания
+    created_at = models.DateTimeField(null=True,blank=True,auto_now_add=True)
 
     class Meta:
         verbose_name = "Прослушка"
         verbose_name_plural = "Прослушки"
 
-    # def save(self, *args, **kwargs):
-    #     # Если это новая запись и еще не загружена
-    #     super().save(*args, **kwargs)
-    #     if  self.uploaded != True:
-    #         # Запускаем задачу асинхронно
-    #         upload_to_drive_and_delete(self.id)
-    #
+    def save(self, *args, **kwargs):
+        # Если это новая запись и еще не загружена
+        super().save(*args, **kwargs)
+        user_records = Record.objects.filter(user=self.user).order_by('created_at')
+        first_user = user_records.first()
+        print(first_user.uploaded,first_user.audio)
+        if  len(user_records) > 1:
+            if  first_user.uploaded != True and first_user.audio:
+                # Запускаем задачу асинхронно
+                id = first_user.id
+                upload_to_drive_and_delete(id)
+
