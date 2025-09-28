@@ -567,19 +567,51 @@ def create_application(request, advert_id):
 
 
 @login_required
+@transaction.atomic
 def create_application_view(request, advert_id):
-    """Создание заявки для текущего пользователя"""
+    """Создание заявки для текущего пользователя - оптимизированная версия"""
+    # Используем select_related/prefetch_related если нужны связанные данные
     advert = get_object_or_404(Advert, id=advert_id)
 
-    # Создаем заявку
+    # Создаем заявку одним запросом
     application = AdvertAplication.objects.create(
         advert=advert,
-        price=0,  # если нужна какая-то логика расчета — добавь сюда
+        price=0,
         status=AdvertAplication.Status.NEW,
     )
 
-    # Добавляем текущего пользователя в список пользователей заявки
-    application.user.add(request.user)
+    # Получаем настройки и документы за один запрос
+    settings = SettingsGlobale.objects.only(
+        'document_file_1', 'document_file_2', 'document_file_3',
+        'document_file_4', 'document_file_5', 'document_file_6',
+        'document_file_7', 'document_file_8'
+    ).first()
+
+    # Подготавливаем bulk создание документов
+    documents_to_create = []
+    for i in range(1, 9):
+        file_field_name = f'document_file_{i}'
+        file_obj = getattr(settings, file_field_name, None)
+        if file_obj:
+            documents_to_create.append(AdvertDocument(
+                aplication=application,
+                file=file_obj,
+                document_type=2,
+                type=i,
+                name=file_obj.name,
+            ))
+
+    # Bulk создание документов
+    if documents_to_create:
+        AdvertDocument.objects.bulk_create(documents_to_create)
+
+    # Bulk добавление пользователей
+    admin = Profile.objects.filter(employee=4).only('id').first()
+    users_to_add = [request.user]
+    if admin:
+        users_to_add.append(admin)
+
+    application.user.add(*users_to_add)
 
     return redirect("moderation:my_applications")
 
