@@ -25,7 +25,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_http_methods
 from django.views.generic import ListView, DetailView, TemplateView, FormView
-from django.db.models import Q
+from django.db.models import Q, Prefetch
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 from .forms import PathForm, PathResponsibilityForm
@@ -459,6 +459,17 @@ class AdvertView(ListView):
         ctx['doors'] = (Advert.objects.values_list('doors',flat=True).exclude(currency__isnull=True).exclude(currency__exact='').distinct().order_by('doors'))
         ctx['carmodels'] = (CarModel.objects.values_list('name',flat=True).distinct().order_by('name'))
         ctx['carbrands'] = (CarBrand.objects.values_list('name',flat=True).distinct().order_by('name'))
+        carbrands_with_models = CarBrand.objects.prefetch_related(
+            Prefetch('models', queryset=CarModel.objects.order_by('name'))
+        ).order_by('name')
+
+        # Создаем словарь марка: [модели]
+        ctx['carmodels_dict'] = {
+            brand.name: list(brand.models.values_list('name', flat=True))
+            for brand in carbrands_with_models
+        }
+        print(ctx['carmodels_dict'])
+
 
         ctx['transmission_choices'] = Advert.TransmissionType.choices
         ctx['fuel_choices'] = Advert.FuelType.choices
@@ -556,19 +567,54 @@ def create_application(request, advert_id):
 
 
 @login_required
+@transaction.atomic
 def create_application_view(request, advert_id):
-    """Создание заявки для текущего пользователя"""
+    """Создание заявки для текущего пользователя - оптимизированная версия"""
+    # Используем select_related/prefetch_related если нужны связанные данные
     advert = get_object_or_404(Advert, id=advert_id)
 
-    # Создаем заявку
+    # Создаем заявку одним запросом
     application = AdvertAplication.objects.create(
         advert=advert,
-        price=0,  # если нужна какая-то логика расчета — добавь сюда
+        price=0,
         status=AdvertAplication.Status.NEW,
     )
 
-    # Добавляем текущего пользователя в список пользователей заявки
-    application.user.add(request.user)
+    # Получаем настройки и документы за один запрос
+    settings = SettingsGlobale.objects.only(
+        'document_file_1', 'document_file_2', 'document_file_3',
+        'document_file_4', 'document_file_5', 'document_file_6',
+        'document_file_7', 'document_file_8'
+    ).first()
+
+    # Подготавливаем bulk создание документов
+    documents_to_create = []
+    for i in range(1, 9):
+        file_field_name = f'document_file_{i}'
+        file_obj = getattr(settings, file_field_name, None)
+        if file_obj:
+            documents_to_create.append(AdvertDocument(
+                aplication=application,
+                file=file_obj,
+                document_type=2,
+                type=i,
+                name=file_obj.name,
+            ))
+
+    # Bulk создание документов
+    if documents_to_create:
+        AdvertDocument.objects.bulk_create(documents_to_create)
+
+    # Bulk добавление пользователей
+    admin = Profile.objects.filter(employee=4).only('id').first()
+    users_to_add = [request.user]
+    if admin:
+        users_to_add.append(admin)
+        application.user_menager.add(admin)
+
+
+    application.user.add(*users_to_add)
+
 
     return redirect("moderation:my_applications")
 

@@ -3,10 +3,13 @@ import json
 import os
 import uuid
 import time
+
+from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer, AsyncWebsocketConsumer
 from django.core.files import File
 from channels.db import database_sync_to_async
 from django.conf import settings
+from django.utils import timezone
 from useraccount.models import Record, Profile
 from moderation.models import AdvertAplication, ChatMessage, CallSession
 
@@ -135,182 +138,96 @@ class AudioConsumer(WebsocketConsumer):
                 print(f"Failed to save record: {e}")
 
 
+
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        self.application_id = self.scope['url_route']['kwargs']['application_id']
-        self.room_group_name = f'chat_{self.application_id}'
+        print(">>> CONNECT: kwargs =", self.scope.get("url_route", {}).get("kwargs"))
 
-        # Проверка доступа к приложению
-        if await self.has_access():
-            # Присоединяемся к группе
-            await self.channel_layer.group_add(
-                self.room_group_name,
-                self.channel_name
-            )
+        try:
+            self.applications_id = self.scope['url_route']['kwargs']['applications_id']
+            self.room_group_name = f"apllication_chat_{self.applications_id}"
+
+            if not self.scope["user"].is_authenticated:
+                print(">>> CONNECT: anonymous user -> close")
+                await self.close(code=4001)
+                return
+            print(">>> CONNECT: user =", self.scope["user"].username)
+
+            # загрузка
+            self.applications = await self.get_application(self.applications_id)
+            print(">>> CONNECT: AdvertApplication loaded id =", self.applications.id)
+
+            messages = await self.get_messages(self.applications)
+            print(f">>> CONNECT: messages loaded: {len(messages)}")
+
+            await self.channel_layer.group_add(self.room_group_name, self.channel_name)
             await self.accept()
+            print(">>> CONNECT: accepted")
 
-            # Отправляем историю сообщений
-            await self.send_history()
+            # отправляем историю
+            for m in messages:
+                await self.send(text_data=json.dumps({
+                    "type": "chat_message",
+                    "message_id": str(m.id),  # <-- строка
+                    "content": m.content,
+                    "author": m.author.username if m.author else "",
+                    "author_id": str(m.author.id) if m.author else None,  # <-- строка
+                    "date": timezone.localtime(m.date).strftime("%H:%M"),
+                    "applications_id": str(self.applications_id),  # <-- строка
+                }))
+            print(">>> CONNECT: history sent")
 
-            # Уведомляем о подключении
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    'type': 'user_joined',
-                    'user_id': self.scope['user'].id,
-                    'user_name': f"{self.scope['user'].first_name} {self.scope['user'].last_name}"
-                }
-            )
-        else:
-            await self.close()
+        except Exception as e:
+            print("!!! CONNECT ERROR:", repr(e))
+            await self.close(code=1000)  # <-- корректный код
 
-    async def disconnect(self, close_code):
-        # Уведомляем о выходе
-        if hasattr(self, 'room_group_name'):
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    'type': 'user_left',
-                    'user_id': self.scope['user'].id,
-                    'user_name': f"{self.scope['user'].first_name} {self.scope['user'].last_name}"
-                }
-            )
-
-            # Покидаем группу
-            await self.channel_layer.group_discard(
-                self.room_group_name,
-                self.channel_name
-            )
+    async def disconnect(self, code):
+        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
     async def receive(self, text_data):
         data = json.loads(text_data)
-        message_type = data.get('type')
+        content = data.get("content")
+        author_id = data.get("author_id")
 
-        if message_type == 'chat_message':
-            await self.handle_chat_message(data)
-        elif message_type == 'user_joined':
-            await self.handle_user_joined(data)
-        elif message_type == 'user_left':
-            await self.handle_user_left(data)
+        try:
+            author = await self.get_author(author_id)
+            msg = await self.create_message(content, author, self.applications)
 
-    async def handle_chat_message(self, data):
-        # Сохраняем сообщение в БД
-        message = await self.save_message(
-            data['message'],
-            data['user_id'],
-            self.application_id
-        )
-
-        # Отправляем сообщение в группу
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                'type': 'chat_message',
-                'message': {
-                    'id': message.id,
-                    'content': message.content,
-                    'author_id': message.author.id,
-                    'author_name': f"{message.author.first_name} {message.author.last_name}",
-                    'timestamp': message.timestamp.isoformat()
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    "type": "chat_message",
+                    "message_id": str(msg.id),
+                    "content": msg.content,
+                    "author": author.username,
+                    "author_id": str(author.id),  # <-- строка
+                    "date": timezone.localtime(msg.date).strftime("%H:%M"),
+                    "applications_id": str(self.applications_id),
                 }
-            }
-        )
-
-    async def handle_user_joined(self, data):
-        # Уведомляем группу о подключении пользователя
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                'type': 'user_joined',
-                'user_id': data['user_id'],
-                'user_name': data['user_name']
-            }
-        )
-
-    async def handle_user_left(self, data):
-        # Уведомляем группу о выходе пользователя
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                'type': 'user_left',
-                'user_id': data['user_id'],
-                'user_name': data['user_name']
-            }
-        )
+            )
+        except Exception as e:
+            await self.send(text_data=json.dumps({"error": str(e)}))
 
     async def chat_message(self, event):
-        # Отправляем сообщение WebSocket клиенту
-        await self.send(text_data=json.dumps({
-            'type': 'chat_message',
-            'message': event['message']
-        }))
+        await self.send(text_data=json.dumps(event))
 
-    async def user_joined(self, event):
-        await self.send(text_data=json.dumps({
-            'type': 'user_joined',
-            'user_id': event['user_id'],
-            'user_name': event['user_name']
-        }))
-
-    async def user_left(self, event):
-        await self.send(text_data=json.dumps({
-            'type': 'user_left',
-            'user_id': event['user_id'],
-            'user_name': event['user_name']
-        }))
-
-    async def send_history(self):
-        # Отправляем последние 50 сообщений
-        messages = await self.get_message_history()
-        await self.send(text_data=json.dumps({
-            'type': 'message_history',
-            'messages': messages
-        }))
+    # --- обёртки для ORM ---
+    @database_sync_to_async
+    def get_application(self, app_id):
+        return AdvertAplication.objects.get(id=app_id)
 
     @database_sync_to_async
-    def has_access(self):
-        """Проверка доступа пользователя к приложению"""
-        try:
-            application = AdvertAplication.objects.get(id=self.application_id)
-            user = self.scope['user']
-
-            # Проверяем, является ли пользователь участником приложения
-            return (user in application.user.all() or
-                    user in application.user_menager.all() or
-                    user in application.user_drivers.all())
-        except AdvertAplication.DoesNotExist:
-            return False
+    def get_messages(self, application):
+        return list(ChatMessage.objects.filter(applications=application)
+                    .select_related("author").order_by("date"))
 
     @database_sync_to_async
-    def save_message(self, content, user_id, application_id):
-        """Сохранение сообщения в БД"""
-        user = Profile.objects.get(id=user_id)
-        application = AdvertAplication.objects.get(id=application_id)
-
-        message = ChatMessage.objects.create(
-            content=content,
-            author=user,
-            application=application
-        )
-        return message
+    def get_author(self, author_id):
+        return Profile.objects.get(id=author_id)
 
     @database_sync_to_async
-    def get_message_history(self):
-        """Получение истории сообщений"""
-        messages = ChatMessage.objects.filter(
-            application_id=self.application_id
-        ).select_related('author').order_by('-timestamp')[:50]
-
-        return [
-            {
-                'id': msg.id,
-                'content': msg.content,
-                'author_id': msg.author.id,
-                'author_name': f"{msg.author.first_name} {msg.author.last_name}",
-                'timestamp': msg.timestamp.isoformat()
-            }
-            for msg in messages
-        ]
+    def create_message(self, content, author, application):
+        return ChatMessage.objects.create(content=content, author=author, applications=application)
 
 
 class CallConsumer(AsyncWebsocketConsumer):

@@ -91,6 +91,13 @@ class Advert(models.Model):
             return True
         return False
 
+    def save(self, *args, **kwargs):
+        if self.doors > 5:
+            self.doors = 5
+        elif self.doors == None:
+            self.doors = 5
+
+
     def __str__(self):
         return self.name
 
