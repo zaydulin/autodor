@@ -316,8 +316,9 @@
   </div>
 
   <!-- Аудио элементы -->
-  <audio id="localAudio" autoplay muted></audio>
-  <audio id="remoteAudio" autoplay></audio>
+  <audio id="localAudio" autoplay muted playsinline></audio>
+    <audio id="remoteAudio" autoplay playsinline></audio>
+
 </div>
 <script>
   const callId = "{{ call_id }}";
@@ -471,11 +472,12 @@
     peerConnection.ontrack = (event) => {
       const remoteAudio = document.getElementById('remoteAudio');
       if (remoteAudio.srcObject !== event.streams[0]) {
-        remoteAudio.srcObject = event.streams[0];
-        detectSpeaking(event.streams[0]);
+          remoteAudio.srcObject = event.streams[0];
+          remoteAudio.muted = false;
+          remoteAudio.play().catch(err => console.warn('Autoplay blocked:', err));
       }
     };
-  }
+
 
   // Запрос микрофона и добавление трека
   function requestMicrophoneAccess() {
