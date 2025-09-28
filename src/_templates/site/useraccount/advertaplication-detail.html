@@ -1548,6 +1548,7 @@ async function createPath() {
 // Функция создания ответственности
 async function createResponsibility() {
     const formData = {
+        application_id: "{{ application.id }}",      // 👈 передаем id заявки
         path_choice: document.getElementById('id_path_choice').value,
         status: document.getElementById('id_status').value,
         additional: document.getElementById('id_additional').value,

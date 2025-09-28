@@ -179,7 +179,9 @@ def delete_path(request, path_id):
 def create_responsibility(request):
     try:
         data = json.loads(request.body)
-        form = PathResponsibilityForm(data)
+        application_id = data.get("application_id")  # 👈 достаём id заявки
+
+        form = PathResponsibilityForm(data, application_id=application_id)  # 👈 передаём в форму
 
         if form.is_valid():
             responsibility = form.save()
