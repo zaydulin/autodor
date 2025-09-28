@@ -201,8 +201,9 @@
   </div>
 
   <!-- Аудио элементы -->
-  <audio id="localAudio" autoplay></audio>
-  <audio id="remoteAudio" autoplay muted></audio>
+  <audio id="localAudio" autoplay muted playsinline></audio>
+  <audio id="remoteAudio" autoplay playsinline></audio>
+
 
 <script>
   const callId = "{{ call_id }}";
@@ -339,52 +340,46 @@
 
   // Инициализация PeerConnection
   function initPeerConnection() {
-    peerConnection = new RTCPeerConnection({
-      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
-    });
-
-    peerConnection.onicecandidate = (event) => {
-      if (event.candidate && isCallActive) {
-        sendMessage({ type: 'ice-candidate', candidate: event.candidate, sender: userId });
-      }
-    };
-
-    peerConnection.ontrack = (event) => {
-      if (remoteAudio.srcObject !== event.streams[0]) {
-        remoteAudio.srcObject = event.streams[0];
-        if (isCallActive) {
-          detectSpeaking(event.streams[0]);
-        }
-      }
-    };
-
-    // Добавляем локальный поток, если он есть
-    if (localStream) {
-      localStream.getTracks().forEach(track => {
-        peerConnection.addTrack(track, localStream);
-      });
-    }
-  }
-
-  // Запрос микрофона (без включения звука)
-  async function requestMicrophoneAccess() {
-    try {
-      localStream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: false
+      peerConnection = new RTCPeerConnection({
+          iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
       });
 
-      // Сначала устанавливаем поток с выключенным звуком
-      localAudio.srcObject = localStream;
-      localAudio.muted = true; // Гарантируем, что локальный звук выключен
+      peerConnection.onicecandidate = (event) => {
+          if (event.candidate) {
+              sendMessage({ type: 'ice-candidate', candidate: event.candidate, sender: userId });
+          }
+      };
 
-      console.log('Микрофон получен, звук выключен');
-    } catch (error) {
-      alert("Не удалось получить доступ к микрофону");
-      console.error(error);
-      throw error;
+      // получаем удалённый поток
+      peerConnection.ontrack = (event) => {
+          console.log("Получен remote track", event.streams);
+          // если это не наш локальный stream – ставим в remoteAudio
+          if (remoteAudio.srcObject !== event.streams[0]) {
+              remoteAudio.srcObject = event.streams[0];
+              remoteAudio.muted = false;
+              remoteAudio.play().catch(err => console.warn('Autoplay blocked', err));
+          }
+      };
+
+      // добавляем локальный поток
+      if (localStream) {
+          localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+      }
     }
-  }
+
+    // захват микрофона
+    async function requestMicrophoneAccess() {
+      try {
+          localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          localAudio.srcObject = localStream;
+          localAudio.muted = true;                 // себя не слышим
+          console.log("Микрофон получен");
+      } catch(err) {
+          console.error("Не удалось получить доступ к микрофону", err);
+          alert("Не удалось получить доступ к микрофону");
+      }
+    }
+
 
   // Включение аудио (после начала звонка)
   function enableAudio() {
