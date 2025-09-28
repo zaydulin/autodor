@@ -479,6 +479,26 @@
     };
     }
 
+
+    async function requestMicrophoneAccess() {
+        try {
+          localStream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+            video: false
+          });
+
+          // Сначала устанавливаем поток с выключенным звуком
+          localAudio.srcObject = localStream;
+          localAudio.muted = true; // Гарантируем, что локальный звук выключен
+
+          console.log('Микрофон получен, звук выключен');
+        } catch (error) {
+          alert("Не удалось получить доступ к микрофону");
+          console.error(error);
+          throw error;
+        }
+      }
+
   // Запрос микрофона и добавление трека
   function requestMicrophoneAccess() {
     navigator.mediaDevices.getUserMedia({ audio: true, video: false })
