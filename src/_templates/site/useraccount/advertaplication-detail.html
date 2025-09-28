@@ -1595,7 +1595,9 @@ async function createResponsibility() {
             phasesRow.appendChild(newCard);
 
             // закрываем модалку
-            bootstrap.Modal.getInstance(document.getElementById('addResponsibilityModal')).hide();
+            bootstrap.Modal.getInstance(
+                document.getElementById('editPhaseModal')
+            )?.hide();
         } else {
             console.log('Ошибка: ' + JSON.stringify(result.errors || result.error));
         }

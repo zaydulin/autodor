@@ -11,7 +11,7 @@ from django_ace import AceWidget
 from django.contrib.auth import get_user_model
 
 
-from .models import TicketComment, Notificationgroups, Ticket, Path, PathResponsibility
+from .models import TicketComment, Notificationgroups, Ticket, Path, PathResponsibility, AdvertAplication
 from webmain.models import SettingsGlobale, HomePage, AboutPage, ContactPage, Faqs, Blogs, CategorysBlogs, TagsBlogs, Pages, Seo
 from useraccount.models import  Notification, Withdrawal
 
@@ -44,41 +44,31 @@ class PathForm(forms.ModelForm):
         model = Path
         fields = ['aplication', 'longitude', 'latitude', 'name', 'description', 'request']
         widgets = {
-            'longitude': forms.NumberInput(attrs={
-                'step': 'any',
-                'class': 'form-control',
-                'placeholder': 'Введите долготу'
-            }),
-            'latitude': forms.NumberInput(attrs={
-                'step': 'any',
-                'class': 'form-control',
-                'placeholder': 'Введите широту'
-            }),
-            'name': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Введите название этапа'
-            }),
-            'description': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 3,
-                'placeholder': 'Введите описание этапа'
-            }),
-            'request': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Введите номер заявки'
-            }),
-            'aplication': forms.Select(attrs={
-                'class': 'form-control'
-            })
+            'aplication': forms.HiddenInput(),   # поле спрятано
+            'longitude': forms.NumberInput(attrs={'step': 'any','class': 'form-control','placeholder': 'Введите долготу'}),
+            'latitude':  forms.NumberInput(attrs={'step': 'any','class': 'form-control','placeholder': 'Введите широту'}),
+            'name':      forms.TextInput(attrs={'class': 'form-control','placeholder': 'Введите название этапа'}),
+            'description': forms.Textarea(attrs={'class': 'form-control','rows': 3,'placeholder': 'Введите описание этапа'}),
+            'request':   forms.TextInput(attrs={'class': 'form-control','placeholder': 'Введите номер заявки'}),
         }
         labels = {
+            'aplication': 'Заявка',
             'longitude': 'Долгота',
             'latitude': 'Широта',
             'name': 'Название этапа',
             'description': 'Описание',
-            'request': 'Заявка',
-            'aplication': 'Приложение'
+            'request': 'Заявка'
         }
+
+    def __init__(self, *args, **kwargs):
+        application_id = kwargs.pop("application_id", None)
+        print(kwargs,11)
+        super().__init__(*args, **kwargs)
+        if application_id:
+            # фиксируем заявку и скрываем выбор
+            self.fields["aplication"].initial = application_id
+            self.fields["aplication"].queryset = AdvertAplication.objects.filter(id=application_id)
+
 
     def clean_longitude(self):
         longitude = self.cleaned_data.get('longitude')
@@ -110,17 +100,13 @@ class PathResponsibilityForm(forms.ModelForm):
         model = PathResponsibility
         fields = ['path_choice', 'status', 'additional', 'responsible']
         widgets = {
-            'path_choice': forms.Select(attrs={
-                'class': 'form-control'
-            }),
+            'path_choice': forms.Select(attrs={'class': 'form-control'}),
             'additional': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 3,
                 'placeholder': 'Введите дополнительную информацию'
             }),
-            'responsible': forms.Select(attrs={
-                'class': 'form-control'
-            })
+            'responsible': forms.Select(attrs={'class': 'form-control'}),
         }
         labels = {
             'path_choice': 'Путь',
@@ -129,13 +115,19 @@ class PathResponsibilityForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        # 🔑 получаем application_id, переданный из view
+        application_id = kwargs.pop("application_id", None)
         super().__init__(*args, **kwargs)
 
-        # Ограничиваем queryset для выбора пути
-        self.fields['path_choice'].queryset = Path.objects.all()
+        # ✅ фильтруем пути только по этой заявке
+        print(kwargs,12)
+        if application_id:
+            self.fields["path_choice"].queryset = Path.objects.filter(aplication_id=application_id)
+        else:
+            self.fields["path_choice"].queryset = Path.objects.none()
 
-        # ✅ Только сотрудники (type = 0)
-        self.fields['responsible'].queryset = Profile.objects.filter(type=0)
+        # ✅ только сотрудники
+        self.fields["responsible"].queryset = Profile.objects.filter(type=0)
 
 
 class PathResponsibilityUpdateForm(forms.ModelForm):

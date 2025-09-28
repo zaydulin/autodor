@@ -104,8 +104,11 @@ class AdvertAplicationDetailView(LoginRequiredMixin, DetailView):
         paths =  Path.objects.filter(aplication=application)
         context['paths'] = paths
         context['path_responsibilitys'] = PathResponsibility.objects.filter(path_choice__in=paths)
-        context['path_form'] = PathForm
-        context['path_responsibilitys_form'] = PathResponsibilityForm
+
+        # ✅ создаём экземпляры форм и передаём application_id
+        context['path_form'] = PathForm(application_id=application.id)
+        context['path_responsibilitys_form'] = PathResponsibilityForm(application_id=application.id)
+
         return context
 
 
