@@ -610,8 +610,11 @@ def create_application_view(request, advert_id):
     users_to_add = [request.user]
     if admin:
         users_to_add.append(admin)
+        application.user_menager.add(admin)
+
 
     application.user.add(*users_to_add)
+
 
     return redirect("moderation:my_applications")
 
