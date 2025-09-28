@@ -560,7 +560,7 @@
     isCallOpen = true; // отмечаем, что звонок открыт
 
     const iframeContainer = document.getElementById('callModalBody');
-    iframeContainer.innerHTML = `<iframe src="/call_iframe/${callId}/${CalleeId}" width="100%" height="100%" style="border:none;" allow="microphone; camera; autoplay; encrypted-media"  allowfullscreen></iframe>`;
+    iframeContainer.innerHTML = `<iframe src="/call_iframe/${callId}/${CalleeId}" width="100%" height="100%" style="border:none;" allowfullscreen></iframe>`;
     const callModal = new bootstrap.Modal(document.getElementById('callModal'));
     callModal.show();
 
