@@ -316,8 +316,8 @@
   </div>
 
   <!-- Аудио элементы -->
-  <audio id="localAudio" autoplay muted playsinline></audio>
-    <audio id="remoteAudio" autoplay playsinline></audio>
+  <audio id="localAudio" muted></audio>
+  <audio id="remoteAudio" muted></audio>
 
 </div>
 <script>
@@ -331,6 +331,7 @@
     // Автоматически начать звонок или показать уведомление
     // Например, автоматически нажать кнопку "Начать звонок"
     document.getElementById('callBtn').click();
+    enableAudio();
   }
 <!--  const wsUrl = `ws://${location.host}/ws/call/${callId}/`;-->
   const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
@@ -376,6 +377,18 @@
     }
     updateCallStatus("Звонок активен");
   }
+
+function enableAudio() {
+    if (localAudio) {
+      localAudio.muted = false; // Включаем локальный звук (для мониторинга)
+    }
+    if (remoteAudio) {
+      remoteAudio.muted = false; // Включаем звук собеседника
+    }
+    console.log('Аудио включено');
+  }
+
+
 
   function updateUIOnCallEnd() {
     if (callBtn) callBtn.style.display = 'inline-block';
