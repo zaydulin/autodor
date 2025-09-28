@@ -7,6 +7,8 @@
     {% block propertyimage %}{{ seo_propertydescription }}{% endblock propertyimage %}
     {% block head %}
      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     {% endblock head %}
 
     {% block content %}
@@ -488,7 +490,7 @@ body {
                         <div class="card">
                             <div class="card-header"><h5 class="mb-0">Местоположение</h5></div>
                             <div class="card-body">
-                                <iframe class="osm-iframe" src="https://www.openstreetmap.org/export/embed.html?bbox=37.6173,55.7558,37.6173,55.7558&layer=mapnik&marker=55.7558,37.6173"></iframe>
+                                <iframe  class="osm-iframe" src="https://www.openstreetmap.org/export/embed.html?bbox=37.6173,55.7558,37.6173,55.7558&layer=mapnik&marker=55.7558,37.6173"></iframe>
                                 <div class="small text-muted mt-2">Москва, Красная площадь</div>
                             </div>
                         </div>
@@ -816,7 +818,7 @@ body {
                                     </div>
                                 </div>
                             </div>
-                                                                {% endfor %}
+                        {% endfor %}
 
 
                         </div>
@@ -879,6 +881,19 @@ body {
                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                 </div>
                                 <div class="modal-body">
+<div class="card-body">
+    <!-- Карта -->
+    <div id="map" style="height: 400px; width: 100%; border-radius: 8px;"></div>
+
+    <!-- Поля координат -->
+    <div class="mt-3">
+        <label for="id_latitude" class="form-label">Широта</label>
+        <input type="number" step="any" id="id_latitude" name="latitude" class="form-control">
+
+        <label for="id_longitude" class="form-label mt-2">Долгота</label>
+        <input type="number" step="any" id="id_longitude" name="longitude" class="form-control">
+    </div>
+</div>
                                     {{ path_form.as_p }}
                                 </div>
                                 <div class="modal-footer">
@@ -969,6 +984,8 @@ body {
     </div>
 </div>
 
+<input type="number" step="any" id="id_latitude" name="latitude" class="form-control hidden">
+<input type="number" step="any" id="id_longitude" name="longitude" class="form-control hidden">
 
 
     <script>
@@ -1676,4 +1693,47 @@ async function updatePath(pathId) {
     }
 }
 </script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    // Координаты по умолчанию (например, Москва)
+    const defaultLat = 55.7558;
+    const defaultLon = 37.6173;
+
+    // Инициализация карты
+    const map = L.map('map').setView([defaultLat, defaultLon], 13);
+
+    // Слой карты
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Маркер по умолчанию
+    let marker = L.marker([defaultLat, defaultLon], {draggable: true}).addTo(map);
+
+    // Поля формы
+    const latInput = document.getElementById('id_latitude');
+    const lonInput = document.getElementById('id_longitude');
+
+    // Стартовые значения
+    latInput.value = defaultLat;
+    lonInput.value = defaultLon;
+
+    // При клике по карте
+    map.on('click', (e) => {
+        const {lat, lng} = e.latlng;
+        marker.setLatLng([lat, lng]);
+        latInput.value = lat.toFixed(6);
+        lonInput.value = lng.toFixed(6);
+    });
+
+    // При перетаскивании маркера
+    marker.on('dragend', (e) => {
+        const {lat, lng} = marker.getLatLng();
+        latInput.value = lat.toFixed(6);
+        lonInput.value = lng.toFixed(6);
+    });
+});
+</script>
+
+
 {% endblock %}
