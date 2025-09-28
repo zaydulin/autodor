@@ -895,14 +895,6 @@ body {
 
                                     <div id="map-container">
                                       <div id="map" style="height: 400px; width: 100%; border-radius: 8px;"></div>
-
-                                      <div class="mt-3">
-                                          <label for="id_latitude" class="form-label">Широта</label>
-                                          <input type="number" step="any" id="id_latitude" name="latitude" class="form-control">
-
-                                          <label for="id_longitude" class="form-label mt-2">Долгота</label>
-                                          <input type="number" step="any" id="id_longitude" name="longitude" class="form-control">
-                                      </div>
                                     </div>
                                     {{ path_form.as_p }}
                                 </div>
@@ -1212,10 +1204,8 @@ body {
             if (result.success) {
               // Обновляем отображение (например, стоимость)
               // Можно добавить обновление других полей при необходимости
-              alert('Заявка успешно обновлена');
-              // Обновите отображение стоимости или других данных, если нужно
-              // Например:
-              // document.querySelector('.cost-display').innerText = data.price;
+              location.reload();
+
 
               modal.hide();
             } else {
@@ -1557,14 +1547,8 @@ async function createPath() {
 
 // Функция создания ответственности
 async function createResponsibility() {
-    const pathId = document.getElementById('id_path_choice').value;
-    if (!pathId) {
-        alert('Пожалуйста, выберите путь для добавления ответственности.');
-        return;
-    }
-
     const formData = {
-        path_choice: pathId,
+        path_choice: document.getElementById('id_path_choice').value,
         status: document.getElementById('id_status').value,
         additional: document.getElementById('id_additional').value,
         responsible: document.getElementById('id_responsible').value
@@ -1583,14 +1567,41 @@ async function createResponsibility() {
         const result = await response.json();
 
         if (result.success) {
-            alert('Ответственность успешно добавлена!');
+            const r = result.responsibility;
+
+            // 🔥 динамически рендерим новую карточку
+            const phasesRow = document.getElementById('phasesRow');
+            const newCard = document.createElement('div');
+            newCard.className = 'col-md-4 mb-4';
+            newCard.innerHTML = `
+                <div class="phase-card">
+                    <h5 class="phase-title"><strong>Этап ${phasesRow.children.length + 1}</strong></h5>
+                    <p>${r.additional}</p>
+                    <div class="users-container">
+                        <h6><i class="fas fa-users me-2"></i>Участники этапа</h6>
+                        <div class="user">
+                            <div class="avatar-placeholder bg-primary text-white">
+                                ${r.responsible.name[0]}
+                            </div>
+                            <div class="user-info">
+                                <div class="user-name">${r.responsible.name}</div>
+                                <div class="user-role">назначен автоматически</div>
+                            </div>
+                        </div>
+                        <p>статус – ${r.status}</p>
+                    </div>
+                </div>`;
+
+            phasesRow.appendChild(newCard);
+
+            // закрываем модалку
             bootstrap.Modal.getInstance(document.getElementById('addResponsibilityModal')).hide();
-            location.reload();
         } else {
-            сonsole.log('Ошибка: ' + JSON.stringify(result.errors));
+            console.log('Ошибка: ' + JSON.stringify(result.errors || result.error));
         }
-    } catch (error) {
-        сonsole.log('Ошибка сети: ' + error);
+    } catch (err) {
+        console.error(err);
+        console.log('Ошибка сети');
     }
 }
 

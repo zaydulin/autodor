@@ -194,7 +194,6 @@ def create_responsibility(request):
             })
         else:
             return JsonResponse({'success': False, 'errors': form.errors})
-
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 

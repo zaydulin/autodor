@@ -130,9 +130,13 @@ class PathResponsibilityForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Опционально: можно ограничить queryset для полей ForeignKey
+
+        # Ограничиваем queryset для выбора пути
         self.fields['path_choice'].queryset = Path.objects.all()
-        self.fields['responsible'].queryset = Profile.objects.all()
+
+        # ✅ Только сотрудники (type = 0)
+        self.fields['responsible'].queryset = Profile.objects.filter(type=0)
+
 
 class PathResponsibilityUpdateForm(forms.ModelForm):
     """Форма для обновления ответственности (только статус и дополнение)"""
