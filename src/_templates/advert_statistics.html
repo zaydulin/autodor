@@ -91,16 +91,19 @@
             padding: 20px;
         }
 
+        .collapse-header {
+            cursor: pointer;
+        }
     </style>
 </head>
 
 <body>
 
     <div class="container mt-5">
-        <h1 class="heading">Статистика по заявкам</h1>
+        <h1 class="heading">Список заявок</h1>
 
         <!-- Список заявок -->
-        {% for application in applications %}
+        {% for application in page_obj %}
             <div class="card">
                 <div class="card-header">
                     <h5>{{ application.advert.name }}
@@ -111,61 +114,70 @@
                     <h6>Общая информация</h6>
                     <p><strong>Стоимость заявки:</strong> {{ application.price }} ₽</p>
 
-                    <!-- Расходы по заявке -->
-                    <div class="card mt-3">
-                        <div class="card-header">
-                            <h6>Расходы по заявке</h6>
-                        </div>
-                        <div class="card-body">
-                            <table class="table table-bordered table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>Статья расходов</th>
-                                        <th>Сумма</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for expense in application.expenses.all %}
+                    <!-- Кнопка сворачивания/разворачивания расходов -->
+                    <div class="collapse-header" data-bs-toggle="collapse" data-bs-target="#expenses-{{ application.id }}">
+                        <h6>Расходы по заявке <i class="fa fa-chevron-down"></i></h6>
+                    </div>
+                    <div id="expenses-{{ application.id }}" class="collapse">
+                        <div class="card mt-3">
+                            <div class="card-body">
+                                <table class="table table-bordered table-striped">
+                                    <thead>
                                         <tr>
-                                            <td>{{ expense.title }}</td>
-                                            <td>{{ expense.amount }} ₽</td>
+                                            <th>Статья расходов</th>
+                                            <th>Сумма</th>
                                         </tr>
-                                    {% empty %}
-                                        <tr>
-                                            <td colspan="2" class="no-data empty-message">Нет расходов для отображения</td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        {% for expense in application.expenses.all %}{{ expense.amount }}, {% endfor %}
+                                        {% for expense in application.expenses.all %}
+                                            <tr>
+                                                <td>{{ expense.title }}</td>
+                                                <td>{{ expense.amount }} ₽</td>
+                                            </tr>
+                                        {% empty %}
+                                            <tr>
+                                                <td colspan="2" class="no-data empty-message">Нет расходов для отображения</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                                <!-- Общая сумма расходов -->
+                                <h6><strong>Общая сумма расходов:</strong> {{ application.total_expenses }} ₽</h6>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Выплаты по заявке -->
-                    <div class="card mt-3">
-                        <div class="card-header">
-                            <h6>Выплаты по заявке</h6>
-                        </div>
-                        <div class="card-body">
-                            <table class="table table-bordered table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>Пользователь</th>
-                                        <th>Сумма выплаты</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for user in application.user.all %}
+                    <!-- Кнопка сворачивания/разворачивания выплат -->
+                    <div class="collapse-header mt-3" data-bs-toggle="collapse" data-bs-target="#withdrawals-{{ application.id }}">
+                        <h6>Выплаты по заявке <i class="fa fa-chevron-down"></i></h6>
+                    </div>
+                    <div id="withdrawals-{{ application.id }}" class="collapse">
+                        <div class="card mt-3">
+                            <div class="card-body">
+                                <table class="table table-bordered table-striped">
+                                    <thead>
                                         <tr>
-                                            <td>{{ user.username }}</td>
-                                            <td>{{ application.total_withdrawals }} ₽</td>
+                                            <th>Пользователь</th>
+                                            <th>Сумма выплаты</th>
                                         </tr>
-                                    {% empty %}
-                                        <tr>
-                                            <td colspan="2" class="no-data empty-message">Нет выплат для отображения</td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        {% for withdrawal in application.withdrawal.all %}
+                                            <tr>
+                                                <td>{{ withdrawal.user.username }}</td>
+                                                <td>{{ withdrawal.amount }} ₽</td>
+                                            </tr>
+                                        {% empty %}
+                                            <tr>
+                                                <td colspan="2" class="no-data empty-message">Нет выплат для отображения</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                                <!-- Общая сумма выплат для этой заявки -->
+                                <h6 data-amount="{% for withdrawal in application.withdrawal.all %}{{ withdrawal.amount }}, {% endfor %}"><strong>Общая сумма выплат:</strong> {{ application.total_withdrawals }} ₽</h6>
+                            </div>
                         </div>
                     </div>
 
@@ -175,11 +187,43 @@
             <p class="no-data">Нет заявок для отображения.</p>
         {% endfor %}
 
-        <!-- Дополнительные статистики -->
-        <div class="total-statistics">
-            <h4>Дополнительная информация:</h4>
-            <p>Статистика расходов и выплат предоставляется по каждой заявке.</p>
+        <!-- Пагинация -->
+        <div class="d-flex justify-content-center">
+            <nav>
+                <ul class="pagination">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1" aria-label="First">
+                                <span aria-hidden="true">&laquo;&laquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    <li class="page-item disabled">
+                        <span class="page-link">Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span>
+                    </li>
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" aria-label="Last">
+                                <span aria-hidden="true">&raquo;&raquo;</span>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
         </div>
+
 
     </div>
 

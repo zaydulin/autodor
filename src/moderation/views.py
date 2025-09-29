@@ -17,6 +17,7 @@ from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
 from moderation.tasks import start_call_task, end_call_task
+from django.contrib.auth.mixins import UserPassesTestMixin
 
 from django.contrib.auth.decorators import login_required
 from django.db import models, transaction
@@ -37,36 +38,60 @@ from useraccount.models import Profile
 
 from webmain.models import SettingsGlobale
 from django.db.models import Sum
+class AdvertStatisticsView(UserPassesTestMixin, View):
+    def test_func(self):
+        return self.request.user.is_superuser
 
-
-class AdvertStatisticsView(View):
     def get(self, request, *args, **kwargs):
         # Получаем все заявки
         applications = AdvertAplication.objects.all()
 
-        # Получаем расходы по заявкам
-        expenses = AdvertExpense.objects.all()
+        # Пагинация
+        paginator = Paginator(applications, 5)  # 5 заявок на страницу
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
 
-        # Получаем все выплаты по пользователям, связанным с заявками
-        withdrawals = Withdrawal.objects.filter(user__in=applications.values('user'))
+        # Рассчитываем суммы расходов и выплат для каждой заявки
+        expense_stats = []
+        withdrawal_stats = []
 
-        # Статистика расходов по каждой заявке
-        expense_stats = applications.annotate(total_expenses=Sum('expenses__amount'))
+        # Общие суммы для всех заявок
+        total_expenses_all = 0
+        total_withdrawals_all = 0
 
-        # Статистика выплат по пользователям, связанным с заявками
-        withdrawal_stats = applications.annotate(
-            total_withdrawals=Sum('user__withdrawal__amount')
-        )
+        for application in applications:
+            # Сумма расходов для текущей заявки
+            total_expenses = application.expenses.aggregate(Sum('amount'))['amount__sum'] or 0
+
+            # Сумма выплат для текущей заявки
+            withdrawals_for_application = Withdrawal.objects.filter(application=application)
+            total_withdrawals = withdrawals_for_application.aggregate(Sum('amount'))['amount__sum'] or 0
+
+            # Сохраняем результаты в список
+            expense_stats.append({
+                'application': application,
+                'total_expenses': total_expenses,
+            })
+
+            withdrawal_stats.append({
+                'application': application,
+                'total_withdrawals': total_withdrawals,
+            })
+
+            # Суммируем общие суммы
+            total_expenses_all += total_expenses
+            total_withdrawals_all += total_withdrawals
 
         # Формируем контекст
         context = {
-            'applications': applications,
+            'page_obj': page_obj,
             'expense_stats': expense_stats,
             'withdrawal_stats': withdrawal_stats,
-            'total_expenses': expenses.aggregate(Sum('amount'))['amount__sum'],
-            'total_withdrawals': withdrawals.aggregate(Sum('amount'))['amount__sum'],
+            'total_expenses_all': total_expenses_all,
+            'total_withdrawals_all': total_withdrawals_all,
         }
         return render(request, 'advert_statistics.html', context)
+
 
 
 
