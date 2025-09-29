@@ -519,6 +519,24 @@ body {
       .nice-table th,
       .nice-table td{ padding:8px 10px; font-size:13px; }
     }
+
+    #tracking-map {
+        border: 1px solid #dee2e6;
+    }
+
+    .driver-status {
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 6px;
+        border-left: 4px solid #28a745;
+    }
+
+    /* Адаптивность для мобильных */
+    @media (max-width: 768px) {
+        #tracking-map {
+            height: 250px !important;
+        }
+    }
     </style>
     <div class="container py-4">
         <div class="row g-4">
@@ -576,6 +594,63 @@ body {
                     </div>
                 </div>
 
+
+                <!-- Блок отслеживания водителя -->
+                {% if application.status == 'in_progress' and application.user_drivers.all %}
+                <div class="card mb-4" id="tracking-card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">📍 Отслеживание водителя</h5>
+                        <span class="badge bg-success" id="tracking-status">Активно</span>
+                    </div>
+                    <div class="card-body">
+                        <!-- Информация о водителе -->
+                        <div id="driver-info" class="mb-3">
+                            <div class="text-center text-muted">
+                                <div class="spinner-border spinner-border-sm" role="status"></div>
+                                <div>Получение данных...</div>
+                            </div>
+                        </div>
+
+                        <!-- Карта отслеживания -->
+                        <div id="tracking-map" style="height: 300px; border-radius: 8px;"></div>
+
+                        <!-- Элементы управления для водителя -->
+                        {% if request.user.employee == 3 and request.user in application.user_drivers.all %}
+                        <div class="mt-3">
+                            <button id="start-tracking-btn" class="btn btn-success btn-sm">
+                                ▶️ Начать отслеживание
+                            </button>
+                            <button id="stop-tracking-btn" class="btn btn-secondary btn-sm">
+                                ⏹️ Остановить
+                            </button>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <style>
+                .driver-marker {
+                    font-size: 20px;
+                    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+                    animation: pulse 2s infinite;
+                }
+
+                @keyframes pulse {
+                    0% { transform: scale(1); }
+                    50% { transform: scale(1.1); }
+                    100% { transform: scale(1); }
+                }
+
+                .driver-marker-icon {
+                    background: none !important;
+                    border: none !important;
+                }
+
+                #tracking-status {
+                    font-size: 0.75rem;
+                }
+                </style>
+                {% endif %}
             </div>
 
             <!-- Правая колонка -->
@@ -2033,6 +2108,233 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 </script>
+<!-- Добавьте этот блок после существующего скрипта чата -->
+<script>
+// Отслеживание местоположения водителя
+class DriverTracker {
+    constructor(applicationId) {
+        this.applicationId = applicationId;
+        this.trackingSocket = null;
+        this.driverMarker = null;
+        this.trackingMap = null;
+        this.watchId = null;
+        this.isDriver = {{ request.user.employee }} === 3; // проверяем, является ли пользователь водителем
+        this.isTrackingActive = false;
 
+        this.init();
+    }
+
+    async init() {
+        await this.initMap();
+        this.connectWebSocket();
+
+        if (this.isDriver) {
+            this.startTracking();
+        }
+    }
+
+    async initMap() {
+        // Создаем карту для отслеживания
+        this.trackingMap = L.map('tracking-map').setView([55.7558, 37.6173], 13);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(this.trackingMap);
+
+        // Иконка для водителя
+        this.driverIcon = L.divIcon({
+            html: '<div class="driver-marker">🚗</div>',
+            iconSize: [30, 30],
+            className: 'driver-marker-icon'
+        });
+    }
+
+    connectWebSocket() {
+        const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+        this.trackingSocket = new WebSocket(
+            `${protocol}://${location.host}/ws/tracking/${this.applicationId}/`
+        );
+
+        this.trackingSocket.onopen = () => {
+            console.log('Tracking WebSocket connected');
+            this.isTrackingActive = true;
+
+            // Запрашиваем текущее местоположение
+            this.trackingSocket.send(JSON.stringify({
+                action: 'get_location'
+            }));
+        };
+
+        this.trackingSocket.onmessage = (e) => {
+            const data = JSON.parse(e.data);
+            if (data.type === 'location_update' && data.data) {
+                this.updateDriverPosition(data.data);
+            }
+        };
+
+        this.trackingSocket.onclose = () => {
+            console.log('Tracking WebSocket disconnected');
+            this.isTrackingActive = false;
+
+            // Попытка переподключения
+            setTimeout(() => this.connectWebSocket(), 5000);
+        };
+    }
+
+    startTracking() {
+        if (!navigator.geolocation) {
+            console.warn('Geolocation not supported');
+            return;
+        }
+
+        const options = {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+        };
+
+        this.watchId = navigator.geolocation.watchPosition(
+            (position) => this.handlePositionUpdate(position),
+            (error) => this.handlePositionError(error),
+            options
+        );
+
+        console.log('Driver tracking started');
+    }
+
+    stopTracking() {
+        if (this.watchId) {
+            navigator.geolocation.clearWatch(this.watchId);
+            this.watchId = null;
+        }
+        console.log('Driver tracking stopped');
+    }
+
+    handlePositionUpdate(position) {
+        const { latitude, longitude, accuracy, speed } = position.coords;
+
+        // Отправляем обновление на сервер
+        if (this.trackingSocket && this.trackingSocket.readyState === WebSocket.OPEN) {
+            this.trackingSocket.send(JSON.stringify({
+                action: 'location_update',
+                latitude: latitude,
+                longitude: longitude,
+                accuracy: accuracy,
+                speed: speed ? speed * 3.6 : null // конвертируем м/с в км/ч
+            }));
+        }
+    }
+
+    handlePositionError(error) {
+        console.error('Geolocation error:', error);
+
+        // Уведомляем пользователя об ошибке
+        if (error.code === error.PERMISSION_DENIED) {
+            this.showNotification('Для отслеживания необходимо разрешить доступ к геолокации', 'error');
+        }
+    }
+
+    updateDriverPosition(locationData) {
+        const { latitude, longitude, driver_name, speed, timestamp } = locationData;
+
+        // Обновляем маркер на карте
+        if (this.driverMarker) {
+            this.driverMarker.setLatLng([latitude, longitude]);
+        } else {
+            this.driverMarker = L.marker([latitude, longitude], {
+                icon: this.driverIcon,
+                zIndexOffset: 1000
+            }).addTo(this.trackingMap);
+
+            // Центрируем карту на водителе
+            this.trackingMap.setView([latitude, longitude], 13);
+        }
+
+        // Обновляем всплывающую подсказку
+        let popupContent = `<strong>${driver_name}</strong><br>`;
+        popupContent += `Обновлено: ${new Date(timestamp).toLocaleTimeString()}`;
+        if (speed) {
+            popupContent += `<br>Скорость: ${Math.round(speed)} км/ч`;
+        }
+
+        this.driverMarker.bindPopup(popupContent).openPopup();
+
+        // Обновляем информацию в интерфейсе
+        this.updateDriverInfo(locationData);
+    }
+
+    updateDriverInfo(locationData) {
+        const driverInfoEl = document.getElementById('driver-info');
+        if (driverInfoEl) {
+            driverInfoEl.innerHTML = `
+                <div class="driver-status">
+                    <h6>🚗 ${locationData.driver_name}</h6>
+                    <div class="small text-muted">
+                        Обновлено: ${new Date(locationData.timestamp).toLocaleString()}
+                        ${locationData.speed ? `• Скорость: ${Math.round(locationData.speed)} км/ч` : ''}
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    showNotification(message, type = 'info') {
+        // Простая система уведомлений
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type === 'error' ? 'danger' : 'info'} alert-dismissible fade show`;
+        notification.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+
+        document.body.appendChild(notification);
+
+        // Автоматическое скрытие
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 5000);
+    }
+}
+
+// Инициализация отслеживания когда страница загружена
+document.addEventListener('DOMContentLoaded', function() {
+    const applicationId = "{{ application.id }}";
+    const applicationStatus = "{{ application.status }}";
+
+    // Запускаем отслеживание только если заявка в обработке и есть водители
+    const hasDrivers = {{ application.user_drivers.all|length }} > 0;
+    const shouldTrack = applicationStatus === 'in_progress' && hasDrivers;
+
+    if (shouldTrack) {
+        window.driverTracker = new DriverTracker(applicationId);
+    }
+});
+</script>
+<script>
+// Управление отслеживанием для водителей
+document.addEventListener('DOMContentLoaded', function() {
+    const startBtn = document.getElementById('start-tracking-btn');
+    const stopBtn = document.getElementById('stop-tracking-btn');
+
+    if (startBtn && stopBtn && window.driverTracker) {
+        startBtn.addEventListener('click', function() {
+            window.driverTracker.startTracking();
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+        });
+
+        stopBtn.addEventListener('click', function() {
+            window.driverTracker.stopTracking();
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+        });
+
+        // По умолчанию отслеживание запущено для водителей
+        startBtn.disabled = true;
+    }
+});
+</script>
 
 {% endblock %}
