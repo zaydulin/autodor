@@ -38,6 +38,9 @@ from useraccount.models import Profile
 
 from webmain.models import SettingsGlobale
 from django.db.models import Sum
+
+
+
 class AdvertStatisticsView(UserPassesTestMixin, View):
     def test_func(self):
         return self.request.user.is_superuser

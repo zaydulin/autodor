@@ -434,7 +434,7 @@
                     </div>
                     <div class="info-content">
                         <h6>Расходы</h6>
-                        <p>{{ application.total_expenses }} ₽</p>
+                        <p>{{ total_expenses_all }} ₽</p>
                     </div>
                 </div>
             </div>
@@ -494,7 +494,7 @@
                     <div class="mt-3">
                         <div class="stats-card">
                             <div class="stats-label">Общая сумма расходов</div>
-                            <div class="stats-value">{{ application.total_expenses }} ₽</div>
+                            <div class="stats-value">{{ total_expenses_all }} ₽</div>
                             <div class="progress mt-2">
                                 <div class="progress-bar bg-danger" role="progressbar"
                                      style="width: {% widthratio application.total_expenses application.price 100 %}%"
@@ -564,7 +564,7 @@
                     <div class="mt-3">
                         <div class="stats-card">
                             <div class="stats-label">Общая сумма выплат</div>
-                            <div class="stats-value">{{ application.total_withdrawals }} ₽</div>
+                            <div class="stats-value">{{ total_withdrawals_all}} ₽</div>
                             <div class="progress mt-2">
                                 <div class="progress-bar bg-success" role="progressbar"
                                      style="width: {% widthratio application.total_withdrawals application.price 100 %}%"
@@ -592,7 +592,7 @@
                     <div class="stats-card text-center">
                         <div class="stats-label">Остаток</div>
                         <div class="stats-value" style="color: var(--success-color);">
-                            {{ application.get_remaining_balance }} ₽
+                            {{ application.price }} ₽
                         </div>
                         <i class="fas fa-piggy-bank fa-2x mt-2 text-success"></i>
                     </div>
@@ -601,7 +601,7 @@
                     <div class="stats-card text-center">
                         <div class="stats-label">Использовано</div>
                         <div class="stats-value" style="color: var(--warning-color);">
-                            {{ application.get_used_balance }} ₽
+                            {{ total_expenses_all }} ₽
                         </div>
                         <i class="fas fa-chart-pie fa-2x mt-2 text-warning"></i>
                     </div>
