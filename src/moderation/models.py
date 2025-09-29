@@ -354,7 +354,7 @@ class Withdrawal(models.Model):
     ]
     type = models.SmallIntegerField(verbose_name="Пополнение/Списание", choices=TYPE_CHOICES, default=0)
     create = models.DateTimeField(auto_now_add=True)
-    application = models.ForeignKey(AdvertAplication, on_delete=models.CASCADE)
+    application = models.ForeignKey(AdvertAplication, on_delete=models.CASCADE, related_name='withdrawal')
 
     class Meta:
         verbose_name = "Выплата"
