@@ -251,6 +251,9 @@ class AdvertExpense(models.Model):
         return f"{self.title} — {self.amount} ({self.aplication.advert.name})"
 
 
+
+
+
 class AdvertAplication(models.Model):
     class Status(models.TextChoices):
         NEW = "new", "Новая"
@@ -296,6 +299,40 @@ class AdvertAplication(models.Model):
 
     def __str__(self):
         return f"Заявка #{self.id} от {self.user} на {self.advert}"
+
+
+class AdvertAplicationGallery(models.Model):
+    """Фото/видео-отчёты для заявки"""
+    application = models.ForeignKey(
+        AdvertAplication,
+        on_delete=models.CASCADE,
+        related_name="gallery"
+    )
+    file = models.FileField(
+        upload_to="advert_gallery/",
+        help_text="Фото или видео"
+    )
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="uploaded_gallery"
+    )
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-uploaded_at"]
+
+    def __str__(self):
+        return f"{self.application} | {self.file.name}"
+
+    @property
+    def is_image(self):
+        return self.file.name.lower().endswith((".png", ".jpg", ".jpeg", ".gif", ".webp"))
+
+    @property
+    def is_video(self):
+        return self.file.name.lower().endswith((".mp4", ".mov", ".webm", ".mkv"))
 
 class Withdrawal(models.Model):
     """Выплаты"""

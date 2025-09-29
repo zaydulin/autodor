@@ -155,7 +155,7 @@ class FaqsView(ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        return Faqs.objects.filter(publishet=True)
+        return Faqs.objects.filter(publishet=True,employee=self.request.user.employee)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

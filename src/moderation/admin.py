@@ -55,6 +55,7 @@ admin.site.register(Path)
 admin.site.register(PathResponsibility)
 admin.site.register(CarModel)
 admin.site.register(CarBrand)
+admin.site.register(AdvertAplicationGallery)
 
 @admin.register(Withdrawal)
 class WithdrawalAdmin(admin.ModelAdmin):

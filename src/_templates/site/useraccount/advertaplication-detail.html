@@ -583,6 +583,66 @@ body {
                     </div>
                 </div>
 
+                <!-- ГАЛЕРЕЯ фото / видео -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Фото / Видео отчёты</h5>
+                        {% if request.user.is_authenticated %}
+                            <form id="galleryUploadForm"
+                                  action="{% url 'moderation:add_gallery_item' application.id %}"
+                                  method="post" enctype="multipart/form-data" class="d-inline">
+                                {% csrf_token %}
+                                <label class="btn btn-outline-primary btn-sm mb-0">
+                                    ➕ Добавить
+                                    <input type="file" name="file" accept="image/*,video/*"
+                                           capture="environment" hidden
+                                           onchange="this.form.submit();">
+                                </label>
+                            </form>
+                        {% endif %}
+                    </div>
+
+                    {% if application.gallery.all %}
+                    <div id="galleryCarousel" class="carousel slide" data-bs-ride="carousel">
+                        <div class="carousel-inner">
+                            {% for item in application.gallery.all %}
+                                <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                                    {% if item.is_image %}
+                                        <img src="{{ item.file.url }}" class="d-block w-100"
+                                             style="object-fit:contain;max-height:420px;">
+                                    {% elif item.is_video %}
+                                        <video class="d-block w-100" controls
+                                               style="max-height:420px;background:#000;">
+                                            <source src="{{ item.file.url }}">
+                                            Ваш браузер не поддерживает видео-тег.
+                                        </video>
+                                    {% endif %}
+                                    <div class="carousel-caption d-none d-md-block">
+                                        <small class="bg-dark bg-opacity-50 px-2 rounded">
+                                            Загружено: {{ item.uploaded_at|date:"d.m.Y H:i" }}
+                                        </small>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <button class="carousel-control-prev" type="button"
+                                data-bs-target="#galleryCarousel" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon"></span>
+                        </button>
+                        <button class="carousel-control-next" type="button"
+                                data-bs-target="#galleryCarousel" data-bs-slide="next">
+                            <span class="carousel-control-next-icon"></span>
+                        </button>
+                    </div>
+                    {% else %}
+                        <div class="card-body text-center text-muted">
+                            Пока нет загруженных фото или видео
+                        </div>
+                    {% endif %}
+                </div>
+
+
                 <!-- Расходы -->
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">

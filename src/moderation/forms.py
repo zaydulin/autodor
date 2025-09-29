@@ -11,7 +11,7 @@ from django_ace import AceWidget
 from django.contrib.auth import get_user_model
 
 
-from .models import TicketComment, Notificationgroups, Ticket, Path, PathResponsibility, AdvertAplication, Withdrawal
+from .models import TicketComment, Notificationgroups, Ticket, Path, PathResponsibility, AdvertAplication, Withdrawal,AdvertAplicationGallery
 from webmain.models import SettingsGlobale, HomePage, AboutPage, ContactPage, Faqs, Blogs, CategorysBlogs, TagsBlogs, Pages, Seo
 from useraccount.models import  Notification
 
@@ -128,6 +128,22 @@ class PathResponsibilityForm(forms.ModelForm):
 
         # ✅ только сотрудники
         self.fields["responsible"].queryset = Profile.objects.filter(type=0)
+
+
+class AdvertAplicationGalleryForm(forms.ModelForm):
+    class Meta:
+        model = AdvertAplicationGallery
+        fields = ("file",)
+        widgets = {
+            "file": forms.ClearableFileInput(
+                attrs={
+                    "class": "form-control",
+                    "accept": "image/*,video/*",
+                    # capture позволяет на мобилке открыть камеру сразу
+                    "capture": "environment"
+                }
+            )
+        }
 
 
 class PathResponsibilityUpdateForm(forms.ModelForm):
