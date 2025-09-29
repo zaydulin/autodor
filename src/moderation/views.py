@@ -29,9 +29,9 @@ from django.views.generic import ListView, DetailView, TemplateView, FormView
 from django.db.models import Q, Prefetch
 from django.contrib.auth.mixins import LoginRequiredMixin
 
-from .forms import PathForm, PathResponsibilityForm
+from .forms import PathForm, PathResponsibilityForm, AdvertAplicationGalleryForm
 from .models import AdvertAplication, ChatMessage, CallSession, AdvertDocument, AdvertExpense, AdvertApplicationImage, \
-    CarModel, CarBrand
+    CarModel, CarBrand,AdvertAplicationGallery
 from moderation.models import Advert, AdvertAplication,Path,PathResponsibility, Withdrawal
 from webmain.models import Faqs, Seo
 from useraccount.models import Profile
@@ -94,6 +94,25 @@ class AdvertStatisticsView(UserPassesTestMixin, View):
 
 
 
+@login_required
+@require_POST
+def add_gallery_item(request, pk):
+    """Загрузка фото/видео в галерею"""
+    app = get_object_or_404(AdvertAplication, pk=pk)
+    form = AdvertAplicationGalleryForm(request.POST, request.FILES)
+    if form.is_valid():
+        obj = form.save(commit=False)
+        obj.application = app
+        obj.uploaded_by = request.user
+        obj.save()
+    return JsonResponse({
+        'success': True,
+        'items': [{
+            'url': obj.file.url,
+            'is_image': obj.is_image,
+            'id': obj.id,
+        }]
+    })
 
 
 class AdvertAplicationListView(LoginRequiredMixin, ListView):
@@ -141,7 +160,12 @@ class AdvertAplicationDetailView(LoginRequiredMixin, DetailView):
                 list(application.user_drivers.all())
         )
         context['users'] = [user for user in users_list if user != self.request.user]
-        context['total_price'] = application.price + advert.price + total_expenses
+        context['total_price'] =  advert.price
+        context['total_expenses'] =  total_expenses
+        context['total_ost'] = advert.price  - total_expenses
+
+        application.price = context['total_ost']
+        application.save()
 
         user = application.user.first()
         messages = ChatMessage.objects.filter(
@@ -563,7 +587,7 @@ class FaqsModerView(ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        return Faqs.objects.filter(publishet=True)
+        return Faqs.objects.filter(publishet=True,employee=self.request.user.employee)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

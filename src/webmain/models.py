@@ -218,6 +218,14 @@ class Pages(models.Model):
 
 class Faqs(models.Model):
     """Часто задаваемые вопросы """
+    EMPLOYEE = [
+        (0, 'Нет должности'),
+        (1, 'Водитель'),
+        (2, 'Менеджер'),
+        (3, 'Посредник'),
+        (4, 'Админ'),
+    ]
+    employee = models.PositiveSmallIntegerField('Тип пользователя', choices=EMPLOYEE, blank=False, default=0)
     question = models.TextField(blank=True, null=True, verbose_name='Вопрос')
     answer = models.TextField(blank=True, null=True, verbose_name='Ответ', default=' ')
     create = models.DateTimeField(auto_now_add=True, blank=True, null=True)
