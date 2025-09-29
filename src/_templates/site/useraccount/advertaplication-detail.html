@@ -7,6 +7,8 @@
     {% block propertyimage %}{{ seo_propertydescription }}{% endblock propertyimage %}
     {% block head %}
      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     {% endblock head %}
 
     {% block content %}
@@ -438,6 +440,12 @@ body {
     .chat_date {
      color: white !important;
     }
+
+
+    #map-container {
+        transition: max-height 0.3s ease;
+        overflow: hidden;
+    }
     </style>
     <div class="container py-4">
         <div class="row g-4">
@@ -488,7 +496,7 @@ body {
                         <div class="card">
                             <div class="card-header"><h5 class="mb-0">Местоположение</h5></div>
                             <div class="card-body">
-                                <iframe class="osm-iframe" src="https://www.openstreetmap.org/export/embed.html?bbox=37.6173,55.7558,37.6173,55.7558&layer=mapnik&marker=55.7558,37.6173"></iframe>
+                                <iframe  class="osm-iframe" src="https://www.openstreetmap.org/export/embed.html?bbox=37.6173,55.7558,37.6173,55.7558&layer=mapnik&marker=55.7558,37.6173"></iframe>
                                 <div class="small text-muted mt-2">Москва, Красная площадь</div>
                             </div>
                         </div>
@@ -816,7 +824,7 @@ body {
                                     </div>
                                 </div>
                             </div>
-                                                                {% endfor %}
+                        {% endfor %}
 
 
                         </div>
@@ -879,6 +887,15 @@ body {
                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                 </div>
                                 <div class="modal-body">
+                                    <button type="button"
+                                            class="btn btn-outline-primary mb-3"
+                                            id="toggle-map-btn">
+                                      Скрыть карту
+                                    </button>
+
+                                    <div id="map-container">
+                                      <div id="map" style="height: 400px; width: 100%; border-radius: 8px;"></div>
+                                    </div>
                                     {{ path_form.as_p }}
                                 </div>
                                 <div class="modal-footer">
@@ -968,8 +985,6 @@ body {
         </div>
     </div>
 </div>
-
-
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {
@@ -1189,10 +1204,8 @@ body {
             if (result.success) {
               // Обновляем отображение (например, стоимость)
               // Можно добавить обновление других полей при необходимости
-              alert('Заявка успешно обновлена');
-              // Обновите отображение стоимости или других данных, если нужно
-              // Например:
-              // document.querySelector('.cost-display').innerText = data.price;
+              location.reload();
+
 
               modal.hide();
             } else {
@@ -1534,14 +1547,9 @@ async function createPath() {
 
 // Функция создания ответственности
 async function createResponsibility() {
-    const pathId = document.getElementById('id_path_choice').value;
-    if (!pathId) {
-        alert('Пожалуйста, выберите путь для добавления ответственности.');
-        return;
-    }
-
     const formData = {
-        path_choice: pathId,
+        application_id: "{{ application.id }}",      // 👈 передаем id заявки
+        path_choice: document.getElementById('id_path_choice').value,
         status: document.getElementById('id_status').value,
         additional: document.getElementById('id_additional').value,
         responsible: document.getElementById('id_responsible').value
@@ -1560,14 +1568,43 @@ async function createResponsibility() {
         const result = await response.json();
 
         if (result.success) {
-            alert('Ответственность успешно добавлена!');
-            bootstrap.Modal.getInstance(document.getElementById('addResponsibilityModal')).hide();
-            location.reload();
+            const r = result.responsibility;
+
+            // 🔥 динамически рендерим новую карточку
+            const phasesRow = document.getElementById('phasesRow');
+            const newCard = document.createElement('div');
+            newCard.className = 'col-md-4 mb-4';
+            newCard.innerHTML = `
+                <div class="phase-card">
+                    <h5 class="phase-title"><strong>Этап ${phasesRow.children.length + 1}</strong></h5>
+                    <p>${r.additional}</p>
+                    <div class="users-container">
+                        <h6><i class="fas fa-users me-2"></i>Участники этапа</h6>
+                        <div class="user">
+                            <div class="avatar-placeholder bg-primary text-white">
+                                ${r.responsible.name[0]}
+                            </div>
+                            <div class="user-info">
+                                <div class="user-name">${r.responsible.name}</div>
+                                <div class="user-role">назначен автоматически</div>
+                            </div>
+                        </div>
+                        <p>статус – ${r.status}</p>
+                    </div>
+                </div>`;
+
+            phasesRow.appendChild(newCard);
+
+            // закрываем модалку
+            bootstrap.Modal.getInstance(
+                document.getElementById('editPhaseModal')
+            )?.hide();
         } else {
-            сonsole.log('Ошибка: ' + JSON.stringify(result.errors));
+            console.log('Ошибка: ' + JSON.stringify(result.errors || result.error));
         }
-    } catch (error) {
-        сonsole.log('Ошибка сети: ' + error);
+    } catch (err) {
+        console.error(err);
+        console.log('Ошибка сети');
     }
 }
 
@@ -1676,4 +1713,70 @@ async function updatePath(pathId) {
     }
 }
 </script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    // Координаты по умолчанию (Москва)
+    const defaultLat = 55.7558;
+    const defaultLon = 37.6173;
+
+    // Инициализация карты
+    window.leafletMap = L.map('map').setView([defaultLat, defaultLon], 13);
+
+    // Слой карты
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(window.leafletMap);
+
+    // Маркер
+    const marker = L.marker([defaultLat, defaultLon], { draggable: true })
+                    .addTo(window.leafletMap);
+
+    // Поля формы
+    const latInput = document.getElementById('id_latitude');
+    const lonInput = document.getElementById('id_longitude');
+
+    latInput.value = defaultLat;
+    lonInput.value = defaultLon;
+
+    // Обработка клика по карте
+    window.leafletMap.on('click', (e) => {
+        const { lat, lng } = e.latlng;
+        marker.setLatLng([lat, lng]);
+        latInput.value = lat.toFixed(6);
+        lonInput.value = lng.toFixed(6);
+    });
+
+    // Перетаскивание маркера
+    marker.on('dragend', () => {
+        const { lat, lng } = marker.getLatLng();
+        latInput.value = lat.toFixed(6);
+        lonInput.value = lng.toFixed(6);
+    });
+});
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const toggleBtn = document.getElementById("toggle-map-btn");
+    const mapContainer = document.getElementById("map-container");
+
+    toggleBtn.addEventListener("click", () => {
+        const isHidden = mapContainer.style.display === "none";
+
+        // переключаем видимость контейнера
+        mapContainer.style.display = isHidden ? "block" : "none";
+
+        // меняем текст кнопки
+        toggleBtn.textContent = isHidden ? "Скрыть карту" : "Показать карту";
+
+        // после показа карты пересчитываем размеры Leaflet
+        if (isHidden && window.leafletMap) {
+            setTimeout(() => window.leafletMap.invalidateSize(), 200);
+        }
+    });
+});
+</script>
+
+
+
+
 {% endblock %}

@@ -291,3 +291,24 @@ class CallConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def call_session_exists(self):
         return CallSession.objects.filter(id=self.call_id).exists()
+
+
+
+class NotifyConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.user = self.scope["user"]
+        if not self.user.is_authenticated:
+            await self.close()
+            return
+
+        self.group_name = f"user_notify_{self.user.id}"
+
+        await self.channel_layer.group_add(self.group_name, self.channel_name)
+        await self.accept()
+
+    async def disconnect(self, code):
+        await self.channel_layer.group_discard(self.group_name, self.channel_name)
+
+    async def notify(self, event):
+        """Отправка произвольных уведомлений клиенту"""
+        await self.send(text_data=json.dumps(event["payload"]))

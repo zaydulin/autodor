@@ -582,8 +582,8 @@
     isCallOpen = false; // сбрасываем флаг, если закрываем вручную
   }
 
-  // Запускаем проверку каждые 10 секунд
-  setInterval(checkForActiveCall, 3000);
+
+
 
   // Запуск при загрузке
   document.addEventListener('DOMContentLoaded', () => {
@@ -688,6 +688,45 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 </script>
 {% endif %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const userId = "{{ request.user.id }}";
+  if (!userId) return;
+
+  const proto = location.protocol === "https:" ? "wss://" : "ws://";
+  const wsUrl = proto + location.host + "/ws/notify/" + userId + "/";
+
+  const notifySocket = new WebSocket(wsUrl);
+
+  notifySocket.onopen = () => console.log("Notify WS connected");
+
+  notifySocket.onmessage = (e) => {
+    const data = JSON.parse(e.data);
+    console.log("Notify:", data);
+
+    if (data.type === "incoming_call") {
+      showCallIframe(data.call_id, data.caller);
+    }
+    if (data.type === "hangup") {
+      hideCallIframe();
+    }
+  };
+
+  function showCallIframe(callId, caller) {
+    const cont = document.getElementById("callModalBody");
+    cont.innerHTML = `<iframe src="/call_iframe/${callId}/${caller.id}"
+                         width="100%" height="100%" style="border:none;"></iframe>`;
+    new bootstrap.Modal(document.getElementById("callModal")).show();
+  }
+
+  function hideCallIframe() {
+    const el = document.getElementById("callModal");
+    const m = bootstrap.Modal.getInstance(el);
+    if (m) m.hide();
+    document.getElementById("callModalBody").innerHTML = "";
+  }
+});
+</script>
 
 {% block footerbottom %}{% endblock footerbottom %}
 </body>

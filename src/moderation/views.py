@@ -104,8 +104,11 @@ class AdvertAplicationDetailView(LoginRequiredMixin, DetailView):
         paths =  Path.objects.filter(aplication=application)
         context['paths'] = paths
         context['path_responsibilitys'] = PathResponsibility.objects.filter(path_choice__in=paths)
-        context['path_form'] = PathForm
-        context['path_responsibilitys_form'] = PathResponsibilityForm
+
+        # ✅ создаём экземпляры форм и передаём application_id
+        context['path_form'] = PathForm(application_id=application.id)
+        context['path_responsibilitys_form'] = PathResponsibilityForm(application_id=application.id)
+
         return context
 
 
@@ -176,7 +179,9 @@ def delete_path(request, path_id):
 def create_responsibility(request):
     try:
         data = json.loads(request.body)
-        form = PathResponsibilityForm(data)
+        application_id = data.get("application_id")  # 👈 достаём id заявки
+
+        form = PathResponsibilityForm(data, application_id=application_id)  # 👈 передаём в форму
 
         if form.is_valid():
             responsibility = form.save()
@@ -194,7 +199,6 @@ def create_responsibility(request):
             })
         else:
             return JsonResponse({'success': False, 'errors': form.errors})
-
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 
