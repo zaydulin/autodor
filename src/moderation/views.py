@@ -30,7 +30,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 
 from .forms import PathForm, PathResponsibilityForm, AdvertAplicationGalleryForm
 from .models import AdvertAplication, ChatMessage, CallSession, AdvertDocument, AdvertExpense, AdvertApplicationImage, \
-    CarModel, CarBrand,AdvertAplicationGallery
+    CarModel, CarBrand, AdvertAplicationGallery, ExpenseMask
 from moderation.models import Advert, AdvertAplication,Path,PathResponsibility, Withdrawal
 from webmain.models import Faqs, Seo
 from useraccount.models import Profile
@@ -105,6 +105,15 @@ class AdvertAplicationListView(LoginRequiredMixin, ListView):
             .order_by("-created_at")
         )
 
+def expense_masks_json(request):
+    """Вернёт все маски в JSON для автодополнения"""
+    q = request.GET.get("q", "")
+    masks = ExpenseMask.objects.all()
+    if q:
+        masks = masks.filter(name__icontains=q)
+    return JsonResponse({"results": [m.name for m in masks[:20]]})
+
+
 class AdvertAplicationDetailView(LoginRequiredMixin, DetailView):
     model = AdvertAplication
     template_name = "site/useraccount/advertaplication-detail.html"
@@ -155,6 +164,7 @@ class AdvertAplicationDetailView(LoginRequiredMixin, DetailView):
         calls = CallSession.objects.filter(application=application)
         context['documents'] = application.documents.all().order_by('-created_at')
         context['calls'] = calls
+        context['expense_masks'] = ExpenseMask.objects.all()
 
         context['all_managers'] = Profile.objects.filter(type=0,employee=2)
         context['all_drivers'] = Profile.objects.filter(type=0,employee=1)

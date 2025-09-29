@@ -209,7 +209,17 @@ class CarModel(models.Model):
         return f"{self.brand.name} {self.name}"
 
 
+class ExpenseMask(models.Model):
+    """Справочник статей расходов (маски / шаблоны)"""
+    name = models.CharField("Название статьи", max_length=150, unique=True)
 
+    class Meta:
+        verbose_name = "Маска статьи расхода"
+        verbose_name_plural = "Маски статей расходов"
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
 
 
 class AdvertExpense(models.Model):
