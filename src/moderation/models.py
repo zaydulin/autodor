@@ -209,6 +209,9 @@ class CarModel(models.Model):
         return f"{self.brand.name} {self.name}"
 
 
+
+
+
 class AdvertExpense(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
@@ -294,6 +297,21 @@ class AdvertAplication(models.Model):
     def __str__(self):
         return f"Заявка #{self.id} от {self.user} на {self.advert}"
 
+class Withdrawal(models.Model):
+    """Выплаты"""
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Пользователь', on_delete=models.CASCADE)
+    amount = models.IntegerField("Сумма", blank=True, null=True)
+    TYPE_CHOICES = [
+        (0, 'Пополнение'),
+        (1, 'Списание'),
+    ]
+    type = models.SmallIntegerField(verbose_name="Пополнение/Списание", choices=TYPE_CHOICES, default=0)
+    create = models.DateTimeField(auto_now_add=True)
+    application = models.ForeignKey(AdvertAplication, on_delete=models.CASCADE)
+
+    class Meta:
+        verbose_name = "Выплата"
+        verbose_name_plural = "Выплаты"
 
 class AdvertApplicationImage(models.Model):
     application = models.ForeignKey(

@@ -28,8 +28,8 @@ from django.contrib import messages
 
 # Models
 from webmain.models import Seo
-from moderation.models import Ticket, TicketComment, TicketCommentMedia
-from useraccount.models import Profile, Notification, Withdrawal, Cards
+from moderation.models import Ticket, TicketComment, TicketCommentMedia, Withdrawal
+from useraccount.models import Profile, Notification, Cards
 
 # Forms
 from useraccount.forms import SignUpForm, UserProfileForm, PasswordResetEmailForm, SetPasswordFormCustom, CardsForm

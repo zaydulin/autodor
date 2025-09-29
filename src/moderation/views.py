@@ -31,11 +31,44 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from .forms import PathForm, PathResponsibilityForm
 from .models import AdvertAplication, ChatMessage, CallSession, AdvertDocument, AdvertExpense, AdvertApplicationImage, \
     CarModel, CarBrand
-from moderation.models import Advert, AdvertAplication,Path,PathResponsibility
+from moderation.models import Advert, AdvertAplication,Path,PathResponsibility, Withdrawal
 from webmain.models import Faqs, Seo
 from useraccount.models import Profile
 
 from webmain.models import SettingsGlobale
+from django.db.models import Sum
+
+
+class AdvertStatisticsView(View):
+    def get(self, request, *args, **kwargs):
+        # Получаем все заявки
+        applications = AdvertAplication.objects.all()
+
+        # Получаем расходы по заявкам
+        expenses = AdvertExpense.objects.all()
+
+        # Получаем все выплаты по пользователям, связанным с заявками
+        withdrawals = Withdrawal.objects.filter(user__in=applications.values('user'))
+
+        # Статистика расходов по каждой заявке
+        expense_stats = applications.annotate(total_expenses=Sum('expenses__amount'))
+
+        # Статистика выплат по пользователям, связанным с заявками
+        withdrawal_stats = applications.annotate(
+            total_withdrawals=Sum('user__withdrawal__amount')
+        )
+
+        # Формируем контекст
+        context = {
+            'applications': applications,
+            'expense_stats': expense_stats,
+            'withdrawal_stats': withdrawal_stats,
+            'total_expenses': expenses.aggregate(Sum('amount'))['amount__sum'],
+            'total_withdrawals': withdrawals.aggregate(Sum('amount'))['amount__sum'],
+        }
+        return render(request, 'advert_statistics.html', context)
+
+
 
 
 class AdvertAplicationListView(LoginRequiredMixin, ListView):

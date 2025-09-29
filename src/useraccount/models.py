@@ -112,20 +112,6 @@ class Dictofone(models.Model):
         verbose_name_plural = "Записи"
 
 
-class Withdrawal(models.Model):
-    """Выплаты"""
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Пользователь', on_delete=models.CASCADE)
-    amount = models.IntegerField("Сумма", blank=True, null=True)
-    TYPE_CHOICES = [
-        (0, 'Пополнение'),
-        (1, 'Списание'),
-    ]
-    type = models.SmallIntegerField(verbose_name="Пополнение/Списание", choices=TYPE_CHOICES, default=0)
-    create = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        verbose_name = "Выплата"
-        verbose_name_plural = "Выплаты"
 
 
 class Cards(models.Model):

@@ -11,9 +11,9 @@ from django_ace import AceWidget
 from django.contrib.auth import get_user_model
 
 
-from .models import TicketComment, Notificationgroups, Ticket, Path, PathResponsibility, AdvertAplication
+from .models import TicketComment, Notificationgroups, Ticket, Path, PathResponsibility, AdvertAplication, Withdrawal
 from webmain.models import SettingsGlobale, HomePage, AboutPage, ContactPage, Faqs, Blogs, CategorysBlogs, TagsBlogs, Pages, Seo
-from useraccount.models import  Notification, Withdrawal
+from useraccount.models import  Notification
 
 from useraccount.models import Profile
 

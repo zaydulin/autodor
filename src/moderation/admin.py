@@ -56,6 +56,10 @@ admin.site.register(PathResponsibility)
 admin.site.register(CarModel)
 admin.site.register(CarBrand)
 
+@admin.register(Withdrawal)
+class WithdrawalAdmin(admin.ModelAdmin):
+    list_display = ['user', 'amount', 'type', 'create']
+
 
 
 
