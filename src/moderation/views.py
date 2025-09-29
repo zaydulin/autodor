@@ -81,7 +81,14 @@ def add_gallery_item(request, pk):
         obj.application = app
         obj.uploaded_by = request.user
         obj.save()
-    return redirect("moderation:application_detail", pk=pk)
+    return JsonResponse({
+        'success': True,
+        'items': [{
+            'url': obj.file.url,
+            'is_image': obj.is_image,
+            'id': obj.id,
+        }]
+    })
 
 class AdvertAplicationListView(LoginRequiredMixin, ListView):
     model = AdvertAplication
@@ -128,8 +135,11 @@ class AdvertAplicationDetailView(LoginRequiredMixin, DetailView):
                 list(application.user_drivers.all())
         )
         context['users'] = [user for user in users_list if user != self.request.user]
-        context['total_price'] =  + advert.price - total_expenses
-        application.price = context['total_price']
+        context['total_price'] =  advert.price
+        context['total_expenses'] =  total_expenses
+        context['total_ost'] = advert.price  - total_expenses
+
+        application.price = context['total_ost']
         application.save()
 
         user = application.user.first()
