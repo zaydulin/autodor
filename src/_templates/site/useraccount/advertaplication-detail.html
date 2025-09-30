@@ -1,455 +1,455 @@
-    {% extends 'site/useraccount/base.html' %}
-    {% load static %}
-    {% block title %}{{ seo_title }}{% endblock title %}
-    {% block description %}{{ seo_description }}{% endblock description %}
-    {% block propertytitle %}{% if seo_previev %}{{ seo_previev.url }} {% endif %} {% endblock propertytitle %}
-    {% block propertydescription %}{{ seo_propertytitle }}{% endblock propertydescription %}
-    {% block propertyimage %}{{ seo_propertydescription }}{% endblock propertyimage %}
-    {% block head %}
-     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    {% endblock head %}
+{% extends 'site/useraccount/base.html' %}
+{% load static %}
+{% block title %}{{ seo_title }}{% endblock title %}
+{% block description %}{{ seo_description }}{% endblock description %}
+{% block propertytitle %}{% if seo_previev %}{{ seo_previev.url }} {% endif %} {% endblock propertytitle %}
+{% block propertydescription %}{{ seo_propertytitle }}{% endblock propertydescription %}
+{% block propertyimage %}{{ seo_propertydescription }}{% endblock propertyimage %}
+{% block head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+{% endblock head %}
 
-    {% block content %}
-    <style>
-        iframe {
-        height: 500px;
-        width: 100%;
-        }
-        .doc {
-            width: 50%;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-
-        @media (max-width: 992px) {
-        .offcanvas-body {
-            margin-bottom: 100px;
-        }
-        }
-
-        .steps-container {
-      width: 100%;
-      margin: 30px auto;
+{% block content %}
+<style>
+    iframe {
+    height: 500px;
+    width: 100%;
+    }
+    .doc {
+        width: 50%;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
     }
 
-    .steps {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: relative;
-      width: 100%;
+    @media (max-width: 992px) {
+    .offcanvas-body {
+        margin-bottom: 100px;
+    }
     }
 
-    .step {
-      flex: 1;
-      text-align: center;
-      position: relative;
-    }
+    .steps-container {
+  width: 100%;
+  margin: 30px auto;
+}
 
-    .step:not(:last-child)::after {
-      content: "";
-      position: absolute;
-      top: 15px;
-      left: 50%;
-      width: 100%;
-      height: 4px;
-      background-color: #ccc;
-      z-index: -1;
-    }
+.steps {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  width: 100%;
+}
 
-    .circle {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      background-color: #ccc;
-      margin: 0 auto 10px auto;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      color: white;
-      font-weight: bold;
-      z-index: 1;
-      position: relative;
-    }
+.step {
+  flex: 1;
+  text-align: center;
+  position: relative;
+}
 
-    .step.active .circle {
-      background-color: #4caf50;
-    }
+.step:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 15px;
+  left: 50%;
+  width: 100%;
+  height: 4px;
+  background-color: #ccc;
+  z-index: -1;
+}
 
-    .step.active ~ .step .circle {
-      background-color: #ccc;
-    }
+.circle {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: #ccc;
+  margin: 0 auto 10px auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: white;
+  font-weight: bold;
+  z-index: 1;
+  position: relative;
+}
 
-    .step.active::after {
-      background-color: #4caf50 !important;
-    }
+.step.active .circle {
+  background-color: #4caf50;
+}
 
-    /* Кнопка */
-    .controls {
-      margin-top: 20px;
-      text-align: center;
-    }
+.step.active ~ .step .circle {
+  background-color: #ccc;
+}
 
-    button {
-        background-color: #4fa0cb;
-        border: none; /* или оставить, если есть граница */
-        color: #fff; /* цвет текста, по желанию */
-        transition: background-color 0.2s ease;
-    }
+.step.active::after {
+  background-color: #4caf50 !important;
+}
 
-    /* Цвет при наведении (чуть темнее) */
-    button:hover {
-        background-color: #3a8ab3;
-    }
+/* Кнопка */
+.controls {
+  margin-top: 20px;
+  text-align: center;
+}
 
-    /* Цвет при нажатии (еще темнее) */
-    button:active {
-        background-color: #3270a0;
-    }
+button {
+    background-color: #4fa0cb;
+    border: none; /* или оставить, если есть граница */
+    color: #fff; /* цвет текста, по желанию */
+    transition: background-color 0.2s ease;
+}
+
+/* Цвет при наведении (чуть темнее) */
+button:hover {
+    background-color: #3a8ab3;
+}
+
+/* Цвет при нажатии (еще темнее) */
+button:active {
+    background-color: #3270a0;
+}
 
 .arrow-line {
-      display: flex;
-      flex-wrap: nowrap;
-      margin: 20px 0;
-      width: 100%;
-    }
-    .arrow {
-      flex: 1; /* стрелка растягивается равномерно */
-      height: 30px;
-      clip-path: polygon(0 0, 70% 0, 100% 50%, 70% 100%, 0 100%, 30% 50%);
-      margin-right: 2px;
-    }
-    .arrow:last-child {
-      margin-right: 0;
-    }
-    .arrow.gray { background: #ccc; }
-    .arrow.blue { background: #007bff; }
+  display: flex;
+  flex-wrap: nowrap;
+  margin: 20px 0;
+  width: 100%;
+}
+.arrow {
+  flex: 1; /* стрелка растягивается равномерно */
+  height: 30px;
+  clip-path: polygon(0 0, 70% 0, 100% 50%, 70% 100%, 0 100%, 30% 50%);
+  margin-right: 2px;
+}
+.arrow:last-child {
+  margin-right: 0;
+}
+.arrow.gray { background: #ccc; }
+.arrow.blue { background: #007bff; }
 body {
-            background-color: #f8f9fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            padding: 20px;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-        .phase-card {
-            background: white;
-            border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-            height: 100%;
-            transition: transform 0.3s ease;
-            position: relative;
-        }
-        .phase-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-        }
-        .phase-title {
-            color: #3a86ff;
-            margin-bottom: 20px;
-            font-weight: 600;
-        }
-        .user-avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 3px solid white;
-            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
-        }
-        .user-avatar:hover {
-            transform: scale(1.1);
-            z-index: 10;
-        }
-        .users-container {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-        }
-        .user {
-            display: flex;
-            align-items: center;
-            margin-bottom: 15px;
-            padding: 8px 12px;
-            border-radius: 8px;
-            background: #f8f9fa;
-            transition: background-color 0.2s;
-        }
-        .user:hover {
-            background-color: #e9ecef;
-        }
-        .user-info {
-            margin-left: 15px;
-        }
-        .user-name {
-            font-weight: 500;
-            margin-bottom: 2px;
-        }
-        .user-role {
-            font-size: 0.85rem;
-            color: #6c757d;
-        }
-        .avatar-placeholder {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: white;
-        }
-
-        .edit-panel {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            display: none;
-        }
-        .phase-card:hover .edit-panel {
-            display: block;
-        }
-        .edit-btn {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #3a86ff;
-            color: white;
-            cursor: pointer;
-            margin-bottom: 5px;
-            transition: all 0.3s ease;
-        }
-        .edit-btn:hover {
-            background: #2563eb;
-            transform: scale(1.1);
-        }
-        .add-phase-btn {
-            background: #4fa0cb;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 12px 25px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 20px auto;
-        }
-        .add-phase-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-        }
-        .modal-content {
-            border-radius: 12px;
-            border: none;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-        }
-        .user-action {
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            margin-left: 10px;
-        }
-        .user:hover .user-action {
-            opacity: 1;
-        }
-
-
-        /* Мобильная адаптация */
-@media (max-width: 768px) {
-    body {
-        padding: 0 !important;
-        margin: 0 !important;
         background-color: #f8f9fa;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        padding: 20px;
     }
-
     .container {
-        max-width: 100% !important;
-        padding-left: 0 !important;
-        padding-right: 0 !important;
-        margin: 0 !important;
+        max-width: 1200px;
+        margin: 0 auto;
     }
-
-    .container.py-4 {
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
+    .header {
+        text-align: center;
+        margin-bottom: 40px;
     }
-
-    .row.g-4 {
-        margin-left: 0 !important;
-        margin-right: 0 !important;
-    }
-
-    .col-lg-8, .col-lg-4 {
-        padding-left: 0 !important;
-        padding-right: 0 !important;
-    }
-
-    .card {
-        border-radius: 0 !important;
-        margin-bottom: 0 !important;
-        border-left: none !important;
-        border-right: none !important;
-    }
-
-    .card-body {
-        padding: 15px !important;
-    }
-
-    .card-header {
-        padding: 12px 15px !important;
-    }
-
-    /* Галерея изображений */
-    .gallery .carousel-inner {
-        border-radius: 0 !important;
-    }
-
-    /* Карта */
-    .osm-iframe {
-        height: 300px !important;
-    }
-
-    /* Кнопки действий */
-    .d-grid.gap-2 {
-        padding: 10px 15px !important;
+    .phase-card {
         background: white;
-        border-bottom: 1px solid #dee2e6;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        height: 100%;
+        transition: transform 0.3s ease;
+        position: relative;
     }
-
-    .btn {
-        border-radius: 8px !important;
-    }
-
-    /* Система этапов */
-    .phase-card, .step-card {
-        border-radius: 0 !important;
-        margin-bottom: 10px !important;
-        box-shadow: none !important;
-        border-bottom: 1px solid #dee2e6;
-    }
-
     .phase-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    }
+    .phase-title {
+        color: #3a86ff;
+        margin-bottom: 20px;
+        font-weight: 600;
+    }
+    .user-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid white;
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+    }
+    .user-avatar:hover {
+        transform: scale(1.1);
+        z-index: 10;
+    }
+    .users-container {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+    }
+    .user {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        background: #f8f9fa;
+        transition: background-color 0.2s;
+    }
+    .user:hover {
+        background-color: #e9ecef;
+    }
+    .user-info {
+        margin-left: 15px;
+    }
+    .user-name {
+        font-weight: 500;
+        margin-bottom: 2px;
+    }
+    .user-role {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+    .avatar-placeholder {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: white;
+    }
+
+    .edit-panel {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        display: none;
+    }
+    .phase-card:hover .edit-panel {
+        display: block;
+    }
+    .edit-btn {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #3a86ff;
+        color: white;
+        cursor: pointer;
+        margin-bottom: 5px;
+        transition: all 0.3s ease;
+    }
+    .edit-btn:hover {
+        background: #2563eb;
+        transform: scale(1.1);
+    }
+    .add-phase-btn {
+        background: #4fa0cb;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 12px 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 20px auto;
+    }
+    .add-phase-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+    .modal-content {
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+    .user-action {
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        margin-left: 10px;
+    }
+    .user:hover .user-action {
+        opacity: 1;
+    }
+
+
+    /* Мобильная адаптация */
+@media (max-width: 768px) {
+body {
+    padding: 0 !important;
+    margin: 0 !important;
+    background-color: #f8f9fa;
+}
+
+.container {
+    max-width: 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin: 0 !important;
+}
+
+.container.py-4 {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+.row.g-4 {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+.col-lg-8, .col-lg-4 {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+.card {
+    border-radius: 0 !important;
+    margin-bottom: 0 !important;
+    border-left: none !important;
+    border-right: none !important;
+}
+
+.card-body {
+    padding: 15px !important;
+}
+
+.card-header {
+    padding: 12px 15px !important;
+}
+
+/* Галерея изображений */
+.gallery .carousel-inner {
+    border-radius: 0 !important;
+}
+
+/* Карта */
+.osm-iframe {
+    height: 300px !important;
+}
+
+/* Кнопки действий */
+.d-grid.gap-2 {
+    padding: 10px 15px !important;
+    background: white;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.btn {
+    border-radius: 8px !important;
+}
+
+/* Система этапов */
+.phase-card, .step-card {
+    border-radius: 0 !important;
+    margin-bottom: 10px !important;
+    box-shadow: none !important;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.phase-card:hover {
+    transform: none !important;
+}
+
+.arrow-line {
+    margin: 10px 0 !important;
+    padding: 0 10px !important;
+}
+
+/* Offcanvas на весь экран */
+.offcanvas-end {
+    width: 100% !important;
+}
+
+/* Таблицы */
+.table {
+    font-size: 14px !important;
+}
+
+/* Модальные окна */
+.modal-dialog {
+    margin: 0 !important;
+    max-width: 100% !important;
+    height: 100% !important;
+}
+
+.modal-content {
+    border-radius: 0 !important;
+    height: 100% !important;
+    min-height: 100vh !important;
+}
+
+/* Убираем hover эффекты на тач-устройствах */
+@media (hover: none) {
+    .phase-card:hover .edit-panel {
+        display: block !important;
+    }
+
+    .user:hover {
+        background-color: #f8f9fa !important;
+    }
+
+    .edit-btn:hover {
         transform: none !important;
     }
-
-    .arrow-line {
-        margin: 10px 0 !important;
-        padding: 0 10px !important;
-    }
-
-    /* Offcanvas на весь экран */
-    .offcanvas-end {
-        width: 100% !important;
-    }
-
-    /* Таблицы */
-    .table {
-        font-size: 14px !important;
-    }
-
-    /* Модальные окна */
-    .modal-dialog {
-        margin: 0 !important;
-        max-width: 100% !important;
-        height: 100% !important;
-    }
-
-    .modal-content {
-        border-radius: 0 !important;
-        height: 100% !important;
-        min-height: 100vh !important;
-    }
-
-    /* Убираем hover эффекты на тач-устройствах */
-    @media (hover: none) {
-        .phase-card:hover .edit-panel {
-            display: block !important;
-        }
-
-        .user:hover {
-            background-color: #f8f9fa !important;
-        }
-
-        .edit-btn:hover {
-            transform: none !important;
-        }
-    }
+}
 }
 
 /* Дополнительно для очень маленьких экранов */
 @media (max-width: 576px) {
-    .row-cols-2.row-cols-md-3.g-2 {
-        margin: 0 -5px !important;
-    }
+.row-cols-2.row-cols-md-3.g-2 {
+    margin: 0 -5px !important;
+}
 
-    .row-cols-2.row-cols-md-3.g-2 .col {
-        padding: 0 5px !important;
-    }
+.row-cols-2.row-cols-md-3.g-2 .col {
+    padding: 0 5px !important;
+}
 
-    .spec-badge {
-        font-size: 12px !important;
-        padding: 4px 8px !important;
-    }
+.spec-badge {
+    font-size: 12px !important;
+    padding: 4px 8px !important;
+}
 
-    .doc {
-        width: 100% !important;
-        -webkit-line-clamp: 3 !important;
-    }
+.doc {
+    width: 100% !important;
+    -webkit-line-clamp: 3 !important;
+}
 
-    iframe {
-        height: 100% !important;
-    }
+iframe {
+    height: 100% !important;
+}
 
-    /* Чат */
-    .offcanvas-body {
-        padding: 15px !important;
-    }
+/* Чат */
+.offcanvas-body {
+    padding: 15px !important;
+}
 
-    #group-chat-messages {
-        min-height: 200px !important;
-        max-height: 50vh !important;
-    }
+#group-chat-messages {
+    min-height: 200px !important;
+    max-height: 50vh !important;
+}
 }
 
 /* Исправление для iOS Safari */
 @supports (-webkit-touch-callout: none) {
-    .modal-content {
-        height: -webkit-fill-available !important;
-    }
-
-    #group-chat-messages {
-        max-height: 45vh !important;
-    }
+.modal-content {
+    height: -webkit-fill-available !important;
 }
-    .chat_date {
-     color: white !important;
-    }
+
+#group-chat-messages {
+    max-height: 45vh !important;
+}
+}
+.chat_date {
+ color: white !important;
+}
 
 
-    #map-container {
-        transition: max-height 0.3s ease;
-        overflow: hidden;
-    }
-    </style>
+#map-container {
+    transition: max-height 0.3s ease;
+    overflow: hidden;
+}
+</style>
 
 
-    <style>
+<style>
     .table-wrap{
       max-width: 600px;                /* была 720px */
       margin: 12px auto;
@@ -539,166 +539,166 @@ body {
     }
 
 
-    </style>
-    <style>
-.gallery-media{
-    object-fit:contain;
-    max-height:420px;
-    background:#000;
-}
+</style>
+<style>
+    .gallery-media{
+        object-fit:contain;
+        max-height:420px;
+        background:#000;
+    }
 
-.preview-thumb{
-    position:relative;
-    overflow:hidden;
-    border-radius:8px;
-    box-shadow:0 2px 6px rgba(0,0,0,.15);
-    animation:fadeIn .4s ease;
-}
-.preview-thumb img,
-.preview-thumb video{
-    width:100%;
-    height:120px;
-    object-fit:cover;
-}
-.preview-remove{
-    position:absolute;
-    top:5px; right:5px;
-    background:rgba(0,0,0,.6);
-    border:none;
-    color:#fff;
-    border-radius:50%;
-    width:26px;height:26px;
-    display:flex;align-items:center;justify-content:center;
-    cursor:pointer;
-}
-@keyframes fadeIn{from{opacity:0;transform:scale(.9);}to{opacity:1;transform:scale(1);}}
+    .preview-thumb{
+        position:relative;
+        overflow:hidden;
+        border-radius:8px;
+        box-shadow:0 2px 6px rgba(0,0,0,.15);
+        animation:fadeIn .4s ease;
+    }
+    .preview-thumb img,
+    .preview-thumb video{
+        width:100%;
+        height:120px;
+        object-fit:cover;
+    }
+    .preview-remove{
+        position:absolute;
+        top:5px; right:5px;
+        background:rgba(0,0,0,.6);
+        border:none;
+        color:#fff;
+        border-radius:50%;
+        width:26px;height:26px;
+        display:flex;align-items:center;justify-content:center;
+        cursor:pointer;
+    }
+    @keyframes fadeIn{from{opacity:0;transform:scale(.9);}to{opacity:1;transform:scale(1);}}
 
-.gallery-media {
-    width: 100%;
-    height: 360px;              /* одна высота */
-    object-fit: contain;        /* фото / видео без обрезки */
-    background: #000;           /* фон за фото/видео */
-    border-radius: 8px;
-}
+    .gallery-media {
+        width: 100%;
+        height: 360px;              /* одна высота */
+        object-fit: contain;        /* фото / видео без обрезки */
+        background: #000;           /* фон за фото/видео */
+        border-radius: 8px;
+    }
 
-/* для видео, чтобы оно не разъезжалось */
-.gallery-media video,
-.gallery-media source {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-}
+    /* для видео, чтобы оно не разъезжалось */
+    .gallery-media video,
+    .gallery-media source {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
 
 </style>
 <style>
-                .preview-thumb .status-label{
-                    position:absolute;
-                    left:0;bottom:0;
-                    width:100%;
-                    font-size:12px;
-                    padding:2px 4px;
-                    text-align:center;
-                    color:#fff;
-                    background:rgba(0,0,0,.55);
-                }
-                .preview-thumb.uploaded .status-label{
-                    background:rgba(40,167,69,.8);          /* зелёный фон */
-                }
-                .preview-thumb.error .status-label{
-                    background:rgba(220,53,69,.8);          /* красный фон */
-                }
-                </style>
-    <div class="container py-4">
-        <div class="row g-4">
-            <!-- Левая колонка -->
-            <div class="col-lg-8">
-                <div class="card">
-                    <div class="card-body">
-                        <h2 class="mb-1">{{ advert.name }}</h2>
-                        <div class="d-flex">
-                            <div class="h4 text-primary fw-bold m-3">Стоимость {{ advert.price }} {{ advert.currency }}</div>
-                        </div>
+    .preview-thumb .status-label{
+        position:absolute;
+        left:0;bottom:0;
+        width:100%;
+        font-size:12px;
+        padding:2px 4px;
+        text-align:center;
+        color:#fff;
+        background:rgba(0,0,0,.55);
+    }
+    .preview-thumb.uploaded .status-label{
+        background:rgba(40,167,69,.8);          /* зелёный фон */
+    }
+    .preview-thumb.error .status-label{
+        background:rgba(220,53,69,.8);          /* красный фон */
+    }
+</style>
+<div class="container py-4">
+    <div class="row g-4">
+        <!-- Левая колонка -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="mb-1">{{ advert.name }}</h2>
+                    <div class="d-flex">
+                        <div class="h4 text-primary fw-bold m-3">Стоимость {{ advert.price }} {{ advert.currency }}</div>
+                    </div>
 
-                        <div class="row row-cols-2 row-cols-md-3 g-2 mb-3">
-                            {% if advert.year %}<div class="col"><span class="badge bg-light text-dark spec-badge">Год: {{ advert.year }}</span></div>{% endif %}
-                            {% if advert.mileage %}<div class="col"><span class="badge bg-light text-dark spec-badge">Пробег: {{ advert.mileage }} км</span></div>{% endif %}
-                            {% if advert.color %}<div class="col"><span class="badge bg-light text-dark spec-badge">Цвет: {{ advert.color }}</span></div>{% endif %}
-                            {% if advert.doors %}<div class="col"><span class="badge bg-light text-dark spec-badge">Дверей: {{ advert.doors }}</span></div>{% endif %}
-                            {% if advert.engine_volume %}<div class="col"><span class="badge bg-light text-dark spec-badge">Объём: {{ advert.engine_volume }} л</span></div>{% endif %}
-                            {% if advert.power %}<div class="col"><span class="badge bg-light text-dark spec-badge">Мощн.: {{ advert.power }} л.с.</span></div>{% endif %}
-                            {% if advert.transmission %}<div class="col"><span class="badge bg-light text-dark spec-badge">Коробка: {{ advert.get_transmission_display }}</span></div>{% endif %}
-                            {% if advert.fuel %}<div class="col"><span class="badge bg-light text-dark spec-badge">Топливо: {{ advert.get_fuel_display }}</span></div>{% endif %}
-                            {% if advert.drive %}<div class="col"><span class="badge bg-light text-dark spec-badge">Привод: {{ advert.get_drive_display }}</span></div>{% endif %}
-                        </div>
+                    <div class="row row-cols-2 row-cols-md-3 g-2 mb-3">
+                        {% if advert.year %}<div class="col"><span class="badge bg-light text-dark spec-badge">Год: {{ advert.year }}</span></div>{% endif %}
+                        {% if advert.mileage %}<div class="col"><span class="badge bg-light text-dark spec-badge">Пробег: {{ advert.mileage }} км</span></div>{% endif %}
+                        {% if advert.color %}<div class="col"><span class="badge bg-light text-dark spec-badge">Цвет: {{ advert.color }}</span></div>{% endif %}
+                        {% if advert.doors %}<div class="col"><span class="badge bg-light text-dark spec-badge">Дверей: {{ advert.doors }}</span></div>{% endif %}
+                        {% if advert.engine_volume %}<div class="col"><span class="badge bg-light text-dark spec-badge">Объём: {{ advert.engine_volume }} л</span></div>{% endif %}
+                        {% if advert.power %}<div class="col"><span class="badge bg-light text-dark spec-badge">Мощн.: {{ advert.power }} л.с.</span></div>{% endif %}
+                        {% if advert.transmission %}<div class="col"><span class="badge bg-light text-dark spec-badge">Коробка: {{ advert.get_transmission_display }}</span></div>{% endif %}
+                        {% if advert.fuel %}<div class="col"><span class="badge bg-light text-dark spec-badge">Топливо: {{ advert.get_fuel_display }}</span></div>{% endif %}
+                        {% if advert.drive %}<div class="col"><span class="badge bg-light text-dark spec-badge">Привод: {{ advert.get_drive_display }}</span></div>{% endif %}
+                    </div>
 
-                        {% if advert.images %}
-                        <div id="advCarousel" class="carousel slide gallery mb-3" data-bs-ride="carousel">
-                            <div class="carousel-inner rounded">
-                                {% for img in advert.images %}
-                                <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                                    <img src="{{ img }}" class="d-block w-100" alt="{{ advert.name }}">
-                                </div>
-                                {% endfor %}
+                    {% if advert.images %}
+                    <div id="advCarousel" class="carousel slide gallery mb-3" data-bs-ride="carousel">
+                        <div class="carousel-inner rounded">
+                            {% for img in advert.images %}
+                            <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                                <img src="{{ img }}" class="d-block w-100" alt="{{ advert.name }}">
                             </div>
-                            <button class="carousel-control-prev" type="button" data-bs-target="#advCarousel" data-bs-slide="prev">
-                                <span class="carousel-control-prev-icon"></span>
-                            </button>
-                            <button class="carousel-control-next" type="button" data-bs-target="#advCarousel" data-bs-slide="next">
-                                <span class="carousel-control-next-icon"></span>
-                            </button>
+                            {% endfor %}
                         </div>
-                        {% endif %}
+                        <button class="carousel-control-prev" type="button" data-bs-target="#advCarousel" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon"></span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#advCarousel" data-bs-slide="next">
+                            <span class="carousel-control-next-icon"></span>
+                        </button>
                     </div>
+                    {% endif %}
                 </div>
+            </div>
 
-                <!-- Местоположение -->
-<!--                <div class="row mt-1">-->
-<!--                    <div class="col-lg-12">-->
-<!--                        <div class="card">-->
-<!--                            <div class="card-header"><h5 class="mb-0">Местоположение</h5></div>-->
-<!--                            <div class="card-body">-->
-<!--                                <iframe  class="osm-iframe" src="https://www.openstreetmap.org/export/embed.html?bbox=37.6173,55.7558,37.6173,55.7558&layer=mapnik&marker=55.7558,37.6173"></iframe>-->
-<!--                                <div class="small text-muted mt-2">Москва, Красная площадь</div>-->
-<!--                            </div>-->
-<!--                        </div>-->
-<!--                    </div>-->
-<!--                </div>-->
+            <!-- Местоположение -->
+            <!--                <div class="row mt-1">-->
+            <!--                    <div class="col-lg-12">-->
+            <!--                        <div class="card">-->
+            <!--                            <div class="card-header"><h5 class="mb-0">Местоположение</h5></div>-->
+            <!--                            <div class="card-body">-->
+            <!--                                <iframe  class="osm-iframe" src="https://www.openstreetmap.org/export/embed.html?bbox=37.6173,55.7558,37.6173,55.7558&layer=mapnik&marker=55.7558,37.6173"></iframe>-->
+            <!--                                <div class="small text-muted mt-2">Москва, Красная площадь</div>-->
+            <!--                            </div>-->
+            <!--                        </div>-->
+            <!--                    </div>-->
+            <!--                </div>-->
 
 
-                <!-- Блок отслеживания водителя -->
-                {% if application.status == 'in_progress' and application.user_drivers.all %}
-                <div class="card mb-4" id="tracking-card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Местоположение машины</h5>
-                        <span class="badge bg-success" id="tracking-status">Активно</span>
-                    </div>
-                    <div class="card-body">
-                        <!-- Информация о водителе -->
-                        <div id="driver-info" class="mb-3">
-                            <div class="text-center text-muted">
-                                <div class="spinner-border spinner-border-sm" role="status"></div>
-                                <div>Получение данных...</div>
-                            </div>
-                        </div>
-
-                        <!-- Карта отслеживания -->
-                        <div id="tracking-map" style="height: 300px; border-radius: 8px;"></div>
-
-                        <!-- Элементы управления для водителя -->
-                        {% if request.user.employee == 3 and request.user in application.user_drivers.all %}
-                        <div class="mt-3">
-                            <button id="start-tracking-btn" class="btn btn-success btn-sm">
-                                ▶️ Начать отслеживание
-                            </button>
-                            <button id="stop-tracking-btn" class="btn btn-secondary btn-sm">
-                                ⏹️ Остановить
-                            </button>
-                        </div>
-                        {% endif %}
-                    </div>
+            <!-- Блок отслеживания водителя -->
+            {% if application.status == 'in_progress' and application.user_drivers.all %}
+            <div class="card mb-4" id="tracking-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Местоположение машины</h5>
+                    <span class="badge bg-success" id="tracking-status">Активно</span>
                 </div>
+                <div class="card-body">
+                    <!-- Информация о водителе -->
+                    <div id="driver-info" class="mb-3">
+                        <div class="text-center text-muted">
+                            <div class="spinner-border spinner-border-sm" role="status"></div>
+                            <div>Получение данных...</div>
+                        </div>
+                    </div>
 
-                <style>
+                    <!-- Карта отслеживания -->
+                    <div id="tracking-map" style="height: 300px; border-radius: 8px;"></div>
+
+                    <!-- Элементы управления для водителя -->
+                    {% if request.user.employee == 3 and request.user in application.user_drivers.all %}
+                    <div class="mt-3">
+                        <button id="start-tracking-btn" class="btn btn-success btn-sm">
+                            ▶️ Начать отслеживание
+                        </button>
+                        <button id="stop-tracking-btn" class="btn btn-secondary btn-sm">
+                            ⏹️ Остановить
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <style>
                 /* Стили для отслеживания */
                     .driver-marker {
                         font-size: 20px;
@@ -752,102 +752,111 @@ body {
                             font-size: 0.9rem;
                         }
                     }
-                </style>
+            </style>
+            {% endif %}
+
+
+        </div>
+
+        <!-- Правая колонка -->
+        <div class="col-lg-4" id="sidebar-container">
+            <div class="d-grid gap-2">
+                <button class="btn btn-light border" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCalls">☎️ Звонки</button>
+                <button class="btn btn-primary" data-bs-toggle="offcanvas" data-bs-target="#offcanvasChat">💬 Групповой чат</button>
+                {% if request.user in application.user_menager.all or request.user.employee == 4 %}
+                <button class="btn btn-primary" id="edit-sidebar-btn">Внести изменения</button>
                 {% endif %}
-
-
             </div>
 
-            <!-- Правая колонка -->
-            <div class="col-lg-4" id="sidebar-container">
-                <div class="d-grid gap-2">
-                    <button class="btn btn-light border" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCalls">☎️ Звонки</button>
-                    <button class="btn btn-primary" data-bs-toggle="offcanvas" data-bs-target="#offcanvasChat">💬 Групповой чат</button>
-                    {% if request.user in application.user_menager.all or request.user.employee == 4 %}
-                    <button class="btn btn-primary" id="edit-sidebar-btn">Внести изменения</button>
-                    {% endif %}
-                </div>
-
-                <!-- Заявка -->
-                <div class="card mb-4"  id="sidebar">
-                    <div class="card-header"><h5 class="mb-0">Заявка {{ application.id }}</h5></div>
-                    <div class="card-body">
-                        <div class="mb-2"><strong>Статус:</strong> {{ application.get_status_display }}</div>
-                        <div class="mb-2"><strong>Создана: </strong>{{ application.created_at|date:"d.m.Y H:i" }}</div>
-                        <div class="mb-2"><strong>Стоимость доставки: </strong>{{ application.delevery_price }}</div>
-                        <hr>
-                        <div class="mb-2"><strong>Заказчик:</strong></div>
-                        <ul class="list-unstyled mb-0">
-                            <li class="d-flex align-items-center gap-2 mb-2">
-                                {% for user in application.user.all %}
-                                    {% if user.employee == 0 %}
-                                        <span class="avatar">{{ user.first_name|slice:":1" }}</span>
-                                        <div><div class="fw-semibold">{{ user.first_name }} {{ user.last_name }}</div><div class="small text-muted"> {{ user.email }}</div></div>
-                                    {%endif%}
-                                {% endfor %}
-                            </li>
-                        </ul>
-
-                        <!-- Менеджеры -->
-                        <div class="mb-2"><strong>Менеджеры:</strong></div>
-                        <ul class="list-unstyled mb-0">
-                            {% for men in application.user_menager.all %}
-                                <li class="d-flex align-items-center gap-2 mb-2">
-                                    <span class="avatar">{{ men.first_name|slice:":1" }}</span>
-                                    <div><div class="fw-semibold">{{ men.first_name }} {{ men.last_name }}</div><div class="small text-muted">{{ men.email }}</div></div>
-                                </li>
+            <!-- Заявка -->
+            <div class="card mb-4"  id="sidebar">
+                <div class="card-header"><h5 class="mb-0">Заявка {{ application.id }}</h5></div>
+                <div class="card-body">
+                    <div class="mb-2"><strong>Статус:</strong> {{ application.get_status_display }}</div>
+                    <div class="mb-2"><strong>Создана: </strong>{{ application.created_at|date:"d.m.Y H:i" }}</div>
+                    <div class="mb-2"><strong>Стоимость доставки: </strong>{{ application.delevery_price }}</div>
+                    <hr>
+                    <div class="mb-2"><strong>Заказчик:</strong></div>
+                    <ul class="list-unstyled mb-0">
+                        <li class="d-flex align-items-center gap-2 mb-2">
+                            {% for user in application.user.all %}
+                            {% if user.employee == 0 %}
+                            <span class="avatar">{{ user.first_name|slice:":1" }}</span>
+                            <div><div class="fw-semibold">{{ user.first_name }} {{ user.last_name }}</div><div class="small text-muted"> {{ user.email }}</div></div>
+                            {%endif%}
                             {% endfor %}
-                        </ul>
-                        <div class="mb-2"><strong>Водители:</strong></div>
-                        <ul class="list-unstyled mb-0">
-                            {% for men in application.user_drivers.all %}
-                                <li class="d-flex align-items-center gap-2 mb-2">
-                                    <span class="avatar">{{ men.first_name|slice:":1" }}</span>
-                                    <div>
-                                        <div>
-                                            <div class="fw-semibold">
-                                                {{ men.first_name }} {{ men.last_name }}
-                                            </div>
-                                            <div class="small text-muted">
-                                                {{ men.email }}
-                                            </div>
-                                        </div>
+                        </li>
+                    </ul>
+
+                    <!-- Менеджеры -->
+                    <div class="mb-2"><strong>Менеджеры:</strong></div>
+                    <ul class="list-unstyled mb-0">
+                        {% for men in application.user_menager.all %}
+                        <li class="d-flex align-items-center gap-2 mb-2">
+                            <span class="avatar">{{ men.first_name|slice:":1" }}</span>
+                            <div><div class="fw-semibold">{{ men.first_name }} {{ men.last_name }}</div><div class="small text-muted">{{ men.email }}</div></div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    <div class="mb-2"><strong>Водители:</strong></div>
+                    <ul class="list-unstyled mb-0">
+                        {% for men in application.user_drivers.all %}
+                        <li class="d-flex align-items-center gap-2 mb-2">
+                            <span class="avatar">{{ men.first_name|slice:":1" }}</span>
+                            <div>
+                                <div>
+                                    <div class="fw-semibold">
+                                        {{ men.first_name }} {{ men.last_name }}
                                     </div>
-                                    <i class="icon ms-auto" title="Кошелек">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" width="20" height="20">
-                                            <path d="M20 2H4C2.9 2 2 2.9 2 4V20C2 21.1 2.9 22 4 22H20C21.1 22 22 21.1 22 20V4C22 2.9 21.1 2 20 2ZM4 4H20V12H4V4ZM4 20V14H20V20H4Z" fill="currentColor"/>
-                                            <path d="M16 7H8V9H16V7Z" fill="currentColor"/>
-                                        </svg>
-                                    </i>
+                                    <div class="small text-muted">
+                                        {{ men.email }}
+                                    </div>
+                                </div>
+                            </div>
+                            <i class="icon ms-auto" title="Кошелек" id="wallet-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" width="20" height="20">
+                                    <path d="M20 2H4C2.9 2 2 2.9 2 4V20C2 21.1 2.9 22 4 22H20C21.1 22 22 21.1 22 20V4C22 2.9 21.1 2 20 2ZM4 4H20V12H4V4ZM4 20V14H20V20H4Z" fill="currentColor"/>
+                                    <path d="M16 7H8V9H16V7Z" fill="currentColor"/>
+                                </svg>
+                            </i>
+                        </li>
 
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    </div>
+                        <!-- Попап (скрытый по умолчанию) -->
+                        <div id="wallet-popup" class="popup" style="display: none;">
+                            <div class="popup-content">
+                                <span class="popup-close" id="popup-close">&times;</span>
+                                <h3>Информация о кошельке</h3>
+                                <p>Здесь будет информация о кошельке.</p>
+                            </div>
+                        </div>
+
+                        {% endfor %}
+                    </ul>
                 </div>
+            </div>
 
-                <!-- Список документов -->
+            <!-- Список документов -->
+            <div class="card mb-4">
                 <div class="card mb-4">
-                    <div class="card mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">Документы</h5>
                     </div>
 
                     <div class="card-body">
-                    <ul class="list-group">
-                        {% for document in documents %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <ul class="list-group">
+                            {% for document in documents %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
                             <span class="doc">
                                 <i class="bi bi-file-earmark-text me-2 text-primary"></i>
                                  {{ document.name }} — {{ document.file.name }}
                             </span>
                                 <a href="{{ document.file.url }}" class="btn btn-outline-primary btn-sm" download>Скачать</a>
                                 {% if request.user in application.user_menager.all or request.user.employee == 4 %}
-                                    <a href="{% url 'moderation:document_editor' document.id %} " class="btn btn-outline-primary btn-sm">пересоздать</a>
+                                <a href="{% url 'moderation:document_editor' document.id %} " class="btn btn-outline-primary btn-sm">пересоздать</a>
                                 {% endif %}
-                        </li> {% empty %}
+                            </li> {% empty %}
 
-                        <li class="list-group-item">Документы отсутствуют</li>
+                            <li class="list-group-item">Документы отсутствуют</li>
                             {% endfor %}
                         </ul>
                     </div>
@@ -855,101 +864,101 @@ body {
 
                 <!-- ГАЛЕРЕЯ фото / видео -->
                 <div class="card mb-4" id="galleryCard">
-                  <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Фото / Видео отчёты</h5>
-                  </div>
-                  <div class="card-body">
-
-                    {% if request.user.is_authenticated %}
-                    <!-- Форма загрузки -->
-                      <!-- Превью файлов -->
-                    <div id="galleryPreview" class="row g-2 mb-2" style="display:none;"></div>
-                    <div class="progress mb-2" id="galleryProgress" style="display:none; height: 6px;">
-                      <div class="progress-bar progress-bar-striped progress-bar-animated"
-                           role="progressbar" style="width: 0%"></div>
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Фото / Видео отчёты</h5>
                     </div>
+                    <div class="card-body">
 
-                    <form id="galleryUploadForm"
-                          action="{% url 'moderation:add_gallery_item' application.id %}"
-                          method="post" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        {{ gallery_form.group }}
-                        {{ gallery_form.description }}
-                        <input type="file" name="file" accept="image/*,video/*" multiple class="form-control mt-2">
-                        <input type="hidden" name="group" id="galleryGroupHidden">
+                        {% if request.user.is_authenticated %}
+                        <!-- Форма загрузки -->
+                        <!-- Превью файлов -->
+                        <div id="galleryPreview" class="row g-2 mb-2" style="display:none;"></div>
+                        <div class="progress mb-2" id="galleryProgress" style="display:none; height: 6px;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated"
+                                 role="progressbar" style="width: 0%"></div>
+                        </div>
 
-                        <button class="btn btn-primary mt-2">Загрузить</button>
+                        <form id="galleryUploadForm"
+                              action="{% url 'moderation:add_gallery_item' application.id %}"
+                              method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            {{ gallery_form.group }}
+                            {{ gallery_form.description }}
+                            <input type="file" name="file" accept="image/*,video/*" multiple class="form-control mt-2">
+                            <input type="hidden" name="group" id="galleryGroupHidden">
 
-                        <button class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#addGroupModal">
-                            <i class="bi bi-folder-plus"></i> Новая группа
-                          </button>
+                            <button class="btn btn-primary mt-2">Загрузить</button>
 
-                        <ul class="nav nav-tabs" id="galleryTabs" role="tablist" style="margin-top: 20px">
-                        {% for group in application.gallery_groups.all %}
-                          <li class="nav-item" role="presentation">
-                            <button class="nav-link {% if forloop.first %}active{% endif %}"
-                                    id="tab-{{ group.id }}" data-bs-toggle="tab"
-                                    data-bs-target="#group-{{ group.id }}" type="button"
-                                    role="tab">
-                              {{ group.title }}
+                            <button class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#addGroupModal">
+                                <i class="bi bi-folder-plus"></i> Новая группа
                             </button>
-                          </li>
-                        {% endfor %}
-                      </ul>
-                    </form>
-                    <hr>
-                    {% endif %}
 
-
-
-                    {% if application.gallery_groups.exists %}
-                      <!-- Вкладки групп -->
-
-
-                      <!-- Контейнеры групп -->
-                      <div class="tab-content mt-3" id="galleryTabsContent">
-                        {% for group in application.gallery_groups.all %}
-                          <div class="tab-pane fade {% if forloop.first %}show active{% endif %}"
-                               id="group-{{ group.id }}" role="tabpanel">
-                            <h6 class="text-muted">{{ group.description }}</h6>
-
-                            {% if group.items.exists %}
-                              <div id="carousel-{{ group.id }}" class="carousel slide mb-3" data-bs-ride="carousel">
-                              <div class="carousel-inner" id="carousel-inner-{{ group.id }}">
-                                {% for item in group.items.all %}
-                                  <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                                    {% if item.is_image %}
-                                      <img src="{{ item.file.url }}" class="d-block w-100 gallery-media" alt="">
-                                    {% elif item.is_video %}
-                                      <video class="d-block w-100 gallery-media" controls>
-                                        <source src="{{ item.file.url }}">
-                                      </video>
-                                    {% endif %}
-                                    {% if item.description %}
-                                      <div class="carousel-caption d-none d-md-block">
-                                        <small class="bg-dark bg-opacity-50 px-2 rounded">{{ item.description }}</small>
-                                      </div>
-                                    {% endif %}
-                                  </div>
+                            <ul class="nav nav-tabs" id="galleryTabs" role="tablist" style="margin-top: 20px">
+                                {% for group in application.gallery_groups.all %}
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link {% if forloop.first %}active{% endif %}"
+                                            id="tab-{{ group.id }}" data-bs-toggle="tab"
+                                            data-bs-target="#group-{{ group.id }}" type="button"
+                                            role="tab">
+                                        {{ group.title }}
+                                    </button>
+                                </li>
                                 {% endfor %}
-                              </div>
-                              <button class="carousel-control-prev" type="button" data-bs-target="#carousel-{{ group.id }}" data-bs-slide="prev">
-                                <span class="carousel-control-prev-icon"></span>
-                              </button>
-                              <button class="carousel-control-next" type="button" data-bs-target="#carousel-{{ group.id }}" data-bs-slide="next">
-                                <span class="carousel-control-next-icon"></span>
-                              </button>
+                            </ul>
+                        </form>
+                        <hr>
+                        {% endif %}
+
+
+
+                        {% if application.gallery_groups.exists %}
+                        <!-- Вкладки групп -->
+
+
+                        <!-- Контейнеры групп -->
+                        <div class="tab-content mt-3" id="galleryTabsContent">
+                            {% for group in application.gallery_groups.all %}
+                            <div class="tab-pane fade {% if forloop.first %}show active{% endif %}"
+                                 id="group-{{ group.id }}" role="tabpanel">
+                                <h6 class="text-muted">{{ group.description }}</h6>
+
+                                {% if group.items.exists %}
+                                <div id="carousel-{{ group.id }}" class="carousel slide mb-3" data-bs-ride="carousel">
+                                    <div class="carousel-inner" id="carousel-inner-{{ group.id }}">
+                                        {% for item in group.items.all %}
+                                        <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                                            {% if item.is_image %}
+                                            <img src="{{ item.file.url }}" class="d-block w-100 gallery-media" alt="">
+                                            {% elif item.is_video %}
+                                            <video class="d-block w-100 gallery-media" controls>
+                                                <source src="{{ item.file.url }}">
+                                            </video>
+                                            {% endif %}
+                                            {% if item.description %}
+                                            <div class="carousel-caption d-none d-md-block">
+                                                <small class="bg-dark bg-opacity-50 px-2 rounded">{{ item.description }}</small>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    <button class="carousel-control-prev" type="button" data-bs-target="#carousel-{{ group.id }}" data-bs-slide="prev">
+                                        <span class="carousel-control-prev-icon"></span>
+                                    </button>
+                                    <button class="carousel-control-next" type="button" data-bs-target="#carousel-{{ group.id }}" data-bs-slide="next">
+                                        <span class="carousel-control-next-icon"></span>
+                                    </button>
+                                </div>
+                                {% else %}
+                                <p class="text-muted">Нет медиа в этой группе</p>
+                                {% endif %}
                             </div>
-                            {% else %}
-                              <p class="text-muted">Нет медиа в этой группе</p>
-                            {% endif %}
-                          </div>
-                        {% endfor %}
-                      </div>
-                    {% else %}
-                      <p class="text-muted">Группы ещё не созданы</p>
-                    {% endif %}
-                  </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-muted">Группы ещё не созданы</p>
+                        {% endif %}
+                    </div>
                 </div>
 
 
@@ -959,42 +968,42 @@ body {
                 <!-- Расходы -->
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                          <table class="nice-table">
+                        <table class="nice-table">
                             <thead>
-                              <tr>
+                            <tr>
                                 <th>Баланс</th>
                                 <th>Остаток</th>
                                 <th>Израсходовано</th>
-                              </tr>
+                            </tr>
                             </thead>
                             <tbody>
-                              <tr>
+                            <tr>
                                 <td><span class="badge badge-blue">{{total_price}} {{ advert.currency }}</span></td>
                                 <td><span class="badge badge-green">{{total_ost}} {{ advert.currency }}</span></td>
                                 <td><span class="badge badge-red">{{total_expenses}} {{ advert.currency }}</span></td>
-                              </tr>
+                            </tr>
                             </tbody>
-                          </table>
+                        </table>
                     </div>
                     {% if request.user in application.user_menager.all or request.user.employee == 4 %}
-                        <button type="button" style="margin-top: 10px;" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addExpenseModal">
-                            <i class="bi bi-plus"></i> Добавить расход
-                        </button>
+                    <button type="button" style="margin-top: 10px;" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addExpenseModal">
+                        <i class="bi bi-plus"></i> Добавить расход
+                    </button>
                     {% endif %}
                     <div class="card-body">
                         {% if expenses %}
-                            <table class="table table-sm align-middle">
-                                <thead>
-                                    <tr><th>Статья</th><th class="text-end">Сумма</th><th>Дата</th></tr>
-                                </thead>
-                                <tbody>
-                                {% for expense in expenses %}
-                                    <tr><td>{{ expense.title }}</td><td class="text-end">{{ expense.amount }} {{ advert.currency }}</td><td>{{ expense.created_at|date:"d.m.Y" }}</td></tr>
-                                {% endfor %}
-                                </tbody>
-                            </table>
+                        <table class="table table-sm align-middle">
+                            <thead>
+                            <tr><th>Статья</th><th class="text-end">Сумма</th><th>Дата</th></tr>
+                            </thead>
+                            <tbody>
+                            {% for expense in expenses %}
+                            <tr><td>{{ expense.title }}</td><td class="text-end">{{ expense.amount }} {{ advert.currency }}</td><td>{{ expense.created_at|date:"d.m.Y" }}</td></tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
                         {% else %}
-                            <p style="text-align: center;">Нет дополнительных расходов</p>
+                        <p style="text-align: center;">Нет дополнительных расходов</p>
                         {% endif %}
                     </div>
                 </div>
@@ -1050,23 +1059,23 @@ body {
             <!-- Сообщения -->
             <div class="flex-grow-1 overflow-auto border rounded p-2 mb-2" style="min-height:260px;" id="group-chat-messages">
                 {% for message in messages %}
-                    {% if message.author != request.user %}
-                    <div class="d-flex mb-2" data-message-id="{{ message.id }}">
-                        <div class="bg-primary text-white p-2 rounded" style="max-width: 75%;">
-                            <div class="fw-bold small">{{ message.author.first_name }} {{ message.author.last_name }}</div>
-                            <div>{{ message.content }}</div>
-                            <div class="small chat_date text-end text-muted">{{ message.date|date:"d.m H:i" }}</div>
-                        </div>
+                {% if message.author != request.user %}
+                <div class="d-flex mb-2" data-message-id="{{ message.id }}">
+                    <div class="bg-primary text-white p-2 rounded" style="max-width: 75%;">
+                        <div class="fw-bold small">{{ message.author.first_name }} {{ message.author.last_name }}</div>
+                        <div>{{ message.content }}</div>
+                        <div class="small chat_date text-end text-muted">{{ message.date|date:"d.m H:i" }}</div>
                     </div>
-                    {% else %}
-                    <div class="d-flex justify-content-end mb-2" data-message-id="{{ message.id }}">
-                        <div class="bg-light p-2 rounded" style="max-width: 75%;">
-                            <div class="fw-bold small">{{ message.author.first_name }} {{ message.author.last_name }}</div>
-                            <div>{{ message.content }}</div>
-                            <div class="small chat_date text-end text-muted">{{ message.date|date:"d.m H:i" }}</div>
-                        </div>
+                </div>
+                {% else %}
+                <div class="d-flex justify-content-end mb-2" data-message-id="{{ message.id }}">
+                    <div class="bg-light p-2 rounded" style="max-width: 75%;">
+                        <div class="fw-bold small">{{ message.author.first_name }} {{ message.author.last_name }}</div>
+                        <div>{{ message.content }}</div>
+                        <div class="small chat_date text-end text-muted">{{ message.date|date:"d.m H:i" }}</div>
                     </div>
-                    {% endif %}
+                </div>
+                {% endif %}
                 {% endfor %}
             </div>
 
@@ -1084,255 +1093,255 @@ body {
     <input type="hidden" id="user-id" value="{{ request.user.id }}">
     <input type="hidden" id="user-name" value="{{ request.user.first_name }} {{ request.user.last_name }}">
 
-<div class="modal fade" id="addExpenseModal" tabindex="-1" aria-labelledby="addExpenseModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-sm">
+    <div class="modal fade" id="addExpenseModal" tabindex="-1" aria-labelledby="addExpenseModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addExpenseModalLabel">Добавить расход</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="add-expense-form">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="expenseTitle" class="form-label">Статья расходов</label>
+
+                            <!-- выпадающий список с готовыми масками -->
+                            <select id="expenseMaskSelect" class="form-select mb-2">
+                                <option value="">— выбрать из списка —</option>
+                                {% for mask in expense_masks %}
+                                <option value="{{ mask.name }}">{{ mask.name }}</option>
+                                {% endfor %}
+                            </select>
+
+                            <!-- или ввести своё -->
+                            <input type="text" class="form-control" id="expenseTitle"
+                                   placeholder="или введите вручную…">
+                            <div class="mb-3">
+                                <label for="expenseAmount" class="form-label">Сумма</label>
+                                <input type="number" step="0.01" class="form-control" id="expenseAmount" required>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                    <button type="button" class="btn btn-primary" id="saveExpenseBtn">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для редактирования заявки -->
+    <div class="modal fade" id="editApplicationModal" tabindex="-1" aria-labelledby="editApplicationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editApplicationModalLabel">Редактировать заявку</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="edit-application-form">
+                        {% csrf_token %}
+
+
+                        <!-- Поле для статуса -->
+                        <div class="mb-3">
+                            <label for="edit-status" class="form-label">Статус</label>
+                            <select class="form-select" id="edit-status" name="status">
+                                {% for key, value in application.Status.choices %}
+                                <option value="{{ key }}">{{ value }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Выбор менеджеров -->
+                        <div class="mb-3">
+                            <label for="edit-managers" class="form-label">Менеджеры</label>
+                            <select multiple class="form-select" id="edit-managers" name="user_menager">
+                                {% for manager in all_managers %}
+                                <option value="{{ manager.id }}">{{ manager.first_name }} {{ manager.last_name }} ({{ manager.email }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+
+
+                        <!-- Выбор водителей -->
+                        <div class="mb-3">
+                            <label for="edit-drivers" class="form-label">Водители</label>
+                            <select multiple class="form-select" id="edit-drivers" name="user_drivers">
+                                {% for driver in all_drivers %}
+                                <option value="{{ driver.id }}">{{ driver.first_name }} {{ driver.last_name }} ({{ driver.email }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="edit-on-hands" class="form-label">Стоимость доставки</label>
+                            <input type="number" step="0.01" class="form-control" id="edit-on-hands" name="delevery_price" value="{{ application.delevery_price }}">
+                        </div>
+
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" id="save-changes-btn">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="container">
+        <div style="display: flex; justify-content: center;">
+            <h1 class="display-5 fw-bold">Система этапов</h1>
+        </div>
+
+        <!-- Верхние фазы -->
+        <div class="row text-center mb-4" id="phasesRow">
+            {% for pathr in path_responsibilitys %}
+
+            <div class="col-md-4 mb-4">
+                <div class="phase-card">
+                    {% if request.user.employee == 1 or request.user.employee == 2 %}
+                    <div class="edit-panel">
+
+                        <div class="edit-btn" data-bs-toggle="modal" data-bs-target="#editPhaseModal" data-phase="1">
+                            <i class="fas fa-edit"></i>
+                        </div>
+                        <div class="edit-btn" onclick="removePhase(this)">
+                            <i class="fas fa-trash"></i>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <h5 class="phase-title"><strong>Этап {{ forloop.counter  }}</strong></h5>
+                    <p>{{ pathr.additional }}</p>
+
+                    <div class="users-container">
+                        <h6><i class="fas fa-users me-2"></i>Участники этапа</h6>
+
+                        <div class="user">
+                            <img src="{{ pathr.responsible.avatar.url }} " class="user-avatar" alt="John Doe">
+                            <div class="user-info">
+                                <div class="user-name">{{ pathr.responsible.first_name}} {{ pathr.responsible.last_name}}</div>
+                                <div class="user-role">{{ pathr.responsible.get_employee_display }}</div>
+                            </div>
+                            <div class="user-action">
+                                <i class="fas fa-times text-danger"></i>
+                            </div>
+                        </div>
+                        <p>статус - {{ pathr.status }}</p>
+
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+
+        </div>
+
+        <!-- Кнопка добавления этапа -->
+        {% if request.user.employee == 2 %}
+
+        <button class="btn add-phase-btn" data-bs-toggle="modal" data-bs-target="#editPhaseModal" data-phase="1">
+            Добавить новый этап
+        </button>
+        {% endif %}
+        <!-- стрелки -->
+        <div class="arrow-line" id="arrowLine">
+            <div class="arrow blue"></div>
+            <div class="arrow blue"></div>
+            <div class="arrow blue"></div>
+            <div class="arrow blue"></div>
+            <div class="arrow blue"></div>
+            <div class="arrow blue"></div>
+            <div class="arrow blue"></div>
+            <div class="arrow blue"></div>
+            <div class="arrow blue"></div>
+            <div class="arrow blue"></div>
+            <div class="arrow blue"></div>
+            <div class="arrow blue"></div>
+            <div class="arrow blue"></div>
+            <div class="arrow blue"></div>
+            <div class="arrow blue"></div>
+        </div>
+        <button class="btn add-phase-btn" data-bs-toggle="modal" data-bs-target="#addPhaseModal">
+            <i class="fas fa-plus me-2"></i>Добавить новый путь
+        </button>
+
+        <!-- Нижние шаги -->
+        <div class="row text-center mt-4" id="stepsRow">
+            {% for step in paths %}
+            <div class="col-md-4 mb-4">
+                <div class="step-card">
+                    <h5 class="step-title">
+                        <strong>{{ forloop.counter  }}. {{ step.name }}</strong>
+                    </h5>
+                    <p>{{ step.description }}</p>
+                    <div class="text-primary step-icon">
+                        <i class="bi bi-geo-alt-fill"></i>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Модальное окно добавления этапа -->
+<div class="modal fade" id="addPhaseModal" tabindex="-1">
+    <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addExpenseModalLabel">Добавить расход</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                <h5 class="modal-title">Добавить новый этап</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <form id="add-expense-form">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                      <label for="expenseTitle" class="form-label">Статья расходов</label>
+                <button type="button"
+                        class="btn btn-outline-primary mb-3"
+                        id="toggle-map-btn">
+                    Скрыть карту
+                </button>
 
-                      <!-- выпадающий список с готовыми масками -->
-                        <select id="expenseMaskSelect" class="form-select mb-2">
-                            <option value="">— выбрать из списка —</option>
-                            {% for mask in expense_masks %}
-                                <option value="{{ mask.name }}">{{ mask.name }}</option>
-                            {% endfor %}
-                        </select>
-
-                      <!-- или ввести своё -->
-                      <input type="text" class="form-control" id="expenseTitle"
-                             placeholder="или введите вручную…">
-                    <div class="mb-3">
-                        <label for="expenseAmount" class="form-label">Сумма</label>
-                        <input type="number" step="0.01" class="form-control" id="expenseAmount" required>
-                    </div>
-                    </div>
-                </form>
+                <div id="map-container">
+                    <div id="map" style="height: 400px; width: 100%; border-radius: 8px;"></div>
+                </div>
+                {{ path_form.as_p }}
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-                <button type="button" class="btn btn-primary" id="saveExpenseBtn">Сохранить</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="submit" class="btn btn-primary" id="addPhaseBtn">documents</button>
             </div>
         </div>
     </div>
 </div>
 
-    <!-- Модальное окно для редактирования заявки -->
-    <div class="modal fade" id="editApplicationModal" tabindex="-1" aria-labelledby="editApplicationModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-lg">
+<!-- Модальное окно редактирования этапа -->
+<div class="modal fade" id="editPhaseModal" tabindex="-1" aria-labelledby="editPhaseModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
         <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="editApplicationModalLabel">Редактировать заявку</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
-          </div>
-          <div class="modal-body">
-            <form id="edit-application-form">
-              {% csrf_token %}
-
-
-              <!-- Поле для статуса -->
-              <div class="mb-3">
-                <label for="edit-status" class="form-label">Статус</label>
-                <select class="form-select" id="edit-status" name="status">
-                  {% for key, value in application.Status.choices %}
-                    <option value="{{ key }}">{{ value }}</option>
-                  {% endfor %}
-                </select>
-              </div>
-
-              <!-- Выбор менеджеров -->
-              <div class="mb-3">
-                <label for="edit-managers" class="form-label">Менеджеры</label>
-                <select multiple class="form-select" id="edit-managers" name="user_menager">
-                  {% for manager in all_managers %}
-                    <option value="{{ manager.id }}">{{ manager.first_name }} {{ manager.last_name }} ({{ manager.email }})</option>
-                  {% endfor %}
-                </select>
-              </div>
-
-
-
-              <!-- Выбор водителей -->
-              <div class="mb-3">
-                <label for="edit-drivers" class="form-label">Водители</label>
-                <select multiple class="form-select" id="edit-drivers" name="user_drivers">
-                  {% for driver in all_drivers %}
-                    <option value="{{ driver.id }}">{{ driver.first_name }} {{ driver.last_name }} ({{ driver.email }})</option>
-                  {% endfor %}
-                </select>
-              </div>
-
-                <div class="mb-3">
-                  <label for="edit-on-hands" class="form-label">Стоимость доставки</label>
-                  <input type="number" step="0.01" class="form-control" id="edit-on-hands" name="delevery_price" value="{{ application.delevery_price }}">
-                </div>
-
-            </form>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-            <button type="button" class="btn btn-primary" id="save-changes-btn">Сохранить</button>
-          </div>
+            <div class="modal-header">
+                <h5 class="modal-title" id="addPhaseModalLabel">Добавить новый этап</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {{ path_responsibilitys_form.as_p }}
+                <input type="hidden" id="responsibility_path_id">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="submit" class="btn btn-primary" onclick="createResponsibility()">Добавить этап</button>
+            </div>
         </div>
-      </div>
     </div>
+</div>
 
 
-                <div class="container">
-                        <div style="display: flex; justify-content: center;">
-                            <h1 class="display-5 fw-bold">Система этапов</h1>
-                        </div>
-
-                        <!-- Верхние фазы -->
-                        <div class="row text-center mb-4" id="phasesRow">
-                                                            {% for pathr in path_responsibilitys %}
-
-                            <div class="col-md-4 mb-4">
-                                <div class="phase-card">
-                                    {% if request.user.employee == 1 or request.user.employee == 2 %}
-                                    <div class="edit-panel">
-
-                                        <div class="edit-btn" data-bs-toggle="modal" data-bs-target="#editPhaseModal" data-phase="1">
-                                            <i class="fas fa-edit"></i>
-                                        </div>
-                                        <div class="edit-btn" onclick="removePhase(this)">
-                                            <i class="fas fa-trash"></i>
-                                        </div>
-                                    </div>
-                                    {% endif %}
-
-                                    <h5 class="phase-title"><strong>Этап {{ forloop.counter  }}</strong></h5>
-                                    <p>{{ pathr.additional }}</p>
-
-                                    <div class="users-container">
-                                        <h6><i class="fas fa-users me-2"></i>Участники этапа</h6>
-
-                                        <div class="user">
-                                            <img src="{{ pathr.responsible.avatar.url }} " class="user-avatar" alt="John Doe">
-                                            <div class="user-info">
-                                                <div class="user-name">{{ pathr.responsible.first_name}} {{ pathr.responsible.last_name}}</div>
-                                                <div class="user-role">{{ pathr.responsible.get_employee_display }}</div>
-                                            </div>
-                                            <div class="user-action">
-                                                <i class="fas fa-times text-danger"></i>
-                                            </div>
-                                        </div>
-                                    <p>статус - {{ pathr.status }}</p>
-
-                                    </div>
-                                </div>
-                            </div>
-                        {% endfor %}
-
-
-                        </div>
-
-                        <!-- Кнопка добавления этапа -->
-                        {% if request.user.employee == 2 %}
-
-                        <button class="btn add-phase-btn" data-bs-toggle="modal" data-bs-target="#editPhaseModal" data-phase="1">
-                            Добавить новый этап
-                        </button>
-                        {% endif %}
-                        <!-- стрелки -->
-                        <div class="arrow-line" id="arrowLine">
-                            <div class="arrow blue"></div>
-                            <div class="arrow blue"></div>
-                            <div class="arrow blue"></div>
-                            <div class="arrow blue"></div>
-                            <div class="arrow blue"></div>
-                            <div class="arrow blue"></div>
-                            <div class="arrow blue"></div>
-                            <div class="arrow blue"></div>
-                            <div class="arrow blue"></div>
-                            <div class="arrow blue"></div>
-                            <div class="arrow blue"></div>
-                            <div class="arrow blue"></div>
-                            <div class="arrow blue"></div>
-                            <div class="arrow blue"></div>
-                            <div class="arrow blue"></div>
-                        </div>
-                        <button class="btn add-phase-btn" data-bs-toggle="modal" data-bs-target="#addPhaseModal">
-                            <i class="fas fa-plus me-2"></i>Добавить новый путь
-                        </button>
-
-                        <!-- Нижние шаги -->
-                        <div class="row text-center mt-4" id="stepsRow">
-                            {% for step in paths %}
-                            <div class="col-md-4 mb-4">
-                                <div class="step-card">
-                                    <h5 class="step-title">
-                                        <strong>{{ forloop.counter  }}. {{ step.name }}</strong>
-                                    </h5>
-                                    <p>{{ step.description }}</p>
-                                    <div class="text-primary step-icon">
-                                        <i class="bi bi-geo-alt-fill"></i>
-                                    </div>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-
-                        </div>
-
-                    </div>
-
-                    <!-- Модальное окно добавления этапа -->
-                    <div class="modal fade" id="addPhaseModal" tabindex="-1">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title">Добавить новый этап</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <button type="button"
-                                            class="btn btn-outline-primary mb-3"
-                                            id="toggle-map-btn">
-                                      Скрыть карту
-                                    </button>
-
-                                    <div id="map-container">
-                                      <div id="map" style="height: 400px; width: 100%; border-radius: 8px;"></div>
-                                    </div>
-                                    {{ path_form.as_p }}
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                                    <button type="submit" class="btn btn-primary" id="addPhaseBtn">documents</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Модальное окно редактирования этапа -->
-                    <div class="modal fade" id="editPhaseModal" tabindex="-1" aria-labelledby="editPhaseModalLabel" aria-hidden="true">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="addPhaseModalLabel">Добавить новый этап</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body">
-                                    {{ path_responsibilitys_form.as_p }}
-                                    <input type="hidden" id="responsibility_path_id">
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                                    <button type="submit" class="btn btn-primary" onclick="createResponsibility()">Добавить этап</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-
-    <!-- Модальное окно редактирования этапа -->
+<!-- Модальное окно редактирования этапа -->
 <div class="modal fade" id="editPathModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -1374,31 +1383,31 @@ body {
 
 
 <div class="modal fade" id="addGroupModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <form id="addGroupForm">
-        {% csrf_token %}
-        <div class="modal-header">
-          <h5 class="modal-title">Создать группу</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="addGroupForm">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">Создать группу</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Название</label>
+                        <input type="text" class="form-control" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Описание</label>
+                        <textarea class="form-control" name="description" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Создать</button>
+                </div>
+            </form>
         </div>
-        <div class="modal-body">
-          <div class="mb-3">
-            <label class="form-label">Название</label>
-            <input type="text" class="form-control" name="title" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Описание</label>
-            <textarea class="form-control" name="description" rows="2"></textarea>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-          <button type="submit" class="btn btn-primary">Создать</button>
-        </div>
-      </form>
     </div>
-  </div>
 </div>
 
 
@@ -1422,111 +1431,111 @@ body {
     </div>
 </div>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-        const toggle = document.getElementById("toggle-desc");
-        if (toggle) {
-            toggle.addEventListener("click", function (e) {
-                e.preventDefault();
-                const moreText = document.getElementById("more-text");
-                const p = document.getElementById("description-text");
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+    const toggle = document.getElementById("toggle-desc");
+    if (toggle) {
+        toggle.addEventListener("click", function (e) {
+            e.preventDefault();
+            const moreText = document.getElementById("more-text");
+            const p = document.getElementById("description-text");
 
-                // Переключение видимости
-                if (moreText.style.display === "none") {
-                    moreText.style.display = "inline";
-                    p.innerHTML = moreText.innerHTML + ' <a href="#" id="toggle-desc">Скрыть</a>';
-                } else {
-                    moreText.style.display = "none";
-                    p.innerHTML = p.innerHTML.split('<a')[0] + ' <a href="#" id="toggle-desc">Показать полностью</a>';
-                }
-            });
-        }
-    });
-
-    </script>
-
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const chatContainer = document.getElementById('group-chat-messages');
-            const messageInput  = document.getElementById('group-chat-input');
-            const messageForm   = document.getElementById('group-chat-form');
-            const applicationId = document.getElementById('application-id').value;
-            const userId        = document.getElementById('user-id').value;
-            const userName      = document.getElementById('user-name').value;
-
-            const protocol  = location.protocol === 'https:' ? 'wss' : 'ws';
-            const chatSocket = new WebSocket(`${protocol}://${location.host}/ws/chat/${applicationId}/`);
-
-            chatSocket.onopen = () => console.log("WebSocket соединение установлено");
-
-            chatSocket.onmessage = (e) => {
-                const data = JSON.parse(e.data);
-                console.log("Получено:", data);
-
-                if (data.type === "chat_message") {
-                    displayMessage(data);           // теперь рендерим сам event
-                } else if (data.error) {
-                    console.error("Ошибка:", data.error);
-                }
-            };
-
-            chatSocket.onclose = (e) => console.log("WebSocket закрыт:", e);
-            chatSocket.onerror = (e) => console.error("WebSocket ошибка:", e);
-
-            // Отправка
-            messageForm.addEventListener("submit", (e) => {
-                e.preventDefault();
-                const text = messageInput.value.trim();
-                if (!text) return;
-
-                if (chatSocket.readyState === WebSocket.OPEN) {
-                    chatSocket.send(JSON.stringify({
-                        type: "chat_message",
-                        content: text,          // <-- content
-                        author_id: userId       // <-- author_id
-                    }));
-                    messageInput.value = "";
-                } else {
-                    alert("Нет соединения с чатом");
-                }
-            });
-
-            messageInput.addEventListener("keydown", (e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    messageForm.dispatchEvent(new Event("submit"));
-                }
-            });
-
-            function displayMessage(m) {
-                const isOwn = String(userId) === String(m.author_id);
-                const div = document.createElement("div");
-                div.className = `d-flex mb-2 ${isOwn ? "justify-content-end" : ""}`;
-                div.dataset.messageId = m.message_id;
-
-                const bubble = document.createElement("div");
-                bubble.className = isOwn ? "bg-light p-2 rounded" : "bg-primary text-white p-2 rounded";
-                bubble.style.maxWidth = "75%";
-                bubble.innerHTML = `
-                    <div class="fw-bold small">${escapeHtml(m.author || "")}</div>
-                    <div>${escapeHtml(m.content || "")}</div>
-                    <div class="small chat_date text-end text-muted">${m.date || ""}</div>
-                `;
-
-                div.appendChild(bubble);
-                chatContainer.appendChild(div);
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-            }
-
-            function escapeHtml(t) {
-                const div = document.createElement("div");
-                div.textContent = t ?? "";
-                return div.innerHTML;
+            // Переключение видимости
+            if (moreText.style.display === "none") {
+                moreText.style.display = "inline";
+                p.innerHTML = moreText.innerHTML + ' <a href="#" id="toggle-desc">Скрыть</a>';
+            } else {
+                moreText.style.display = "none";
+                p.innerHTML = p.innerHTML.split('<a')[0] + ' <a href="#" id="toggle-desc">Показать полностью</a>';
             }
         });
-        </script>
+    }
+});
 
-    <script>
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const chatContainer = document.getElementById('group-chat-messages');
+        const messageInput  = document.getElementById('group-chat-input');
+        const messageForm   = document.getElementById('group-chat-form');
+        const applicationId = document.getElementById('application-id').value;
+        const userId        = document.getElementById('user-id').value;
+        const userName      = document.getElementById('user-name').value;
+
+        const protocol  = location.protocol === 'https:' ? 'wss' : 'ws';
+        const chatSocket = new WebSocket(`${protocol}://${location.host}/ws/chat/${applicationId}/`);
+
+        chatSocket.onopen = () => console.log("WebSocket соединение установлено");
+
+        chatSocket.onmessage = (e) => {
+            const data = JSON.parse(e.data);
+            console.log("Получено:", data);
+
+            if (data.type === "chat_message") {
+                displayMessage(data);           // теперь рендерим сам event
+            } else if (data.error) {
+                console.error("Ошибка:", data.error);
+            }
+        };
+
+        chatSocket.onclose = (e) => console.log("WebSocket закрыт:", e);
+        chatSocket.onerror = (e) => console.error("WebSocket ошибка:", e);
+
+        // Отправка
+        messageForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const text = messageInput.value.trim();
+            if (!text) return;
+
+            if (chatSocket.readyState === WebSocket.OPEN) {
+                chatSocket.send(JSON.stringify({
+                    type: "chat_message",
+                    content: text,          // <-- content
+                    author_id: userId       // <-- author_id
+                }));
+                messageInput.value = "";
+            } else {
+                alert("Нет соединения с чатом");
+            }
+        });
+
+        messageInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                messageForm.dispatchEvent(new Event("submit"));
+            }
+        });
+
+        function displayMessage(m) {
+            const isOwn = String(userId) === String(m.author_id);
+            const div = document.createElement("div");
+            div.className = `d-flex mb-2 ${isOwn ? "justify-content-end" : ""}`;
+            div.dataset.messageId = m.message_id;
+
+            const bubble = document.createElement("div");
+            bubble.className = isOwn ? "bg-light p-2 rounded" : "bg-primary text-white p-2 rounded";
+            bubble.style.maxWidth = "75%";
+            bubble.innerHTML = `
+                <div class="fw-bold small">${escapeHtml(m.author || "")}</div>
+                <div>${escapeHtml(m.content || "")}</div>
+                <div class="small chat_date text-end text-muted">${m.date || ""}</div>
+            `;
+
+            div.appendChild(bubble);
+            chatContainer.appendChild(div);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function escapeHtml(t) {
+            const div = document.createElement("div");
+            div.textContent = t ?? "";
+            return div.innerHTML;
+        }
+    });
+</script>
+
+<script>
     document.addEventListener("DOMContentLoaded", () => {
       let isEditing = false;
       const sidebar = document.getElementById('sidebar');
@@ -1582,109 +1591,109 @@ body {
 
     });
 
-    </script>
-    <script>
-      document.addEventListener("DOMContentLoaded", () => {
-        const modal = new bootstrap.Modal(document.getElementById('editApplicationModal'));
-        const form = document.getElementById('edit-application-form');
-        const saveBtn = document.getElementById('save-changes-btn');
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const modal = new bootstrap.Modal(document.getElementById('editApplicationModal'));
+      const form = document.getElementById('edit-application-form');
+      const saveBtn = document.getElementById('save-changes-btn');
 
-        // Переменная для хранения ID заявки
-        let currentApplicationId = "{{ application.id }}";
+      // Переменная для хранения ID заявки
+      let currentApplicationId = "{{ application.id }}";
 
-        // Обработчик кнопки "Внести изменения"
-        document.getElementById('edit-sidebar-btn')?.addEventListener('click', () => {
-          // Заполняем форму текущими данными
-          // Предполагаем, что есть текущие значения, можно их вставить сюда
+      // Обработчик кнопки "Внести изменения"
+      document.getElementById('edit-sidebar-btn')?.addEventListener('click', () => {
+        // Заполняем форму текущими данными
+        // Предполагаем, что есть текущие значения, можно их вставить сюда
 
-          // Заполняем выбранный статус
-          document.getElementById('edit-status').value = "{{ application.status }}";
+        // Заполняем выбранный статус
+        document.getElementById('edit-status').value = "{{ application.status }}";
 
-          // Заполняем менеджеров (выбираем только тех, что есть у заявки)
-          const managerIds = [{% for m in application.user_menager.all %}'{{ m.id }}',{% endfor %}];
-          const managerSelect = document.getElementById('edit-managers');
-          Array.from(managerSelect.options).forEach(option => {
-            option.selected = managerIds.includes(option.value);
-          });
-
-          // Заполняем водителей
-          const driverIds = [{% for d in application.user_drivers.all %}'{{ d.id }}',{% endfor %}];
-          const driverSelect = document.getElementById('edit-drivers');
-          Array.from(driverSelect.options).forEach(option => {
-            option.selected = driverIds.includes(option.value);
-          });
-
-          // Открываем модальное окно
-          modal.show();
+        // Заполняем менеджеров (выбираем только тех, что есть у заявки)
+        const managerIds = [{% for m in application.user_menager.all %}'{{ m.id }}',{% endfor %}];
+        const managerSelect = document.getElementById('edit-managers');
+        Array.from(managerSelect.options).forEach(option => {
+          option.selected = managerIds.includes(option.value);
         });
 
-        // Обработчик кнопки "Сохранить"
-        saveBtn?.addEventListener('click', () => {
-          // Собираем данные
-            const data = {
-              status: document.getElementById('edit-status').value,
-              user_menager: Array.from(document.getElementById('edit-managers').selectedOptions).map(opt => opt.value),
-              user_drivers: Array.from(document.getElementById('edit-drivers').selectedOptions).map(opt => opt.value),
-              delevery_price: document.getElementById('edit-on-hands').value   // 👈 добавлено
-            };
+        // Заполняем водителей
+        const driverIds = [{% for d in application.user_drivers.all %}'{{ d.id }}',{% endfor %}];
+        const driverSelect = document.getElementById('edit-drivers');
+        Array.from(driverSelect.options).forEach(option => {
+          option.selected = driverIds.includes(option.value);
+        });
+
+        // Открываем модальное окно
+        modal.show();
+      });
+
+      // Обработчик кнопки "Сохранить"
+      saveBtn?.addEventListener('click', () => {
+        // Собираем данные
+          const data = {
+            status: document.getElementById('edit-status').value,
+            user_menager: Array.from(document.getElementById('edit-managers').selectedOptions).map(opt => opt.value),
+            user_drivers: Array.from(document.getElementById('edit-drivers').selectedOptions).map(opt => opt.value),
+            delevery_price: document.getElementById('edit-on-hands').value   // 👈 добавлено
+          };
 
 
-          fetch("{% url 'moderation:update_application' application.id %}", {
-            method: 'POST',
-            headers: {
-              'X-CSRFToken': '{{ csrf_token }}',
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-          })
-          .then(res => res.json())
-          .then(result => {
-            if (result.success) {
-              // Обновляем отображение (например, стоимость)
-              // Можно добавить обновление других полей при необходимости
-              location.reload();
+        fetch("{% url 'moderation:update_application' application.id %}", {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        })
+        .then(res => res.json())
+        .then(result => {
+          if (result.success) {
+            // Обновляем отображение (например, стоимость)
+            // Можно добавить обновление других полей при необходимости
+            location.reload();
 
 
-              modal.hide();
+            modal.hide();
+          } else {
+            alert('Ошибка при сохранении: ' + result.error);
+          }
+        })
+        .catch(() => {
+          alert('Ошибка сервера');
+        });
+      });
+    });
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const address = "{{ advert.address|escapejs }}"; // Получаем адрес из контекста
+      const iframe = document.querySelector('.osm-iframe');
+
+      if (address && iframe) {
+        // Используем API Nominatim для геокодирования
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`)
+          .then(response => response.json())
+          .then(data => {
+            if (data && data.length > 0) {
+              const lat = data[0].lat;
+              const lon = data[0].lon;
+              // Обновляем src iframe с новыми координатами
+              iframe.src = `https://www.openstreetmap.org/export/embed.html?bbox=${lon},${lat},${lon},${lat}&layer=mapnik&marker=${lat},${lon}`;
+
+              // Также можно обновить подпись
+              document.querySelector('.card-body .small.text-muted').innerText = address;
             } else {
-              alert('Ошибка при сохранении: ' + result.error);
+              console.warn('Координаты по адресу не найдены');
             }
           })
-          .catch(() => {
-            alert('Ошибка сервера');
+          .catch(error => {
+            console.error('Ошибка геокодирования:', error);
           });
-        });
-      });
-    </script>
-    <script>
-      document.addEventListener("DOMContentLoaded", function() {
-        const address = "{{ advert.address|escapejs }}"; // Получаем адрес из контекста
-        const iframe = document.querySelector('.osm-iframe');
-
-        if (address && iframe) {
-          // Используем API Nominatim для геокодирования
-          fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`)
-            .then(response => response.json())
-            .then(data => {
-              if (data && data.length > 0) {
-                const lat = data[0].lat;
-                const lon = data[0].lon;
-                // Обновляем src iframe с новыми координатами
-                iframe.src = `https://www.openstreetmap.org/export/embed.html?bbox=${lon},${lat},${lon},${lat}&layer=mapnik&marker=${lat},${lon}`;
-
-                // Также можно обновить подпись
-                document.querySelector('.card-body .small.text-muted').innerText = address;
-              } else {
-                console.warn('Координаты по адресу не найдены');
-              }
-            })
-            .catch(error => {
-              console.error('Ошибка геокодирования:', error);
-            });
-        }
-      });
-    </script>
-    <script>
+      }
+    });
+</script>
+<script>
     document.addEventListener('DOMContentLoaded', () => {
         // Получаем кнопку по ID
         const btn = document.getElementById('recreate-doc-btn');
@@ -1744,9 +1753,9 @@ body {
             }
         });
     });
-    </script>
+</script>
 
-        <script>
+<script>
     document.addEventListener('DOMContentLoaded', () => {
         const modal = new bootstrap.Modal(document.getElementById('addExpenseModal'));
         const saveBtn = document.getElementById('saveExpenseBtn');
@@ -1792,128 +1801,128 @@ body {
     });
 </script>
 <script>
-     // Текущий редактируемый этап
+    // Текущий редактируемый этап
 let currentEditingPhase = null;
 let phaseCounter = 3; // Начинаем с 3, так как уже есть 3 этапа
 
 // Функция для удаления этапа
 function removePhase(element) {
-    const phaseCard = element.closest('.col-md-4');
-    const phaseIndex = Array.from(phaseCard.parentNode.children).indexOf(phaseCard);
+   const phaseCard = element.closest('.col-md-4');
+   const phaseIndex = Array.from(phaseCard.parentNode.children).indexOf(phaseCard);
 
-    if (confirm('Вы уверены, что хотите удалить этот этап?')) {
-        // Удаляем из всех трех секций
-        phaseCard.remove();
-        document.getElementById('stepsRow').children[phaseIndex].remove();
+   if (confirm('Вы уверены, что хотите удалить этот этап?')) {
+       // Удаляем из всех трех секций
+       phaseCard.remove();
+       document.getElementById('stepsRow').children[phaseIndex].remove();
 
-        // Обновляем стрелки
-        updateArrows();
+       // Обновляем стрелки
+       updateArrows();
 
-        // Обновляем сетку после удаления
-        updatePhasesLayout();
-    }
+       // Обновляем сетку после удаления
+       updatePhasesLayout();
+   }
 }
 
 // Функция для обновления расположения этапов
 function updatePhasesLayout() {
-    const phasesRow = document.getElementById('phasesRow');
-    const phaseCards = phasesRow.querySelectorAll('.col-md-4');
+   const phasesRow = document.getElementById('phasesRow');
+   const phaseCards = phasesRow.querySelectorAll('.col-md-4');
 
-    console.log('Теперь этапов: ' + phaseCards.length);
+   console.log('Теперь этапов: ' + phaseCards.length);
 }
 
 // Функция для обновления стрелок
 function updateArrows() {
-    const arrowLine = document.getElementById('arrowLine');
-    const phaseCount = document.getElementById('phasesRow').children.length;
+   const arrowLine = document.getElementById('arrowLine');
+   const phaseCount = document.getElementById('phasesRow').children.length;
 
-    // Очищаем текущие стрелки
-    arrowLine.innerHTML = '';
+   // Очищаем текущие стрелки
+   arrowLine.innerHTML = '';
 
-    // Добавляем новые стрелки (5 на этап)
-    for (let i = 0; i < phaseCount * 5; i++) {
-        const arrow = document.createElement('div');
-        arrow.className = 'arrow blue';
-        arrowLine.appendChild(arrow);
-    }
+   // Добавляем новые стрелки (5 на этап)
+   for (let i = 0; i < phaseCount * 5; i++) {
+       const arrow = document.createElement('div');
+       arrow.className = 'arrow blue';
+       arrowLine.appendChild(arrow);
+   }
 }
 
 // Функция для добавления нового этапа
 function addNewPhase() {
-    const title = document.getElementById('id_name').value;
-    const description = document.getElementById('id_description').value;
-    const stepTitle = '';
-    const stepDescription = '';
+   const title = document.getElementById('id_name').value;
+   const description = document.getElementById('id_description').value;
+   const stepTitle = '';
+   const stepDescription = '';
 
-    phaseCounter++;
+   phaseCounter++;
 
-    // 1. Добавляем в phasesRow
-    const newPhaseHTML = `
-        <div class="col-md-4 mb-4">
-            <div class="phase-card">
-                <div class="edit-panel">
-                    <div class="edit-btn" data-bs-toggle="modal" data-bs-target="#editPhaseModal" data-phase="${phaseCounter}">
-                        <i class="fas fa-edit"></i>
-                    </div>
-                    <div class="edit-btn" onclick="removePhase(this)">
-                        <i class="fas fa-trash"></i>
-                    </div>
-                </div>
+   // 1. Добавляем в phasesRow
+   const newPhaseHTML = `
+       <div class="col-md-4 mb-4">
+           <div class="phase-card">
+               <div class="edit-panel">
+                   <div class="edit-btn" data-bs-toggle="modal" data-bs-target="#editPhaseModal" data-phase="${phaseCounter}">
+                       <i class="fas fa-edit"></i>
+                   </div>
+                   <div class="edit-btn" onclick="removePhase(this)">
+                       <i class="fas fa-trash"></i>
+                   </div>
+               </div>
 
-                <h5 class="phase-title"><strong>${title}</strong></h5>
-                <p>${description || 'Описание этапа'}</p>
+               <h5 class="phase-title"><strong>${title}</strong></h5>
+               <p>${description || 'Описание этапа'}</p>
 
-                <div class="users-container">
-                    <h6><i class="fas fa-users me-2"></i>Участники в данном пути</h6>
-                    <div id="users-${phaseCounter}">
-                        <!-- Участники будут добавлены здесь -->
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
+               <div class="users-container">
+                   <h6><i class="fas fa-users me-2"></i>Участники в данном пути</h6>
+                   <div id="users-${phaseCounter}">
+                       <!-- Участники будут добавлены здесь -->
+                   </div>
+               </div>
+           </div>
+       </div>
+   `;
 
-    const phasesRow = document.getElementById('phasesRow');
-    phasesRow.insertAdjacentHTML('beforeend', newPhaseHTML);
+   const phasesRow = document.getElementById('phasesRow');
+   phasesRow.insertAdjacentHTML('beforeend', newPhaseHTML);
 
-    // 2. Обновляем стрелки в arrowLine
-    updateArrows();
+   // 2. Обновляем стрелки в arrowLine
+   updateArrows();
 
-    // 3. Добавляем в stepsRow
-    const newStepHTML = `
-        <div class="col-md-4 mb-4">
-            <div class="step-card">
-                <h5 class="step-title"><strong>${stepTitle}</strong></h5>
-                <p>${stepDescription || 'Описание пути'}</p>
-                <div class="text-primary step-icon">
-                    <i class="bi bi-geo-alt-fill"></i>
-                </div>
-            </div>
-        </div>
-    `;
+   // 3. Добавляем в stepsRow
+   const newStepHTML = `
+       <div class="col-md-4 mb-4">
+           <div class="step-card">
+               <h5 class="step-title"><strong>${stepTitle}</strong></h5>
+               <p>${stepDescription || 'Описание пути'}</p>
+               <div class="text-primary step-icon">
+                   <i class="bi bi-geo-alt-fill"></i>
+               </div>
+           </div>
+       </div>
+   `;
 
-    const stepsRow = document.getElementById('stepsRow');
-    stepsRow.insertAdjacentHTML('beforeend', newStepHTML);
+   const stepsRow = document.getElementById('stepsRow');
+   stepsRow.insertAdjacentHTML('beforeend', newStepHTML);
 
-    // Добавляем участников, если они есть
-    const usersList = document.getElementById('usersList').querySelectorAll('.user-item');
-    if (usersList.length > 0) {
-        const usersContainer = document.getElementById(`users-${phaseCounter}`);
-        usersList.forEach(user => {
-            usersContainer.innerHTML += user.outerHTML;
-        });
-    }
+   // Добавляем участников, если они есть
+   const usersList = document.getElementById('usersList').querySelectorAll('.user-item');
+   if (usersList.length > 0) {
+       const usersContainer = document.getElementById(`users-${phaseCounter}`);
+       usersList.forEach(user => {
+           usersContainer.innerHTML += user.outerHTML;
+       });
+   }
 
-    // Закрываем модальное окно
-    const modal = bootstrap.Modal.getInstance(document.getElementById('addPhaseModal'));
-    modal.hide();
+   // Закрываем модальное окно
+   const modal = bootstrap.Modal.getInstance(document.getElementById('addPhaseModal'));
+   modal.hide();
 
-    // Сбрасываем форму
-    document.getElementById('addPhaseForm').reset();
-    document.getElementById('usersList').innerHTML = '';
+   // Сбрасываем форму
+   document.getElementById('addPhaseForm').reset();
+   document.getElementById('usersList').innerHTML = '';
 
-    // Обновляем сетку
-    updatePhasesLayout();
+   // Обновляем сетку
+   updatePhasesLayout();
 }
 
 </script>
@@ -1924,971 +1933,971 @@ function addNewPhase() {
 
 
 <script>
-// Глобальные переменные
-let currentApplicationId = "{{ application.id }}";
+    // Глобальные переменные
+    let currentApplicationId = "{{ application.id }}";
 
-// Функция создания этапа (пути)
-async function createPath() {
-    const formData = {
-        aplication: currentApplicationId,
-        name: document.getElementById('id_name').value,
-        description: document.getElementById('id_description').value,
-        longitude: parseFloat(document.getElementById('id_longitude').value) || 0,
-        latitude: parseFloat(document.getElementById('id_latitude').value) || 0,
-        request: document.getElementById('id_request').value
-    };
+    // Функция создания этапа (пути)
+    async function createPath() {
+        const formData = {
+            aplication: currentApplicationId,
+            name: document.getElementById('id_name').value,
+            description: document.getElementById('id_description').value,
+            longitude: parseFloat(document.getElementById('id_longitude').value) || 0,
+            latitude: parseFloat(document.getElementById('id_latitude').value) || 0,
+            request: document.getElementById('id_request').value
+        };
 
-    // Валидация обязательных полей
-    if (!formData.name) {
-        alert('Пожалуйста, введите название этапа');
-        return;
-    }
+        // Валидация обязательных полей
+        if (!formData.name) {
+            alert('Пожалуйста, введите название этапа');
+            return;
+        }
 
-    try {
-        const response = await fetch('{% url "moderation:create_path" %}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token }}'
-            },
-            body: JSON.stringify(formData)
-        });
+        try {
+            const response = await fetch('{% url "moderation:create_path" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify(formData)
+            });
 
-        const result = await response.json();
+            const result = await response.json();
 
-        if (result.success) {
-            // Показываем сообщение об успехе
-            alert('Этап успешно создан!');
+            if (result.success) {
+                // Показываем сообщение об успехе
+                alert('Этап успешно создан!');
 
-            // Закрываем модальное окно
-            const modal = bootstrap.Modal.getInstance(document.getElementById('addPhaseModal'));
-            modal.hide();
+                // Закрываем модальное окно
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addPhaseModal'));
+                modal.hide();
 
-            // Обновляем страницу чтобы увидеть новый этап
-            location.reload();
-        } else {
-            // Показываем ошибки валидации
-            if (result.errors) {
-                let errorMessage = 'Ошибки при сохранении:\n';
-                for (const field in result.errors) {
-                    errorMessage += `${field}: ${result.errors[field].join(', ')}\n`;
+                // Обновляем страницу чтобы увидеть новый этап
+                location.reload();
+            } else {
+                // Показываем ошибки валидации
+                if (result.errors) {
+                    let errorMessage = 'Ошибки при сохранении:\n';
+                    for (const field in result.errors) {
+                        errorMessage += `${field}: ${result.errors[field].join(', ')}\n`;
+                    }
+                    alert(errorMessage);
+                } else {
+                    alert('Ошибка при создании этапа: ' + (result.error || 'Неизвестная ошибка'));
                 }
-                alert(errorMessage);
-            } else {
-                alert('Ошибка при создании этапа: ' + (result.error || 'Неизвестная ошибка'));
             }
+        } catch (error) {
+            console.error('Ошибка сети:', error);
         }
-    } catch (error) {
-        console.error('Ошибка сети:', error);
     }
-}
 
-// Функция создания ответственности
-async function createResponsibility() {
-    const formData = {
-        application_id: "{{ application.id }}",      // 👈 передаем id заявки
-        path_choice: document.getElementById('id_path_choice').value,
-        status: document.getElementById('id_status').value,
-        additional: document.getElementById('id_additional').value,
-        responsible: document.getElementById('id_responsible').value
-    };
+    // Функция создания ответственности
+    async function createResponsibility() {
+        const formData = {
+            application_id: "{{ application.id }}",      // 👈 передаем id заявки
+            path_choice: document.getElementById('id_path_choice').value,
+            status: document.getElementById('id_status').value,
+            additional: document.getElementById('id_additional').value,
+            responsible: document.getElementById('id_responsible').value
+        };
 
-    try {
-        const response = await fetch('{% url "moderation:create_responsibility" %}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token }}'
-            },
-            body: JSON.stringify(formData)
-        });
+        try {
+            const response = await fetch('{% url "moderation:create_responsibility" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify(formData)
+            });
 
-        const result = await response.json();
+            const result = await response.json();
 
-        if (result.success) {
-            const r = result.responsibility;
+            if (result.success) {
+                const r = result.responsibility;
 
-            // 🔥 динамически рендерим новую карточку
-            const phasesRow = document.getElementById('phasesRow');
-            const newCard = document.createElement('div');
-            newCard.className = 'col-md-4 mb-4';
-            newCard.innerHTML = `
-                <div class="phase-card">
-                    <h5 class="phase-title"><strong>Этап ${phasesRow.children.length + 1}</strong></h5>
-                    <p>${r.additional}</p>
-                    <div class="users-container">
-                        <h6><i class="fas fa-users me-2"></i>Участники этапа</h6>
-                        <div class="user">
-                            <div class="avatar-placeholder bg-primary text-white">
-                                ${r.responsible.name[0]}
+                // 🔥 динамически рендерим новую карточку
+                const phasesRow = document.getElementById('phasesRow');
+                const newCard = document.createElement('div');
+                newCard.className = 'col-md-4 mb-4';
+                newCard.innerHTML = `
+                    <div class="phase-card">
+                        <h5 class="phase-title"><strong>Этап ${phasesRow.children.length + 1}</strong></h5>
+                        <p>${r.additional}</p>
+                        <div class="users-container">
+                            <h6><i class="fas fa-users me-2"></i>Участники этапа</h6>
+                            <div class="user">
+                                <div class="avatar-placeholder bg-primary text-white">
+                                    ${r.responsible.name[0]}
+                                </div>
+                                <div class="user-info">
+                                    <div class="user-name">${r.responsible.name}</div>
+                                    <div class="user-role">назначен автоматически</div>
+                                </div>
                             </div>
-                            <div class="user-info">
-                                <div class="user-name">${r.responsible.name}</div>
-                                <div class="user-role">назначен автоматически</div>
-                            </div>
+                            <p>статус – ${r.status}</p>
                         </div>
-                        <p>статус – ${r.status}</p>
-                    </div>
-                </div>`;
+                    </div>`;
 
-            phasesRow.appendChild(newCard);
+                phasesRow.appendChild(newCard);
 
-            // закрываем модалку
-            bootstrap.Modal.getInstance(
-                document.getElementById('editPhaseModal')
-            )?.hide();
-        } else {
-            console.log('Ошибка: ' + JSON.stringify(result.errors || result.error));
-        }
-    } catch (err) {
-        console.error(err);
-        console.log('Ошибка сети');
-    }
-}
-
-// Обработчики событий для кнопок
-document.addEventListener('DOMContentLoaded', function() {
-    // Обработчик для кнопки добавления этапа
-    const addPhaseBtn = document.getElementById('addPhaseBtn');
-    if (addPhaseBtn) {
-        addPhaseBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            createPath();
-        });
-    }
-
-    // Обработчик для кнопки добавления ответственности
-    const addResponsibilityBtn = document.getElementById('addResponsibilityBtn');
-    if (addResponsibilityBtn) {
-        addResponsibilityBtn.addEventListener('click', function() {
-            const pathId = document.getElementById('responsibility_path_id').value;
-            if (pathId) {
-                createResponsibility(pathId);
+                // закрываем модалку
+                bootstrap.Modal.getInstance(
+                    document.getElementById('editPhaseModal')
+                )?.hide();
             } else {
-                alert('Выберите путь для добавления ответственности');
+                console.log('Ошибка: ' + JSON.stringify(result.errors || result.error));
             }
-        });
+        } catch (err) {
+            console.error(err);
+            console.log('Ошибка сети');
+        }
     }
 
-    // Обработчик для формы (чтобы можно было нажимать Enter)
-    const pathForm = document.querySelector('#addPhaseModal form');
-    if (pathForm) {
-        pathForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            createPath();
-        });
+    // Обработчики событий для кнопок
+    document.addEventListener('DOMContentLoaded', function() {
+        // Обработчик для кнопки добавления этапа
+        const addPhaseBtn = document.getElementById('addPhaseBtn');
+        if (addPhaseBtn) {
+            addPhaseBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                createPath();
+            });
+        }
+
+        // Обработчик для кнопки добавления ответственности
+        const addResponsibilityBtn = document.getElementById('addResponsibilityBtn');
+        if (addResponsibilityBtn) {
+            addResponsibilityBtn.addEventListener('click', function() {
+                const pathId = document.getElementById('responsibility_path_id').value;
+                if (pathId) {
+                    createResponsibility(pathId);
+                } else {
+                    alert('Выберите путь для добавления ответственности');
+                }
+            });
+        }
+
+        // Обработчик для формы (чтобы можно было нажимать Enter)
+        const pathForm = document.querySelector('#addPhaseModal form');
+        if (pathForm) {
+            pathForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                createPath();
+            });
+        }
+
+        // Автозаполнение координат, если доступна геолокация
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                const latitudeInput = document.getElementById('id_latitude');
+                const longitudeInput = document.getElementById('id_longitude');
+
+                if (latitudeInput && !latitudeInput.value) {
+                    latitudeInput.value = position.coords.latitude.toFixed(6);
+                }
+                if (longitudeInput && !longitudeInput.value) {
+                    longitudeInput.value = position.coords.longitude.toFixed(6);
+                }
+            }, function(error) {
+                console.log('Геолокация недоступна:', error);
+            });
+        }
+    });
+
+    // Функция для открытия модального окна добавления ответственности для конкретного пути
+    function openAddResponsibilityModal(pathId) {
+        document.getElementById('responsibility_path_id').value = pathId;
+        const modal = new bootstrap.Modal(document.getElementById('addResponsibilityModal'));
+        modal.show();
     }
 
-    // Автозаполнение координат, если доступна геолокация
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function(position) {
-            const latitudeInput = document.getElementById('id_latitude');
-            const longitudeInput = document.getElementById('id_longitude');
+    // Функция для редактирования существующего пути
+    async function editPath(pathId) {
+        // Заполняем форму данными пути
+        // (здесь нужно получить данные пути с сервера или из data-атрибутов)
+        const modal = new bootstrap.Modal(document.getElementById('editPathModal'));
+        modal.show();
 
-            if (latitudeInput && !latitudeInput.value) {
-                latitudeInput.value = position.coords.latitude.toFixed(6);
-            }
-            if (longitudeInput && !longitudeInput.value) {
-                longitudeInput.value = position.coords.longitude.toFixed(6);
-            }
-        }, function(error) {
-            console.log('Геолокация недоступна:', error);
-        });
+        // Устанавливаем обработчик для кнопки сохранения
+        document.getElementById('savePathBtn').onclick = function() {
+            updatePath(pathId);
+        };
     }
-});
 
-// Функция для открытия модального окна добавления ответственности для конкретного пути
-function openAddResponsibilityModal(pathId) {
-    document.getElementById('responsibility_path_id').value = pathId;
-    const modal = new bootstrap.Modal(document.getElementById('addResponsibilityModal'));
-    modal.show();
-}
+    // Функция обновления пути
+    async function updatePath(pathId) {
+        const formData = {
+            name: document.getElementById('edit_path_name').value,
+            description: document.getElementById('edit_path_description').value,
+            longitude: parseFloat(document.getElementById('edit_path_longitude').value) || 0,
+            latitude: parseFloat(document.getElementById('edit_path_latitude').value) || 0,
+            request: document.getElementById('edit_path_request').value
+        };
 
-// Функция для редактирования существующего пути
-async function editPath(pathId) {
-    // Заполняем форму данными пути
-    // (здесь нужно получить данные пути с сервера или из data-атрибутов)
-    const modal = new bootstrap.Modal(document.getElementById('editPathModal'));
-    modal.show();
+        try {
+            const response = await fetch(`/update-path/${pathId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify(formData)
+            });
 
-    // Устанавливаем обработчик для кнопки сохранения
-    document.getElementById('savePathBtn').onclick = function() {
-        updatePath(pathId);
-    };
-}
+            const result = await response.json();
 
-// Функция обновления пути
-async function updatePath(pathId) {
-    const formData = {
-        name: document.getElementById('edit_path_name').value,
-        description: document.getElementById('edit_path_description').value,
-        longitude: parseFloat(document.getElementById('edit_path_longitude').value) || 0,
-        latitude: parseFloat(document.getElementById('edit_path_latitude').value) || 0,
-        request: document.getElementById('edit_path_request').value
-    };
+            if (result.success) {
+                alert('Путь успешно обновлен!');
+                bootstrap.Modal.getInstance(document.getElementById('editPathModal')).hide();
+                location.reload();
+            } else {
+                сonsole.log('Ошибка при обновлении: ' + JSON.stringify(result.errors));
+            }
+        } catch (error) {
+            сonsole.log('Ошибка сети: ' + error);
+        }
+    }
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        // Координаты по умолчанию (Москва)
+        const defaultLat = 55.7558;
+        const defaultLon = 37.6173;
 
-    try {
-        const response = await fetch(`/update-path/${pathId}/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token }}'
-            },
-            body: JSON.stringify(formData)
+        // Инициализация карты
+        window.leafletMap = L.map('map').setView([defaultLat, defaultLon], 13);
+
+        // Слой карты
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(window.leafletMap);
+
+        // Маркер
+        const marker = L.marker([defaultLat, defaultLon], { draggable: true })
+                        .addTo(window.leafletMap);
+
+        // Поля формы
+        const latInput = document.getElementById('id_latitude');
+        const lonInput = document.getElementById('id_longitude');
+
+        latInput.value = defaultLat;
+        lonInput.value = defaultLon;
+
+        // Обработка клика по карте
+        window.leafletMap.on('click', (e) => {
+            const { lat, lng } = e.latlng;
+            marker.setLatLng([lat, lng]);
+            latInput.value = lat.toFixed(6);
+            lonInput.value = lng.toFixed(6);
         });
 
-        const result = await response.json();
+        // Перетаскивание маркера
+        marker.on('dragend', () => {
+            const { lat, lng } = marker.getLatLng();
+            latInput.value = lat.toFixed(6);
+            lonInput.value = lng.toFixed(6);
+        });
+    });
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const toggleBtn = document.getElementById("toggle-map-btn");
+        const mapContainer = document.getElementById("map-container");
 
-        if (result.success) {
-            alert('Путь успешно обновлен!');
-            bootstrap.Modal.getInstance(document.getElementById('editPathModal')).hide();
-            location.reload();
+        toggleBtn.addEventListener("click", () => {
+            const isHidden = mapContainer.style.display === "none";
+
+            // переключаем видимость контейнера
+            mapContainer.style.display = isHidden ? "block" : "none";
+
+            // меняем текст кнопки
+            toggleBtn.textContent = isHidden ? "Скрыть карту" : "Показать карту";
+
+            // после показа карты пересчитываем размеры Leaflet
+            if (isHidden && window.leafletMap) {
+                setTimeout(() => window.leafletMap.invalidateSize(), 200);
+            }
+        });
+    });
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const form = document.getElementById("galleryUploadForm");
+      const input = document.getElementById("galleryInput");
+      const preview = document.getElementById("previewContainer");
+      const progress = document.getElementById("uploadProgress");
+      const bar = progress.querySelector(".progress-bar");
+      const carouselInner = document.getElementById("galleryCarouselInner");
+      const emptyText = document.getElementById("emptyGalleryText");
+
+      /** ✅ Превью выбранных файлов */
+      input.addEventListener("change", () => {
+          preview.innerHTML = "";
+          if (!input.files.length) { preview.style.display="none"; return; }
+          preview.style.display = "flex";
+
+          Array.from(input.files).forEach((file, idx) => {
+              const col = document.createElement("div");
+              col.className = "col-4 preview-thumb";
+              const url = URL.createObjectURL(file);
+
+              col.innerHTML = `
+                  ${file.type.startsWith("image")
+                      ? `<img src="${url}" alt="">`
+                      : `<video src="${url}"></video>`}
+                  <div class="status-label">Загружается…</div>
+                  <button class="preview-remove">&times;</button>
+              `;
+              // Удаление
+              col.querySelector(".preview-remove").addEventListener("click",()=>{
+                  removeFile(idx);
+                  col.remove();
+                  if(!preview.children.length) preview.style.display="none";
+              });
+              preview.appendChild(col);
+          });
+
+          // После добавления сразу грузим
+          uploadFiles();
+      });
+
+      /** ⚙️ Удаление файла из input */
+      function removeFile(index){
+          const dt = new DataTransfer();
+          Array.from(input.files).forEach((f,i)=>{ if(i!==index) dt.items.add(f); });
+          input.files = dt.files;
+      }
+
+      /** 🚀 Загрузка файлов */
+      function uploadFiles(){
+          const data = new FormData();
+          for(const f of input.files) data.append("file", f);
+
+          progress.style.display="block";
+          bar.style.width="0%";
+
+          fetch(form.action, {
+              method: "POST",
+              body: data,
+              headers:{ "X-CSRFToken": "{{ csrf_token }}" }
+          })
+          .then(res=>res.json())
+          .then(json=>{
+              progress.style.display="none";
+              if(json.success && json.items){
+                  // отмечаем каждый как загруженный
+                  preview.querySelectorAll('.preview-thumb').forEach(div=>{
+                    div.classList.add('uploaded');
+                    div.querySelector('.status-label').textContent = "✅ Загружено";
+
+                    // ⏳ Скрываем превью через 2 секунды
+                    setTimeout(() => {
+                        div.remove();
+                        if(!preview.children.length){
+                            preview.style.display = "none";
+                        }
+                    }, 1000);
+                });
+
+                  if(emptyText) emptyText.remove();
+                  json.items.forEach(addToCarousel);
+                  input.value="";
+              }else{
+                  preview.querySelectorAll('.preview-thumb').forEach(div=>{
+                      div.classList.add('error');
+                      div.querySelector('.status-label').textContent = "❌ Ошибка";
+                  });
+                  alert(json.error || "Не удалось загрузить");
+              }
+          })
+          .catch(()=>{
+              progress.style.display="none";
+              preview.querySelectorAll('.preview-thumb').forEach(div=>{
+                  div.classList.add('error');
+                  div.querySelector('.status-label').textContent = "❌ Ошибка сети";
+              });
+          });
+      }
+
+      /** ➕ Добавление слайда в галерею */
+      function addToCarousel(item){
+          const div = document.createElement("div");
+          div.className = "carousel-item";
+          div.innerHTML = item.is_image
+              ? `<img src="${item.url}" class="d-block w-100 rounded gallery-media">`
+              : `<video class="d-block w-100 rounded gallery-media" controls>
+                     <source src="${item.url}">
+                 </video>`;
+          if(!carouselInner.querySelector(".carousel-item")) div.classList.add("active");
+          carouselInner.appendChild(div);
+      }
+    });
+</script>
+
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const selectMask = document.getElementById("expenseMaskSelect");
+      const inputTitle = document.getElementById("expenseTitle");
+
+      // Подстановка выбранной маски в текстовое поле
+      selectMask.addEventListener("change", () => {
+          inputTitle.value = selectMask.value;
+      });
+
+      // Автопоиск при вводе
+      inputTitle.addEventListener("input", async () => {
+          const q = inputTitle.value.trim();
+          const res = await fetch(`/ajax/expense-masks/?q=${encodeURIComponent(q)}`);
+          const data = await res.json();
+
+          // Очищаем селект и наполняем новыми масками
+          selectMask.innerHTML = '<option value="">— выбрать из списка —</option>';
+          data.results.forEach(name => {
+              const opt = document.createElement("option");
+              opt.value = name;
+              opt.textContent = name;
+              selectMask.appendChild(opt);
+          });
+      });
+    });
+
+</script>
+<!-- Добавьте этот блок после существующего скрипта чата -->
+<script>
+    // Отслеживание местоположения водителя
+    class DriverTracker {
+        constructor(applicationId) {
+            this.applicationId = applicationId;
+            this.trackingSocket = null;
+            this.driverMarker = null;
+            this.trackingMap = null;
+            this.watchId = null;
+            this.isDriver = {{ request.user.employee }} === 3;
+            this.isTrackingActive = false;
+            this.reconnectAttempts = 0;
+            this.maxReconnectAttempts = 5;
+
+            console.log('DriverTracker initialized:', {
+                applicationId,
+                isDriver: this.isDriver,
+                user: '{{ request.user.first_name }} {{ request.user.last_name }}'
+            });
+
+            this.init();
+        }
+
+        async init() {
+            try {
+                await this.initMap();
+                this.connectWebSocket();
+
+                if (this.isDriver) {
+                    this.startTracking();
+                }
+            } catch (error) {
+                console.error('Failed to initialize DriverTracker:', error);
+            }
+        }
+
+        async initMap() {
+            // Создаем карту для отслеживания
+            this.trackingMap = L.map('tracking-map').setView([55.7558, 37.6173], 13);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(this.trackingMap);
+
+            // Иконка для водителя
+            this.driverIcon = L.divIcon({
+                html: '<div class="driver-marker">🚗</div>',
+                iconSize: [30, 30],
+                className: 'driver-marker-icon'
+            });
+
+            console.log('Tracking map initialized');
+        }
+
+        connectWebSocket() {
+            const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+            const wsUrl = `${protocol}://${location.host}/ws/tracking/${this.applicationId}/`;
+
+            console.log('Connecting to WebSocket:', wsUrl);
+
+            try {
+                this.trackingSocket = new WebSocket(wsUrl);
+
+                this.trackingSocket.onopen = () => {
+                    console.log('Tracking WebSocket connected');
+                    this.isTrackingActive = true;
+                    this.reconnectAttempts = 0;
+                    this.updateTrackingStatus('connected');
+
+                    // Запрашиваем текущее местоположение
+                    this.trackingSocket.send(JSON.stringify({
+                        action: 'get_location'
+                    }));
+                };
+
+                this.trackingSocket.onmessage = (e) => {
+                    try {
+                        const data = JSON.parse(e.data);
+                        console.log('Tracking WebSocket message:', data);
+
+                        if (data.type === 'location_update' && data.data) {
+                            this.updateDriverPosition(data.data);
+                        } else if (data.type === 'no_location') {
+                            this.showNoLocationMessage();
+                        } else if (data.type === 'error') {
+                            this.showNotification(data.message, 'error');
+                        }
+                    } catch (error) {
+                        console.error('Error processing WebSocket message:', error);
+                    }
+                };
+
+                this.trackingSocket.onclose = (e) => {
+                    console.log('Tracking WebSocket disconnected:', e.code, e.reason);
+                    this.isTrackingActive = false;
+                    this.updateTrackingStatus('disconnected');
+
+                    // Попытка переподключения
+                    if (this.reconnectAttempts < this.maxReconnectAttempts) {
+                        this.reconnectAttempts++;
+                        console.log(`Attempting reconnect ${this.reconnectAttempts}/${this.maxReconnectAttempts}`);
+                        setTimeout(() => this.connectWebSocket(), 3000);
+                    } else {
+                        this.showNotification('Соединение с сервером отслеживания потеряно', 'error');
+                    }
+                };
+
+                this.trackingSocket.onerror = (error) => {
+                    console.error('Tracking WebSocket error:', error);
+                    this.updateTrackingStatus('error');
+                };
+
+            } catch (error) {
+                console.error('Failed to create WebSocket connection:', error);
+            }
+        }
+
+        startTracking() {
+            if (!navigator.geolocation) {
+                this.showNotification('Ваш браузер не поддерживает геолокацию', 'error');
+                return;
+            }
+
+            // Запрашиваем разрешение на геолокацию
+            if (this.isDriver) {
+                const options = {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                };
+
+                // Сначала проверяем доступность
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        // Разрешение получено, запускаем отслеживание
+                        this.watchId = navigator.geolocation.watchPosition(
+                            (position) => this.handlePositionUpdate(position),
+                            (error) => this.handlePositionError(error),
+                            options
+                        );
+                        console.log('Driver tracking started');
+                        this.updateDriverControls(true);
+                    },
+                    (error) => this.handlePositionError(error),
+                    options
+                );
+            }
+        }
+
+        stopTracking() {
+            if (this.watchId) {
+                navigator.geolocation.clearWatch(this.watchId);
+                this.watchId = null;
+            }
+            console.log('Driver tracking stopped');
+            this.updateDriverControls(false);
+        }
+
+        handlePositionUpdate(position) {
+            const { latitude, longitude, accuracy, speed } = position.coords;
+
+            console.log('Position update:', { latitude, longitude, accuracy, speed });
+
+            // Отправляем обновление на сервер
+            if (this.trackingSocket && this.trackingSocket.readyState === WebSocket.OPEN) {
+                this.trackingSocket.send(JSON.stringify({
+                    action: 'location_update',
+                    latitude: latitude,
+                    longitude: longitude,
+                    accuracy: accuracy,
+                    speed: speed ? speed * 3.6 : 0 // конвертируем м/с в км/ч
+                }));
+            }
+        }
+
+        handlePositionError(error) {
+            console.error('Geolocation error:', error);
+
+            let message = 'Ошибка получения местоположения';
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    message = 'Для отслеживания необходимо разрешить доступ к геолокации';
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    message = 'Информация о местоположении недоступна';
+                    break;
+                case error.TIMEOUT:
+                    message = 'Время ожидания получения местоположения истекло';
+                    break;
+            }
+
+            this.showNotification(message, 'error');
+        }
+
+        updateDriverPosition(locationData) {
+            const { latitude, longitude, driver_name, speed, timestamp } = locationData;
+
+            console.log('Updating driver position:', locationData);
+
+            // Обновляем маркер на карте
+            if (this.driverMarker) {
+                this.driverMarker.setLatLng([latitude, longitude]);
+            } else {
+                this.driverMarker = L.marker([latitude, longitude], {
+                    icon: this.driverIcon,
+                    zIndexOffset: 1000
+                }).addTo(this.trackingMap);
+            }
+
+            // Центрируем карту на водителе
+            this.trackingMap.setView([latitude, longitude], 13);
+
+            // Обновляем всплывающую подсказку
+            let popupContent = `<strong>${driver_name}</strong><br>`;
+            popupContent += `Обновлено: ${new Date(timestamp).toLocaleTimeString()}`;
+            if (speed && speed > 0) {
+                popupContent += `<br>Скорость: ${Math.round(speed)} км/ч`;
+            }
+
+            this.driverMarker.bindPopup(popupContent).openPopup();
+
+            // Обновляем информацию в интерфейсе
+            this.updateDriverInfo(locationData);
+        }
+
+        updateDriverInfo(locationData) {
+            const driverInfoEl = document.getElementById('driver-info');
+            if (driverInfoEl) {
+                driverInfoEl.innerHTML = `
+                    <div class="driver-status">
+                        <h6>🚗 ${locationData.driver_name}</h6>
+                        <div class="small text-muted">
+                            Обновлено: ${new Date(locationData.timestamp).toLocaleString()}
+                            ${locationData.speed && locationData.speed > 0 ?
+                              `• Скорость: ${Math.round(locationData.speed)} км/ч` : ''}
+                            ${locationData.accuracy ?
+                              `• Точность: ${Math.round(locationData.accuracy)}м` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        showNoLocationMessage() {
+            const driverInfoEl = document.getElementById('driver-info');
+            if (driverInfoEl) {
+                driverInfoEl.innerHTML = `
+                    <div class="text-center text-muted">
+                        <div>📍 Ожидание данных о местоположении</div>
+                        <small>Водитель еще не начал передавать местоположение</small>
+                    </div>
+                `;
+            }
+        }
+
+        updateTrackingStatus(status) {
+            const statusEl = document.getElementById('tracking-status');
+            if (statusEl) {
+                const statusConfig = {
+                    'connected': { text: 'Активно', class: 'bg-success' },
+                    'disconnected': { text: 'Неактивно', class: 'bg-secondary' },
+                    'error': { text: 'Ошибка', class: 'bg-danger' }
+                };
+
+                const config = statusConfig[status] || statusConfig.disconnected;
+                statusEl.textContent = config.text;
+                statusEl.className = `badge ${config.class}`;
+            }
+        }
+
+        updateDriverControls(tracking) {
+            const startBtn = document.getElementById('start-tracking-btn');
+            const stopBtn = document.getElementById('stop-tracking-btn');
+
+            if (startBtn && stopBtn) {
+                startBtn.disabled = tracking;
+                stopBtn.disabled = !tracking;
+            }
+        }
+
+        showNotification(message, type = 'info') {
+            // Создаем уведомление
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type === 'error' ? 'danger' : 'info'} alert-dismissible fade show`;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 10000;
+                min-width: 300px;
+            `;
+            notification.innerHTML = `
+                <strong>${type === 'error' ? '⚠️ Ошибка' : 'ℹ️ Информация'}</strong>
+                <div>${message}</div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+            document.body.appendChild(notification);
+
+            // Автоматическое скрытие через 5 секунд
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+    }
+
+    // Инициализация отслеживания когда страница загружена
+    document.addEventListener('DOMContentLoaded', function() {
+        const applicationId = "{{ application.id }}";
+        const applicationStatus = "{{ application.status }}";
+
+        // Запускаем отслеживание только если заявка в обработке и есть водители
+        const hasDrivers = {{ application.user_drivers.all|length }} > 0;
+        const shouldTrack = applicationStatus === 'in_progress' && hasDrivers;
+
+        console.log('Page loaded - Tracking conditions:', {
+            applicationId,
+            applicationStatus,
+            hasDrivers,
+            shouldTrack
+        });
+
+        if (shouldTrack) {
+            window.driverTracker = new DriverTracker(applicationId);
         } else {
-            сonsole.log('Ошибка при обновлении: ' + JSON.stringify(result.errors));
-        }
-    } catch (error) {
-        сonsole.log('Ошибка сети: ' + error);
-    }
-}
-</script>
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-    // Координаты по умолчанию (Москва)
-    const defaultLat = 55.7558;
-    const defaultLon = 37.6173;
-
-    // Инициализация карты
-    window.leafletMap = L.map('map').setView([defaultLat, defaultLon], 13);
-
-    // Слой карты
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(window.leafletMap);
-
-    // Маркер
-    const marker = L.marker([defaultLat, defaultLon], { draggable: true })
-                    .addTo(window.leafletMap);
-
-    // Поля формы
-    const latInput = document.getElementById('id_latitude');
-    const lonInput = document.getElementById('id_longitude');
-
-    latInput.value = defaultLat;
-    lonInput.value = defaultLon;
-
-    // Обработка клика по карте
-    window.leafletMap.on('click', (e) => {
-        const { lat, lng } = e.latlng;
-        marker.setLatLng([lat, lng]);
-        latInput.value = lat.toFixed(6);
-        lonInput.value = lng.toFixed(6);
-    });
-
-    // Перетаскивание маркера
-    marker.on('dragend', () => {
-        const { lat, lng } = marker.getLatLng();
-        latInput.value = lat.toFixed(6);
-        lonInput.value = lng.toFixed(6);
-    });
-});
-</script>
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-    const toggleBtn = document.getElementById("toggle-map-btn");
-    const mapContainer = document.getElementById("map-container");
-
-    toggleBtn.addEventListener("click", () => {
-        const isHidden = mapContainer.style.display === "none";
-
-        // переключаем видимость контейнера
-        mapContainer.style.display = isHidden ? "block" : "none";
-
-        // меняем текст кнопки
-        toggleBtn.textContent = isHidden ? "Скрыть карту" : "Показать карту";
-
-        // после показа карты пересчитываем размеры Leaflet
-        if (isHidden && window.leafletMap) {
-            setTimeout(() => window.leafletMap.invalidateSize(), 200);
+            console.log('Tracking not started - conditions not met');
+            // Скрываем блок отслеживания если условия не выполнены
+            const trackingCard = document.getElementById('tracking-card');
+            if (trackingCard) {
+                trackingCard.style.display = 'none';
+            }
         }
     });
-});
 </script>
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-  const form = document.getElementById("galleryUploadForm");
-  const input = document.getElementById("galleryInput");
-  const preview = document.getElementById("previewContainer");
-  const progress = document.getElementById("uploadProgress");
-  const bar = progress.querySelector(".progress-bar");
-  const carouselInner = document.getElementById("galleryCarouselInner");
-  const emptyText = document.getElementById("emptyGalleryText");
+    // Управление отслеживанием для водителей
+    document.addEventListener('DOMContentLoaded', function() {
+        const startBtn = document.getElementById('start-tracking-btn');
+        const stopBtn = document.getElementById('stop-tracking-btn');
 
-  /** ✅ Превью выбранных файлов */
-  input.addEventListener("change", () => {
-      preview.innerHTML = "";
-      if (!input.files.length) { preview.style.display="none"; return; }
-      preview.style.display = "flex";
+        if (startBtn && stopBtn) {
+            startBtn.addEventListener('click', function() {
+                if (window.driverTracker) {
+                    window.driverTracker.startTracking();
+                }
+            });
 
-      Array.from(input.files).forEach((file, idx) => {
+            stopBtn.addEventListener('click', function() {
+                if (window.driverTracker) {
+                    window.driverTracker.stopTracking();
+                }
+            });
+
+            // По умолчанию для водителей отслеживание запущено
+            if ({{ request.user.employee }} === 3) {
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+            } else {
+                // Для не-водителей скрываем кнопки управления
+                startBtn.style.display = 'none';
+                stopBtn.style.display = 'none';
+            }
+        }
+    });
+</script>
+<script>
+    // Управление отслеживанием для водителей
+    document.addEventListener('DOMContentLoaded', function() {
+        const startBtn = document.getElementById('start-tracking-btn');
+        const stopBtn = document.getElementById('stop-tracking-btn');
+
+        if (startBtn && stopBtn && window.driverTracker) {
+            startBtn.addEventListener('click', function() {
+                window.driverTracker.startTracking();
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+            });
+
+            stopBtn.addEventListener('click', function() {
+                window.driverTracker.stopTracking();
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+            });
+
+            // По умолчанию отслеживание запущено для водителей
+            startBtn.disabled = true;
+        }
+    });
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const form = document.getElementById("addGroupForm");
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const data = {
+          title: form.querySelector("[name=title]").value,
+          description: form.querySelector("[name=description]").value,
+          application_id: "{{ application.id }}"
+        };
+
+        try {
+          const res = await fetch("{% url 'moderation:add_gallery_group' %}", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: JSON.stringify(data)
+          });
+          const json = await res.json();
+
+          if (json.success) {
+            location.reload(); // 🔄 обновим страницу, чтобы вкладка группы появилась
+          } else {
+            alert("Ошибка: " + (json.error || "Неизвестная"));
+          }
+        } catch (err) {
+          console.error(err);
+          alert("Ошибка сети");
+        }
+      });
+    });
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const uploadForm = document.getElementById("galleryUploadForm");
+      const input = uploadForm.querySelector("input[type=file]");
+      const preview = document.getElementById("galleryPreview");
+      const progress = document.getElementById("galleryProgress");
+      const bar = progress.querySelector(".progress-bar");
+
+      // 📌 Превью выбранных файлов
+      input.addEventListener("change", () => {
+        preview.innerHTML = "";
+        if (!input.files.length) { preview.style.display="none"; return; }
+        preview.style.display = "flex";
+
+        Array.from(input.files).forEach((file, idx) => {
           const col = document.createElement("div");
           col.className = "col-4 preview-thumb";
           const url = URL.createObjectURL(file);
 
           col.innerHTML = `
-              ${file.type.startsWith("image")
-                  ? `<img src="${url}" alt="">`
-                  : `<video src="${url}"></video>`}
-              <div class="status-label">Загружается…</div>
-              <button class="preview-remove">&times;</button>
+            ${file.type.startsWith("image")
+              ? `<img src="${url}" class="img-fluid rounded">`
+              : `<video src="${url}" class="img-fluid rounded"></video>`}
+            <div class="status-label">⏳ Ожидание</div>
           `;
-          // Удаление
-          col.querySelector(".preview-remove").addEventListener("click",()=>{
-              removeFile(idx);
-              col.remove();
-              if(!preview.children.length) preview.style.display="none";
-          });
           preview.appendChild(col);
+        });
       });
 
-      // После добавления сразу грузим
-      uploadFiles();
-  });
+      // 📌 Загрузка с отображением прогресса
+      uploadForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
 
-  /** ⚙️ Удаление файла из input */
-  function removeFile(index){
-      const dt = new DataTransfer();
-      Array.from(input.files).forEach((f,i)=>{ if(i!==index) dt.items.add(f); });
-      input.files = dt.files;
-  }
+        const formData = new FormData(uploadForm);
 
-  /** 🚀 Загрузка файлов */
-  function uploadFiles(){
-      const data = new FormData();
-      for(const f of input.files) data.append("file", f);
+        // Берём активную группу
+        const activeTab = document.querySelector("#galleryTabs .nav-link.active");
+        if (!activeTab) {
+          alert("Выберите группу");
+          return;
+        }
+        const groupId = activeTab.id.replace("tab-", "");
+        formData.set("group", groupId);
 
-      progress.style.display="block";
-      bar.style.width="0%";
+        progress.style.display = "block";
+        bar.style.width = "0%";
 
-      fetch(form.action, {
-          method: "POST",
-          body: data,
-          headers:{ "X-CSRFToken": "{{ csrf_token }}" }
-      })
-      .then(res=>res.json())
-      .then(json=>{
-          progress.style.display="none";
-          if(json.success && json.items){
-              // отмечаем каждый как загруженный
-              preview.querySelectorAll('.preview-thumb').forEach(div=>{
-                div.classList.add('uploaded');
-                div.querySelector('.status-label').textContent = "✅ Загружено";
+        try {
+          const res = await fetch(uploadForm.action, {
+            method: "POST",
+            body: formData,
+            headers: { "X-CSRFToken": "{{ csrf_token }}" }
+          });
 
-                // ⏳ Скрываем превью через 2 секунды
-                setTimeout(() => {
-                    div.remove();
-                    if(!preview.children.length){
-                        preview.style.display = "none";
-                    }
-                }, 1000);
+          const json = await res.json();
+          bar.style.width = "100%";
+
+          if (json.success) {
+            // ✅ обновляем превью
+            preview.querySelectorAll('.status-label').forEach(el=>{
+              el.textContent = "✅ Загружено";
+              el.parentElement.classList.add("uploaded");
             });
 
-              if(emptyText) emptyText.remove();
-              json.items.forEach(addToCarousel);
-              input.value="";
-          }else{
-              preview.querySelectorAll('.preview-thumb').forEach(div=>{
-                  div.classList.add('error');
-                  div.querySelector('.status-label').textContent = "❌ Ошибка";
-              });
-              alert(json.error || "Не удалось загрузить");
+            // обновляем галерею
+            const item = json.item;
+           const inner = document.getElementById(`carousel-inner-${item.group_id}`);
+
+            // убираем active только у текущего активного
+            const activeNow = inner.querySelector(".carousel-item.active");
+            if (activeNow) activeNow.classList.remove("active");
+
+            // делаем новый активным
+            const div = document.createElement("div");
+            div.className = "carousel-item active";
+            div.innerHTML = item.is_image
+              ? `<img src="${item.url}" class="d-block w-100 gallery-media">`
+              : `<video class="d-block w-100 gallery-media" controls><source src="${item.url}"></video>`;
+            inner.appendChild(div);
+
+
+            // очистка
+            setTimeout(()=>{
+              preview.style.display="none";
+              input.value = "";
+              progress.style.display="none";
+            }, 1500);
+          } else {
+            preview.querySelectorAll('.status-label').forEach(el=>{
+              el.textContent = "❌ Ошибка";
+            });
+            alert("Ошибка: " + (json.error || JSON.stringify(json.errors)));
           }
-      })
-      .catch(()=>{
-          progress.style.display="none";
-          preview.querySelectorAll('.preview-thumb').forEach(div=>{
-              div.classList.add('error');
-              div.querySelector('.status-label').textContent = "❌ Ошибка сети";
+        } catch(err) {
+          preview.querySelectorAll('.status-label').forEach(el=>{
+            el.textContent = "❌ Сеть";
           });
+          console.error(err);
+          alert("Ошибка сети при загрузке");
+        }
       });
-  }
-
-  /** ➕ Добавление слайда в галерею */
-  function addToCarousel(item){
-      const div = document.createElement("div");
-      div.className = "carousel-item";
-      div.innerHTML = item.is_image
-          ? `<img src="${item.url}" class="d-block w-100 rounded gallery-media">`
-          : `<video class="d-block w-100 rounded gallery-media" controls>
-                 <source src="${item.url}">
-             </video>`;
-      if(!carouselInner.querySelector(".carousel-item")) div.classList.add("active");
-      carouselInner.appendChild(div);
-  }
-});
-</script>
-
-
-
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  const selectMask = document.getElementById("expenseMaskSelect");
-  const inputTitle = document.getElementById("expenseTitle");
-
-  // Подстановка выбранной маски в текстовое поле
-  selectMask.addEventListener("change", () => {
-      inputTitle.value = selectMask.value;
-  });
-
-  // Автопоиск при вводе
-  inputTitle.addEventListener("input", async () => {
-      const q = inputTitle.value.trim();
-      const res = await fetch(`/ajax/expense-masks/?q=${encodeURIComponent(q)}`);
-      const data = await res.json();
-
-      // Очищаем селект и наполняем новыми масками
-      selectMask.innerHTML = '<option value="">— выбрать из списка —</option>';
-      data.results.forEach(name => {
-          const opt = document.createElement("option");
-          opt.value = name;
-          opt.textContent = name;
-          selectMask.appendChild(opt);
-      });
-  });
-});
-
-</script>
-<!-- Добавьте этот блок после существующего скрипта чата -->
-<script>
-// Отслеживание местоположения водителя
-class DriverTracker {
-    constructor(applicationId) {
-        this.applicationId = applicationId;
-        this.trackingSocket = null;
-        this.driverMarker = null;
-        this.trackingMap = null;
-        this.watchId = null;
-        this.isDriver = {{ request.user.employee }} === 3;
-        this.isTrackingActive = false;
-        this.reconnectAttempts = 0;
-        this.maxReconnectAttempts = 5;
-
-        console.log('DriverTracker initialized:', {
-            applicationId,
-            isDriver: this.isDriver,
-            user: '{{ request.user.first_name }} {{ request.user.last_name }}'
-        });
-
-        this.init();
-    }
-
-    async init() {
-        try {
-            await this.initMap();
-            this.connectWebSocket();
-
-            if (this.isDriver) {
-                this.startTracking();
-            }
-        } catch (error) {
-            console.error('Failed to initialize DriverTracker:', error);
-        }
-    }
-
-    async initMap() {
-        // Создаем карту для отслеживания
-        this.trackingMap = L.map('tracking-map').setView([55.7558, 37.6173], 13);
-
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(this.trackingMap);
-
-        // Иконка для водителя
-        this.driverIcon = L.divIcon({
-            html: '<div class="driver-marker">🚗</div>',
-            iconSize: [30, 30],
-            className: 'driver-marker-icon'
-        });
-
-        console.log('Tracking map initialized');
-    }
-
-    connectWebSocket() {
-        const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-        const wsUrl = `${protocol}://${location.host}/ws/tracking/${this.applicationId}/`;
-
-        console.log('Connecting to WebSocket:', wsUrl);
-
-        try {
-            this.trackingSocket = new WebSocket(wsUrl);
-
-            this.trackingSocket.onopen = () => {
-                console.log('Tracking WebSocket connected');
-                this.isTrackingActive = true;
-                this.reconnectAttempts = 0;
-                this.updateTrackingStatus('connected');
-
-                // Запрашиваем текущее местоположение
-                this.trackingSocket.send(JSON.stringify({
-                    action: 'get_location'
-                }));
-            };
-
-            this.trackingSocket.onmessage = (e) => {
-                try {
-                    const data = JSON.parse(e.data);
-                    console.log('Tracking WebSocket message:', data);
-
-                    if (data.type === 'location_update' && data.data) {
-                        this.updateDriverPosition(data.data);
-                    } else if (data.type === 'no_location') {
-                        this.showNoLocationMessage();
-                    } else if (data.type === 'error') {
-                        this.showNotification(data.message, 'error');
-                    }
-                } catch (error) {
-                    console.error('Error processing WebSocket message:', error);
-                }
-            };
-
-            this.trackingSocket.onclose = (e) => {
-                console.log('Tracking WebSocket disconnected:', e.code, e.reason);
-                this.isTrackingActive = false;
-                this.updateTrackingStatus('disconnected');
-
-                // Попытка переподключения
-                if (this.reconnectAttempts < this.maxReconnectAttempts) {
-                    this.reconnectAttempts++;
-                    console.log(`Attempting reconnect ${this.reconnectAttempts}/${this.maxReconnectAttempts}`);
-                    setTimeout(() => this.connectWebSocket(), 3000);
-                } else {
-                    this.showNotification('Соединение с сервером отслеживания потеряно', 'error');
-                }
-            };
-
-            this.trackingSocket.onerror = (error) => {
-                console.error('Tracking WebSocket error:', error);
-                this.updateTrackingStatus('error');
-            };
-
-        } catch (error) {
-            console.error('Failed to create WebSocket connection:', error);
-        }
-    }
-
-    startTracking() {
-        if (!navigator.geolocation) {
-            this.showNotification('Ваш браузер не поддерживает геолокацию', 'error');
-            return;
-        }
-
-        // Запрашиваем разрешение на геолокацию
-        if (this.isDriver) {
-            const options = {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 0
-            };
-
-            // Сначала проверяем доступность
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    // Разрешение получено, запускаем отслеживание
-                    this.watchId = navigator.geolocation.watchPosition(
-                        (position) => this.handlePositionUpdate(position),
-                        (error) => this.handlePositionError(error),
-                        options
-                    );
-                    console.log('Driver tracking started');
-                    this.updateDriverControls(true);
-                },
-                (error) => this.handlePositionError(error),
-                options
-            );
-        }
-    }
-
-    stopTracking() {
-        if (this.watchId) {
-            navigator.geolocation.clearWatch(this.watchId);
-            this.watchId = null;
-        }
-        console.log('Driver tracking stopped');
-        this.updateDriverControls(false);
-    }
-
-    handlePositionUpdate(position) {
-        const { latitude, longitude, accuracy, speed } = position.coords;
-
-        console.log('Position update:', { latitude, longitude, accuracy, speed });
-
-        // Отправляем обновление на сервер
-        if (this.trackingSocket && this.trackingSocket.readyState === WebSocket.OPEN) {
-            this.trackingSocket.send(JSON.stringify({
-                action: 'location_update',
-                latitude: latitude,
-                longitude: longitude,
-                accuracy: accuracy,
-                speed: speed ? speed * 3.6 : 0 // конвертируем м/с в км/ч
-            }));
-        }
-    }
-
-    handlePositionError(error) {
-        console.error('Geolocation error:', error);
-
-        let message = 'Ошибка получения местоположения';
-        switch(error.code) {
-            case error.PERMISSION_DENIED:
-                message = 'Для отслеживания необходимо разрешить доступ к геолокации';
-                break;
-            case error.POSITION_UNAVAILABLE:
-                message = 'Информация о местоположении недоступна';
-                break;
-            case error.TIMEOUT:
-                message = 'Время ожидания получения местоположения истекло';
-                break;
-        }
-
-        this.showNotification(message, 'error');
-    }
-
-    updateDriverPosition(locationData) {
-        const { latitude, longitude, driver_name, speed, timestamp } = locationData;
-
-        console.log('Updating driver position:', locationData);
-
-        // Обновляем маркер на карте
-        if (this.driverMarker) {
-            this.driverMarker.setLatLng([latitude, longitude]);
-        } else {
-            this.driverMarker = L.marker([latitude, longitude], {
-                icon: this.driverIcon,
-                zIndexOffset: 1000
-            }).addTo(this.trackingMap);
-        }
-
-        // Центрируем карту на водителе
-        this.trackingMap.setView([latitude, longitude], 13);
-
-        // Обновляем всплывающую подсказку
-        let popupContent = `<strong>${driver_name}</strong><br>`;
-        popupContent += `Обновлено: ${new Date(timestamp).toLocaleTimeString()}`;
-        if (speed && speed > 0) {
-            popupContent += `<br>Скорость: ${Math.round(speed)} км/ч`;
-        }
-
-        this.driverMarker.bindPopup(popupContent).openPopup();
-
-        // Обновляем информацию в интерфейсе
-        this.updateDriverInfo(locationData);
-    }
-
-    updateDriverInfo(locationData) {
-        const driverInfoEl = document.getElementById('driver-info');
-        if (driverInfoEl) {
-            driverInfoEl.innerHTML = `
-                <div class="driver-status">
-                    <h6>🚗 ${locationData.driver_name}</h6>
-                    <div class="small text-muted">
-                        Обновлено: ${new Date(locationData.timestamp).toLocaleString()}
-                        ${locationData.speed && locationData.speed > 0 ?
-                          `• Скорость: ${Math.round(locationData.speed)} км/ч` : ''}
-                        ${locationData.accuracy ?
-                          `• Точность: ${Math.round(locationData.accuracy)}м` : ''}
-                    </div>
-                </div>
-            `;
-        }
-    }
-
-    showNoLocationMessage() {
-        const driverInfoEl = document.getElementById('driver-info');
-        if (driverInfoEl) {
-            driverInfoEl.innerHTML = `
-                <div class="text-center text-muted">
-                    <div>📍 Ожидание данных о местоположении</div>
-                    <small>Водитель еще не начал передавать местоположение</small>
-                </div>
-            `;
-        }
-    }
-
-    updateTrackingStatus(status) {
-        const statusEl = document.getElementById('tracking-status');
-        if (statusEl) {
-            const statusConfig = {
-                'connected': { text: 'Активно', class: 'bg-success' },
-                'disconnected': { text: 'Неактивно', class: 'bg-secondary' },
-                'error': { text: 'Ошибка', class: 'bg-danger' }
-            };
-
-            const config = statusConfig[status] || statusConfig.disconnected;
-            statusEl.textContent = config.text;
-            statusEl.className = `badge ${config.class}`;
-        }
-    }
-
-    updateDriverControls(tracking) {
-        const startBtn = document.getElementById('start-tracking-btn');
-        const stopBtn = document.getElementById('stop-tracking-btn');
-
-        if (startBtn && stopBtn) {
-            startBtn.disabled = tracking;
-            stopBtn.disabled = !tracking;
-        }
-    }
-
-    showNotification(message, type = 'info') {
-        // Создаем уведомление
-        const notification = document.createElement('div');
-        notification.className = `alert alert-${type === 'error' ? 'danger' : 'info'} alert-dismissible fade show`;
-        notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 10000;
-            min-width: 300px;
-        `;
-        notification.innerHTML = `
-            <strong>${type === 'error' ? '⚠️ Ошибка' : 'ℹ️ Информация'}</strong>
-            <div>${message}</div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
-
-        document.body.appendChild(notification);
-
-        // Автоматическое скрытие через 5 секунд
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.remove();
-            }
-        }, 5000);
-    }
-}
-
-// Инициализация отслеживания когда страница загружена
-document.addEventListener('DOMContentLoaded', function() {
-    const applicationId = "{{ application.id }}";
-    const applicationStatus = "{{ application.status }}";
-
-    // Запускаем отслеживание только если заявка в обработке и есть водители
-    const hasDrivers = {{ application.user_drivers.all|length }} > 0;
-    const shouldTrack = applicationStatus === 'in_progress' && hasDrivers;
-
-    console.log('Page loaded - Tracking conditions:', {
-        applicationId,
-        applicationStatus,
-        hasDrivers,
-        shouldTrack
     });
-
-    if (shouldTrack) {
-        window.driverTracker = new DriverTracker(applicationId);
-    } else {
-        console.log('Tracking not started - conditions not met');
-        // Скрываем блок отслеживания если условия не выполнены
-        const trackingCard = document.getElementById('tracking-card');
-        if (trackingCard) {
-            trackingCard.style.display = 'none';
-        }
-    }
-});
-</script>
-
-<script>
-// Управление отслеживанием для водителей
-document.addEventListener('DOMContentLoaded', function() {
-    const startBtn = document.getElementById('start-tracking-btn');
-    const stopBtn = document.getElementById('stop-tracking-btn');
-
-    if (startBtn && stopBtn) {
-        startBtn.addEventListener('click', function() {
-            if (window.driverTracker) {
-                window.driverTracker.startTracking();
-            }
-        });
-
-        stopBtn.addEventListener('click', function() {
-            if (window.driverTracker) {
-                window.driverTracker.stopTracking();
-            }
-        });
-
-        // По умолчанию для водителей отслеживание запущено
-        if ({{ request.user.employee }} === 3) {
-            startBtn.disabled = true;
-            stopBtn.disabled = false;
-        } else {
-            // Для не-водителей скрываем кнопки управления
-            startBtn.style.display = 'none';
-            stopBtn.style.display = 'none';
-        }
-    }
-});
-</script>
-    <script>
-// Управление отслеживанием для водителей
-document.addEventListener('DOMContentLoaded', function() {
-    const startBtn = document.getElementById('start-tracking-btn');
-    const stopBtn = document.getElementById('stop-tracking-btn');
-
-    if (startBtn && stopBtn && window.driverTracker) {
-        startBtn.addEventListener('click', function() {
-            window.driverTracker.startTracking();
-            startBtn.disabled = true;
-            stopBtn.disabled = false;
-        });
-
-        stopBtn.addEventListener('click', function() {
-            window.driverTracker.stopTracking();
-            startBtn.disabled = false;
-            stopBtn.disabled = true;
-        });
-
-        // По умолчанию отслеживание запущено для водителей
-        startBtn.disabled = true;
-    }
-});
-</script>
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  const form = document.getElementById("addGroupForm");
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const data = {
-      title: form.querySelector("[name=title]").value,
-      description: form.querySelector("[name=description]").value,
-      application_id: "{{ application.id }}"
-    };
-
-    try {
-      const res = await fetch("{% url 'moderation:add_gallery_group' %}", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": "{{ csrf_token }}"
-        },
-        body: JSON.stringify(data)
-      });
-      const json = await res.json();
-
-      if (json.success) {
-        location.reload(); // 🔄 обновим страницу, чтобы вкладка группы появилась
-      } else {
-        alert("Ошибка: " + (json.error || "Неизвестная"));
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Ошибка сети");
-    }
-  });
-});
-</script>
-
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  const uploadForm = document.getElementById("galleryUploadForm");
-  const input = uploadForm.querySelector("input[type=file]");
-  const preview = document.getElementById("galleryPreview");
-  const progress = document.getElementById("galleryProgress");
-  const bar = progress.querySelector(".progress-bar");
-
-  // 📌 Превью выбранных файлов
-  input.addEventListener("change", () => {
-    preview.innerHTML = "";
-    if (!input.files.length) { preview.style.display="none"; return; }
-    preview.style.display = "flex";
-
-    Array.from(input.files).forEach((file, idx) => {
-      const col = document.createElement("div");
-      col.className = "col-4 preview-thumb";
-      const url = URL.createObjectURL(file);
-
-      col.innerHTML = `
-        ${file.type.startsWith("image")
-          ? `<img src="${url}" class="img-fluid rounded">`
-          : `<video src="${url}" class="img-fluid rounded"></video>`}
-        <div class="status-label">⏳ Ожидание</div>
-      `;
-      preview.appendChild(col);
-    });
-  });
-
-  // 📌 Загрузка с отображением прогресса
-  uploadForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const formData = new FormData(uploadForm);
-
-    // Берём активную группу
-    const activeTab = document.querySelector("#galleryTabs .nav-link.active");
-    if (!activeTab) {
-      alert("Выберите группу");
-      return;
-    }
-    const groupId = activeTab.id.replace("tab-", "");
-    formData.set("group", groupId);
-
-    progress.style.display = "block";
-    bar.style.width = "0%";
-
-    try {
-      const res = await fetch(uploadForm.action, {
-        method: "POST",
-        body: formData,
-        headers: { "X-CSRFToken": "{{ csrf_token }}" }
-      });
-
-      const json = await res.json();
-      bar.style.width = "100%";
-
-      if (json.success) {
-        // ✅ обновляем превью
-        preview.querySelectorAll('.status-label').forEach(el=>{
-          el.textContent = "✅ Загружено";
-          el.parentElement.classList.add("uploaded");
-        });
-
-        // обновляем галерею
-        const item = json.item;
-       const inner = document.getElementById(`carousel-inner-${item.group_id}`);
-
-        // убираем active только у текущего активного
-        const activeNow = inner.querySelector(".carousel-item.active");
-        if (activeNow) activeNow.classList.remove("active");
-
-        // делаем новый активным
-        const div = document.createElement("div");
-        div.className = "carousel-item active";
-        div.innerHTML = item.is_image
-          ? `<img src="${item.url}" class="d-block w-100 gallery-media">`
-          : `<video class="d-block w-100 gallery-media" controls><source src="${item.url}"></video>`;
-        inner.appendChild(div);
-
-
-        // очистка
-        setTimeout(()=>{
-          preview.style.display="none";
-          input.value = "";
-          progress.style.display="none";
-        }, 1500);
-      } else {
-        preview.querySelectorAll('.status-label').forEach(el=>{
-          el.textContent = "❌ Ошибка";
-        });
-        alert("Ошибка: " + (json.error || JSON.stringify(json.errors)));
-      }
-    } catch(err) {
-      preview.querySelectorAll('.status-label').forEach(el=>{
-        el.textContent = "❌ Сеть";
-      });
-      console.error(err);
-      alert("Ошибка сети при загрузке");
-    }
-  });
-});
 
 </script>
 
