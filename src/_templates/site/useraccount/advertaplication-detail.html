@@ -977,18 +977,14 @@ iframe {
                         <div id="galleryPreview" class="row g-2 mb-2" style="display:none;"></div>
                         <div class="progress mb-2" id="galleryProgress" style="display:none; height: 6px;">
                             <div class="progress-bar progress-bar-striped progress-bar-animated"
-                                 role="progressbar" style="width: 0%"></div>
+                                 role="progressbar" style="width: 0%">
+                            </div>
                         </div>
                         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addGroupModal">
-                            <i class="bi bi-folder-plus"></i> Создать группу и добавить отчёт
+                            <i class="bi bi-folder-plus"></i> Добавить отчёт
                         </button>
-
-
-
                         <hr>
                         {% endif %}
-
-
 
                         {% if application.gallery_groups.exists %}
                         <!-- Вкладки групп -->
