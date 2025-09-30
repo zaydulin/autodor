@@ -271,6 +271,7 @@ class AdvertAplication(models.Model):
         DONE = "done", "Завершена"
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     price = models.DecimalField("Стоимость", max_digits=12, decimal_places=2)
+    delevery_price = models.DecimalField("Стоимость доставки", max_digits=12, decimal_places=2)
 
     user = models.ManyToManyField(
         settings.AUTH_USER_MODEL,

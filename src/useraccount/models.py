@@ -32,6 +32,7 @@ class Profile(AbstractUser):
         (3, 'Посредник'),
         (4, 'Админ'),
     ]
+    on_hands = models.DecimalField("Стоимость доставки", max_digits=12, decimal_places=2)
     employee = models.PositiveSmallIntegerField('Должность', choices=EMPLOYEE, blank=False, default=0)
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     phone = models.CharField(blank=True, verbose_name='Телефон', max_length=500, null=True)

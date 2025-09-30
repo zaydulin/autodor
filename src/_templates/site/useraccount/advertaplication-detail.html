@@ -537,7 +537,60 @@ body {
             height: 250px !important;
         }
     }
+
+
     </style>
+    <style>
+.gallery-media{
+    object-fit:contain;
+    max-height:420px;
+    background:#000;
+}
+
+.preview-thumb{
+    position:relative;
+    overflow:hidden;
+    border-radius:8px;
+    box-shadow:0 2px 6px rgba(0,0,0,.15);
+    animation:fadeIn .4s ease;
+}
+.preview-thumb img,
+.preview-thumb video{
+    width:100%;
+    height:120px;
+    object-fit:cover;
+}
+.preview-remove{
+    position:absolute;
+    top:5px; right:5px;
+    background:rgba(0,0,0,.6);
+    border:none;
+    color:#fff;
+    border-radius:50%;
+    width:26px;height:26px;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+}
+@keyframes fadeIn{from{opacity:0;transform:scale(.9);}to{opacity:1;transform:scale(1);}}
+</style>
+<style>
+                .preview-thumb .status-label{
+                    position:absolute;
+                    left:0;bottom:0;
+                    width:100%;
+                    font-size:12px;
+                    padding:2px 4px;
+                    text-align:center;
+                    color:#fff;
+                    background:rgba(0,0,0,.55);
+                }
+                .preview-thumb.uploaded .status-label{
+                    background:rgba(40,167,69,.8);          /* зелёный фон */
+                }
+                .preview-thumb.error .status-label{
+                    background:rgba(220,53,69,.8);          /* красный фон */
+                }
+                </style>
     <div class="container py-4">
         <div class="row g-4">
             <!-- Левая колонка -->
@@ -684,6 +737,8 @@ body {
                     }
                 </style>
                 {% endif %}
+
+
             </div>
 
             <!-- Правая колонка -->
@@ -772,23 +827,25 @@ body {
                       {% if request.user.is_authenticated %}
                       <form id="galleryUploadForm"
                             action="{% url 'moderation:add_gallery_item' application.id %}"
-                            method="post" enctype="multipart/form-data" class="d-inline">
+                            method="post" enctype="multipart/form-data">
                           {% csrf_token %}
                           <label class="btn btn-outline-primary btn-sm mb-0">
                               ➕ Загрузить
                               <input type="file"
+                                     id="galleryInput"
                                      name="file"
                                      accept="image/*,video/*"
-                                     capture="environment"
-                                     multiple
-                                     hidden>
+                                     multiple hidden>
                           </label>
                       </form>
                       {% endif %}
                   </div>
 
+                  <!-- Превью выбранных файлов -->
+                  <div id="previewContainer" class="row g-2 px-3 pb-2" style="display:none;"></div>
+
                   <!-- Прогресс-бар -->
-                  <div class="progress" id="uploadProgress" style="height:4px;display:none;">
+                  <div class="progress rounded-0" id="uploadProgress" style="height:5px;display:none;">
                       <div class="progress-bar progress-bar-striped progress-bar-animated bg-success"
                            role="progressbar" style="width:0%"></div>
                   </div>
@@ -800,11 +857,10 @@ body {
                           {% for item in application.gallery.all %}
                           <div class="carousel-item {% if forloop.first %}active{% endif %}">
                               {% if item.is_image %}
-                                  <img src="{{ item.file.url }}" class="d-block w-100 rounded"
-                                       style="object-fit:contain;max-height:420px;">
+                                  <img src="{{ item.file.url }}" class="d-block w-100 rounded gallery-media"
+                                       alt="preview">
                               {% else %}
-                                  <video class="d-block w-100 rounded" controls
-                                         style="max-height:420px;background:#000;">
+                                  <video class="d-block w-100 rounded gallery-media" controls>
                                       <source src="{{ item.file.url }}">
                                   </video>
                               {% endif %}
@@ -826,11 +882,12 @@ body {
                       </button>
                   </div>
                   {% else %}
-                  <div class="card-body text-center text-muted">
+                  <div class="card-body text-center text-muted" id="emptyGalleryText">
                       Пока нет загруженных фото или видео
                   </div>
                   {% endif %}
                 </div>
+
 
 
 
@@ -2053,65 +2110,119 @@ document.addEventListener("DOMContentLoaded", () => {
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-    const form = document.getElementById("galleryUploadForm");
-    const input = form.querySelector("input[name='file']");
-    const progress = document.getElementById("uploadProgress");
-    const bar = progress.querySelector(".progress-bar");
-    const carouselInner = document.getElementById("galleryCarouselInner");
+  const form = document.getElementById("galleryUploadForm");
+  const input = document.getElementById("galleryInput");
+  const preview = document.getElementById("previewContainer");
+  const progress = document.getElementById("uploadProgress");
+  const bar = progress.querySelector(".progress-bar");
+  const carouselInner = document.getElementById("galleryCarouselInner");
+  const emptyText = document.getElementById("emptyGalleryText");
 
-    input.addEventListener("change", () => {
-        if (!input.files.length) return;
+  /** ✅ Превью выбранных файлов */
+  input.addEventListener("change", () => {
+      preview.innerHTML = "";
+      if (!input.files.length) { preview.style.display="none"; return; }
+      preview.style.display = "flex";
 
-        // готовим данные
-        const data = new FormData(form);
-        for (const f of input.files) data.append("file", f);
+      Array.from(input.files).forEach((file, idx) => {
+          const col = document.createElement("div");
+          col.className = "col-4 preview-thumb";
+          const url = URL.createObjectURL(file);
 
-        progress.style.display = "block";
-        bar.style.width = "0%";
+          col.innerHTML = `
+              ${file.type.startsWith("image")
+                  ? `<img src="${url}" alt="">`
+                  : `<video src="${url}"></video>`}
+              <div class="status-label">Загружается…</div>
+              <button class="preview-remove">&times;</button>
+          `;
+          // Удаление
+          col.querySelector(".preview-remove").addEventListener("click",()=>{
+              removeFile(idx);
+              col.remove();
+              if(!preview.children.length) preview.style.display="none";
+          });
+          preview.appendChild(col);
+      });
 
-        fetch(form.action, {
-            method: "POST",
-            body: data,
-            headers: { "X-CSRFToken": "{{ csrf_token }}" }
-        }).then(res => {
-            if (!res.ok) throw new Error("Ошибка сервера");
-            // отслеживаем прогресс (через XHR):
-            return res.json();
-        }).then(json => {
-            progress.style.display = "none";
-            if (json.success && json.items) {
-                json.items.forEach(addItemToCarousel);
-            } else {
-                alert(json.error || "Не удалось загрузить");
-            }
-            input.value = "";
-        }).catch(err => {
-            console.error(err);
-            progress.style.display = "none";
-            alert("Ошибка при загрузке");
-        });
-    });
+      // После добавления сразу грузим
+      uploadFiles();
+  });
 
-    /** функция добавления нового медиа в слайдер */
-    function addItemToCarousel(item){
-        const div = document.createElement("div");
-        div.className = "carousel-item";
-        div.innerHTML = item.is_image
-            ? `<img src="${item.url}" class="d-block w-100 rounded"
-                     style="object-fit:contain;max-height:420px;">`
-            : `<video class="d-block w-100 rounded" controls
-                      style="max-height:420px;background:#000;">
-                   <source src="${item.url}">
-               </video>`;
+  /** ⚙️ Удаление файла из input */
+  function removeFile(index){
+      const dt = new DataTransfer();
+      Array.from(input.files).forEach((f,i)=>{ if(i!==index) dt.items.add(f); });
+      input.files = dt.files;
+  }
 
-        // если это первый элемент – делаем активным
-        if (!carouselInner.querySelector(".carousel-item")) {
-            div.classList.add("active");
-        }
-        carouselInner.appendChild(div);
-    }
+  /** 🚀 Загрузка файлов */
+  function uploadFiles(){
+      const data = new FormData();
+      for(const f of input.files) data.append("file", f);
+
+      progress.style.display="block";
+      bar.style.width="0%";
+
+      fetch(form.action, {
+          method: "POST",
+          body: data,
+          headers:{ "X-CSRFToken": "{{ csrf_token }}" }
+      })
+      .then(res=>res.json())
+      .then(json=>{
+          progress.style.display="none";
+          if(json.success && json.items){
+              // отмечаем каждый как загруженный
+              preview.querySelectorAll('.preview-thumb').forEach(div=>{
+                div.classList.add('uploaded');
+                div.querySelector('.status-label').textContent = "✅ Загружено";
+
+                // ⏳ Скрываем превью через 2 секунды
+                setTimeout(() => {
+                    div.remove();
+                    if(!preview.children.length){
+                        preview.style.display = "none";
+                    }
+                }, 1000);
+            });
+
+              if(emptyText) emptyText.remove();
+              json.items.forEach(addToCarousel);
+              input.value="";
+          }else{
+              preview.querySelectorAll('.preview-thumb').forEach(div=>{
+                  div.classList.add('error');
+                  div.querySelector('.status-label').textContent = "❌ Ошибка";
+              });
+              alert(json.error || "Не удалось загрузить");
+          }
+      })
+      .catch(()=>{
+          progress.style.display="none";
+          preview.querySelectorAll('.preview-thumb').forEach(div=>{
+              div.classList.add('error');
+              div.querySelector('.status-label').textContent = "❌ Ошибка сети";
+          });
+      });
+  }
+
+  /** ➕ Добавление слайда в галерею */
+  function addToCarousel(item){
+      const div = document.createElement("div");
+      div.className = "carousel-item";
+      div.innerHTML = item.is_image
+          ? `<img src="${item.url}" class="d-block w-100 rounded gallery-media">`
+          : `<video class="d-block w-100 rounded gallery-media" controls>
+                 <source src="${item.url}">
+             </video>`;
+      if(!carouselInner.querySelector(".carousel-item")) div.classList.add("active");
+      carouselInner.appendChild(div);
+  }
 });
 </script>
+
+
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {

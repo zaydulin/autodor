@@ -8,6 +8,7 @@
 
 {% block head %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 
 
@@ -389,6 +390,14 @@
         <h1 class="page-title">📋 Список заявок</h1>
         <p class="page-subtitle">Управление и отслеживание всех ваших заявок</p>
     </div>
+    <div class="main-container mb-5">
+      <div class="card p-4 shadow-sm fade-in">
+          <h3 class="mb-3 text-center">📈 Динамика заявок</h3>
+          <canvas id="statisticsChart" height="120"></canvas>
+      </div>
+    </div>
+
+
 
     <!-- Список заявок -->
     {% for application in page_obj %}
@@ -728,4 +737,80 @@ document.addEventListener('DOMContentLoaded', function() {
     updateProgressBars();
 });
 </script>
+
+{{ chart_labels|json_script:"chart-labels" }}
+{{ chart_prices|json_script:"chart-prices" }}
+{{ chart_expenses|json_script:"chart-expenses" }}
+{{ chart_withdrawals|json_script:"chart-withdrawals" }}
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const ctx = document.getElementById("statisticsChart");
+
+    const labels      = JSON.parse(document.getElementById("chart-labels").textContent);
+    const prices      = JSON.parse(document.getElementById("chart-prices").textContent);
+    const expenses    = JSON.parse(document.getElementById("chart-expenses").textContent);
+    const withdrawals = JSON.parse(document.getElementById("chart-withdrawals").textContent);
+
+    if (!labels.length) {
+        console.warn("Нет данных для графика");
+        return;
+    }
+
+    new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: "Стоимость заявок",
+                    data: prices,
+                    borderColor: "#3a86ff",
+                    backgroundColor: "rgba(58,134,255,0.1)",
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 4
+                },
+                {
+                    label: "Расходы",
+                    data: expenses,
+                    borderColor: "#ff6b6b",
+                    backgroundColor: "rgba(255,107,107,0.15)",
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 4
+                },
+                {
+                    label: "Выплаты",
+                    data: withdrawals,
+                    borderColor: "#4cc9f0",
+                    backgroundColor: "rgba(76,201,240,0.15)",
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: "bottom" },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()} ₽`
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { callback: v => v + " ₽" }
+                }
+            }
+        }
+    });
+});
+</script>
+
+
 {% endblock content %}
