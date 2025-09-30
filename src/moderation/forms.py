@@ -133,17 +133,18 @@ class PathResponsibilityForm(forms.ModelForm):
 class AdvertAplicationGalleryForm(forms.ModelForm):
     class Meta:
         model = AdvertAplicationGallery
-        fields = ("file",)
+        fields = ["file", "description", "group"]
         widgets = {
-            "file": forms.ClearableFileInput(
-                attrs={
-                    "class": "form-control",
-                    "accept": "image/*,video/*",
-                    # capture позволяет на мобилке открыть камеру сразу
-                    "capture": "environment"
-                }
-            )
+            "description": forms.TextInput(
+                attrs={"class": "form-control", "placeholder": "Описание…"}
+            ),
+            "group": forms.Select(attrs={
+                "class": "form-select",
+                "id": "galleryGroupSelect"  # 👈 важно
+            }),
         }
+
+
 
 
 class PathResponsibilityUpdateForm(forms.ModelForm):
