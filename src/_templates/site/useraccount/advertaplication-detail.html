@@ -451,6 +451,8 @@ iframe {
 </style>
 
 
+
+
 <style>
     .table-wrap{
       max-width: 600px;                /* была 720px */
@@ -609,6 +611,97 @@ iframe {
     .preview-thumb.error .status-label{
         background:rgba(220,53,69,.8);          /* красный фон */
     }
+</style>
+
+
+<style>
+    /* Общая сетка */
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+/* Карточка */
+.gallery-item {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #000;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+.gallery-item:hover {
+  transform: translateY(-3px);
+}
+
+/* Медиа */
+.gallery-item img,
+.gallery-item video {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  display: block;
+  transition: opacity 0.3s ease;
+}
+
+/* Оверлей при наведении */
+.gallery-item::after {
+  content: "🔍";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 28px;
+  background: rgba(0,0,0,0.4);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.gallery-item:hover::after {
+  opacity: 1;
+}
+
+/* Видео метка */
+.gallery-item.video::after {
+  content: "▶️";
+  font-size: 32px;
+}
+
+/* ====== Адаптивность ====== */
+@media (max-width: 991px) {
+  .gallery-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+  .gallery-item img,
+  .gallery-item video {
+    height: 150px;
+  }
+}
+
+@media (max-width: 767px) {
+  .gallery-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  .gallery-item img,
+  .gallery-item video {
+    height: 120px;
+  }
+}
+
+/* Очень маленькие экраны */
+@media (max-width: 480px) {
+  .gallery-grid {
+    grid-template-columns: 1fr;
+  }
+  .gallery-item img,
+  .gallery-item video {
+    height: 220px;
+  }
+}
+
 </style>
 <div class="container py-4">
     <div class="row g-4">
@@ -1003,6 +1096,7 @@ iframe {
                                     </thead>
                                     <tbody>
                                     {% for group in application.gallery_groups.all %}
+
                                     {% if group.description %}
                                     <tr>
                                         <td>
@@ -1013,7 +1107,12 @@ iframe {
                                     <tr>
                                         <td>
                                             <div class="row">
+                                                  <h5 class="mb-1">Название - "{{ group.title }}"</h5>
+                                                  <p class="mb-1">описание - {{ group.description }}</p>
+
                                                 {% for item in group.items.all %}
+
+
                                                 <div class="col-3 mb-3">
                                                     {% if item.is_image %}
                                                     <!-- Миниатюра изображения -->
@@ -1332,7 +1431,7 @@ iframe {
                     {% if request.user.employee == 1 or request.user.employee == 2 %}
                     <div class="edit-panel">
 
-                        <div class="edit-btn" data-bs-toggle="modal" data-bs-target="#editPhaseModal" data-phase="1">
+                        <div class="edit-btn" data-bs-toggle="modal" data-bs-target="#responsibilityModal" data-phase="1">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil" viewBox="0 0 16 16">
                                 <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325"/>
                             </svg>
@@ -1560,24 +1659,28 @@ iframe {
 
 
 <!-- Модальное окно редактирования ответственности -->
-<div class="modal fade" id="addResponsibilityModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Добавить ответственность</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                {{ path_responsibilitys_form.as_p }}
-                <input type="hidden" id="responsibility_path_id">
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                <button type="button" class="btn btn-primary" id="addResponsibilityBtn">Добавить</button>
-            </div>
+<div class="modal fade" id="responsibilityModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="responsibilityForm">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title">Этап</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
+        <div class="modal-body" id="responsibilityFormBody">
+          <!-- Сюда AJAX загрузит форму -->
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary"
+                  data-bs-dismiss="modal">Отмена</button>
+          <button type="submit" class="btn btn-primary">Сохранить</button>
+        </div>
+      </form>
     </div>
+  </div>
 </div>
+
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
@@ -3099,4 +3202,66 @@ function addNewPhase() {
 });
 
 </script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const modal = new bootstrap.Modal(document.getElementById("responsibilityModal"));
+  const form = document.getElementById("responsibilityForm");
+  const body = document.getElementById("responsibilityFormBody");
+
+  // открыть модалку
+  window.openResponsibilityModal = async (id=null) => {
+    const url = id ? `/responsibility/${id}/form/` : `/responsibility/form/`;
+    const res = await fetch(url);
+    const json = await res.json();
+    body.innerHTML = json.html;
+    modal.show();
+  };
+
+  // сохранение
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const formData = new FormData(form);
+    const id = formData.get("id");
+    const url = id ? `/responsibility/${id}/form/` : `/responsibility/form/`;
+
+    const res = await fetch(url, { method: "POST", body: formData });
+    const json = await res.json();
+
+    if (json.success && json.responsibility) {
+      modal.hide();
+      updateResponsibilityUI(json.responsibility);
+    } else {
+      body.innerHTML = json.html || "<p class='text-danger'>Ошибка</p>";
+    }
+  });
+
+  // обновление DOM
+  function updateResponsibilityUI(r) {
+    let el = document.querySelector(`#responsibility-${r.id}`);
+    if (!el) {
+      el = document.createElement("div");
+      el.id = `responsibility-${r.id}`;
+      document.querySelector("#phasesRow").appendChild(el);
+    }
+    el.innerHTML = `
+      <div id="responsibility-{{ pathr.id }}">
+      <div class="phase-card">
+        <h5>Этап {{ forloop.counter }}</h5>
+        <p>{{ pathr.additional }}</p>
+        <p>Статус: {{ pathr.status }}</p>
+        <p>Ответственный: {{ pathr.responsible }}</p>
+
+        <button class="btn btn-sm btn-outline-primary"
+                onclick="openResponsibilityModal({{ pathr.id }})">
+          Редактировать
+        </button>
+      </div>
+    </div>
+    `;
+  }
+});
+
+
+</script>
+
 {% endblock %}

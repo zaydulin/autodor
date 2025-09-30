@@ -14,6 +14,7 @@ from django.core.paginator import Paginator
 from django.db.models.functions import TruncDate
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
@@ -157,6 +158,30 @@ def add_gallery_group_with_items(request, pk):
         "items": items_data,
     })
 
+
+def responsibility_form(request, pk=None):
+    instance = get_object_or_404(PathResponsibility, pk=pk) if pk else None
+    form = PathResponsibilityForm(request.POST or None, instance=instance)
+
+    if request.method == "POST":
+        if form.is_valid():
+            obj = form.save()
+            return JsonResponse({
+                "success": True,
+                "responsibility": {
+                    "id": obj.id,
+                    "additional": obj.additional,
+                    "status": obj.status,
+                    "responsible": str(obj.responsible),
+                }
+            })
+        # ошибки
+        html = render_to_string("moderation/includes/responsibility_form.html", {"form": form}, request=request)
+        return JsonResponse({"success": False, "html": html})
+
+    # GET → отдаем форму
+    html = render_to_string("moderation/includes/responsibility_form.html", {"form": form}, request=request)
+    return JsonResponse({"success": True, "html": html})
 
 
 class AdvertAplicationListView(LoginRequiredMixin, ListView):

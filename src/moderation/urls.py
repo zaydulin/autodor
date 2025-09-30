@@ -12,11 +12,13 @@ urlpatterns = [
     path("advert/<int:advert_id>/", views.create_application_view, name="advert_apply"),
     path("ajax/expense-masks/", views.expense_masks_json, name="expense_masks_json"),
     path("add-gallery-group/", views.add_gallery_group, name="add_gallery_group"),
-path(
-    "applications/<uuid:pk>/gallery/add_group_with_items/",
-    views.add_gallery_group_with_items,
-    name="add_gallery_group_with_items",
-),
+    path(
+        "applications/<uuid:pk>/gallery/add_group_with_items/",
+        views.add_gallery_group_with_items,
+        name="add_gallery_group_with_items",
+    ),
+    path("responsibility/form/", views.responsibility_form, name="responsibility_create"),
+    path("responsibility/<int:pk>/form/", views.responsibility_form, name="responsibility_update"),
 
 
     path("my-applications/", views.AdvertAplicationListView.as_view(), name="my_applications"),
