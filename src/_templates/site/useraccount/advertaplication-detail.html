@@ -983,6 +983,21 @@ iframe {
                         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addGroupModal">
                             <i class="bi bi-folder-plus"></i> Добавить отчёт
                         </button>
+
+
+
+                        <ul class="nav nav-tabs" id="galleryTabs" role="tablist" style="margin-top: 20px">
+                                {% for group in application.gallery_groups.all %}
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link {% if forloop.first %}active{% endif %}"
+                                            id="tab-{{ group.id }}" data-bs-toggle="tab"
+                                            data-bs-target="#group-{{ group.id }}" type="button"
+                                            role="tab">
+                                        {{ group.title }}
+                                    </button>
+                                </li>
+                                {% endfor %}
+                            </ul>
                         <hr>
                         {% endif %}
 
