@@ -486,7 +486,7 @@ class Path(models.Model):
     request = models.CharField(max_length=255, verbose_name='Заявка')
 
     def __str__(self):
-        return f"Path {self.id} ({self.latitude}, {self.longitude})"
+        return f"Path {self.name} ({self.latitude}, {self.longitude})"
 
 
 class PathResponsibility(models.Model):

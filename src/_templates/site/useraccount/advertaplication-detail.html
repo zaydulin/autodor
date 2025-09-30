@@ -1219,9 +1219,7 @@ body {
 
                         <!-- Кнопка добавления этапа -->
                         {% if request.user.employee == 2 %}
-                        <button class="btn add-phase-btn" data-bs-toggle="modal" data-bs-target="#addPhaseModal">
-                            <i class="fas fa-plus me-2"></i>Добавить новый путь
-                        </button>
+
                         <button class="btn add-phase-btn" data-bs-toggle="modal" data-bs-target="#editPhaseModal" data-phase="1">
                             Добавить новый этап
                         </button>
@@ -1244,6 +1242,9 @@ body {
                             <div class="arrow blue"></div>
                             <div class="arrow blue"></div>
                         </div>
+                        <button class="btn add-phase-btn" data-bs-toggle="modal" data-bs-target="#addPhaseModal">
+                            <i class="fas fa-plus me-2"></i>Добавить новый путь
+                        </button>
 
                         <!-- Нижние шаги -->
                         <div class="row text-center mt-4" id="stepsRow">
@@ -1288,7 +1289,7 @@ body {
                                 </div>
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                                    <button type="submit" class="btn btn-primary" id="addPhaseBtn">Добавить этап</button>
+                                    <button type="submit" class="btn btn-primary" id="addPhaseBtn">documents</button>
                                 </div>
                             </div>
                         </div>
