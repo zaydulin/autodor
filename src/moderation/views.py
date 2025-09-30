@@ -161,9 +161,10 @@ def add_gallery_group_with_items(request, pk):
 
 def responsibility_form(request, pk=None):
     instance = get_object_or_404(PathResponsibility, pk=pk) if pk else None
-    form = PathResponsibilityForm(request.POST or None, instance=instance)
 
     if request.method == "POST":
+        form = PathResponsibilityForm(request.POST, instance=instance)
+        print(form)
         if form.is_valid():
             obj = form.save()
             return JsonResponse({
@@ -171,16 +172,26 @@ def responsibility_form(request, pk=None):
                 "responsibility": {
                     "id": obj.id,
                     "additional": obj.additional,
-                    "status": obj.status,
+                    "status": obj.get_status_display(),
                     "responsible": str(obj.responsible),
                 }
             })
-        # ошибки
-        html = render_to_string("moderation/includes/responsibility_form.html", {"form": form}, request=request)
-        return JsonResponse({"success": False, "html": html})
+        else:
+            # Возвращаем форму с ошибками
+            html = render_to_string(
+                "moderation/includes/responsibility_form.html",
+                {"form": form},
+                request=request
+            )
+            return JsonResponse({"success": False, "html": html})
 
-    # GET → отдаем форму
-    html = render_to_string("moderation/includes/responsibility_form.html", {"form": form}, request=request)
+    # GET request
+    form = PathResponsibilityForm(instance=instance)
+    html = render_to_string(
+        "moderation/includes/responsibility_form.html",
+        {"form": form},
+        request=request
+    )
     return JsonResponse({"success": True, "html": html})
 
 
