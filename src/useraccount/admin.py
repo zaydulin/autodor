@@ -5,8 +5,8 @@ from .models import *
 # Register your models here.
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
-    list_display = ['phone', 'display_avatar', 'get_gender_display']
-    list_display_links = ['phone', 'display_avatar', 'get_gender_display']
+    list_display = ['phone', 'display_avatar', 'get_gender_display', 'get_type_display', 'get_employee_display', 'email']
+    list_display_links = ['phone', 'display_avatar', 'get_gender_display', 'get_type_display', 'get_employee_display', 'email']
 
     def display_avatar(self, obj):
         if obj.avatar:
