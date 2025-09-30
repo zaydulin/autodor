@@ -984,28 +984,7 @@ iframe {
                         </button>
 
 
-                        <form id="galleryUploadForm"
-                              method="post" enctype="multipart/form-data">
-                            {% csrf_token %}
-                            {{ gallery_form.group }}
-                            {{ gallery_form.description }}
-                            <input type="file" name="file" accept="image/*,video/*" multiple class="form-control mt-2">
-                            <input type="hidden" name="group" id="galleryGroupHidden">
 
-
-                            <ul class="nav nav-tabs" id="galleryTabs" role="tablist" style="margin-top: 20px">
-                                {% for group in application.gallery_groups.all %}
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link {% if forloop.first %}active{% endif %}"
-                                            id="tab-{{ group.id }}" data-bs-toggle="tab"
-                                            data-bs-target="#group-{{ group.id }}" type="button"
-                                            role="tab">
-                                        {{ group.title }}
-                                    </button>
-                                </li>
-                                {% endfor %}
-                            </ul>
-                        </form>
                         <hr>
                         {% endif %}
 
