@@ -110,29 +110,53 @@ def add_gallery_group(request):
 
 @login_required
 @require_POST
-def add_gallery_item(request, pk):
+def add_gallery_group_with_items(request, pk):
     application = get_object_or_404(AdvertAplication, pk=pk)
 
-    form = AdvertAplicationGalleryForm(request.POST, request.FILES)
-    if form.is_valid():
-        item = form.save(commit=False)
-        item.application = application
-        item.uploaded_by = request.user
-        item.save()
-        return JsonResponse({
-            "success": True,
-            "item": {
-                "id": item.id,
-                "url": item.file.url,
-                "description": item.description,
-                "is_image": item.is_image,
-                "is_video": item.is_video,
-                "group_id": item.group_id,
-                "group_title": item.group.title if item.group else "",
-                "uploaded_at": item.uploaded_at.strftime("%d.%m.%Y %H:%M"),
-            },
+    title = request.POST.get("title")
+    description = request.POST.get("description", "")
+    files = request.FILES.getlist("files[]")  # multiple input
+    report_description = request.POST.get("report_description", "")
+
+    if not title or not files:
+        return JsonResponse({"success": False, "error": "Название и файлы обязательны"}, status=400)
+
+    # 1. Создаём группу
+    group = AdvertAplicationGalleryGroup.objects.create(
+        application=application,
+        title=title,
+        description=description,
+        position=application.gallery_groups.count() + 1,
+    )
+
+    items_data = []
+    for f in files:
+        item = AdvertAplicationGallery.objects.create(
+            application=application,
+            group=group,
+            file=f,
+            description=report_description,
+            uploaded_by=request.user,
+        )
+        items_data.append({
+            "id": item.id,
+            "url": item.file.url,
+            "description": item.description,
+            "is_image": item.is_image,
+            "is_video": item.is_video,
+            "uploaded_at": item.uploaded_at.strftime("%d.%m.%Y %H:%M"),
         })
-    return JsonResponse({"success": False, "errors": form.errors}, status=400)
+
+    return JsonResponse({
+        "success": True,
+        "group": {
+            "id": group.id,
+            "title": group.title,
+            "description": group.description,
+        },
+        "items": items_data,
+    })
+
 
 
 class AdvertAplicationListView(LoginRequiredMixin, ListView):
