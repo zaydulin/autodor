@@ -163,51 +163,57 @@ def add_gallery_group_with_items(request, pk):
 @require_http_methods(["GET", "POST"])
 def driver_wallet_view(request, application_id, driver_id):
     """View для работы с кошельком водителя"""
-    application = get_object_or_404(AdvertAplication, id=application_id)
-    driver = get_object_or_404(Profile, id=driver_id)
-
-    # Проверяем права доступа
-    if not (request.user in application.user_menager.all() or request.user.employee == 4):
-        return JsonResponse({'error': 'Нет прав доступа'}, status=403)
-
     try:
-        cart_vod = CartVod.objects.get(application=application, voditel=driver)
-    except CartVod.DoesNotExist:
-        cart_vod = CartVod.objects.create(
+        application = get_object_or_404(AdvertAplication, id=application_id)
+        driver = get_object_or_404(Profile, id=driver_id)
+
+        # Проверяем права доступа
+        if not (request.user in application.user_menager.all() or request.user.employee == 4):
+            return JsonResponse({'error': 'Нет прав доступа'}, status=403)
+
+        # Получаем или создаем кошелек
+        cart_vod, created = CartVod.objects.get_or_create(
             application=application,
             voditel=driver,
-            summa=0
+            defaults={'summa': 0}
         )
 
-    if request.method == 'GET':
-        return JsonResponse({
-            'success': True,
-            'driver_name': f"{driver.first_name} {driver.last_name}",
-            'current_amount': float(cart_vod.summa),
-            'formatted_amount': f"{cart_vod.summa:.2f} руб.",
-            'application_id': application.id,
-            'driver_id': driver.id
-        })
-
-    elif request.method == 'POST':
-        new_amount = request.POST.get('amount')
-        try:
-            new_amount = Decimal(new_amount)
-            if new_amount < 0:
-                return JsonResponse({'error': 'Сумма не может быть отрицательной'}, status=400)
-
-            cart_vod.summa = new_amount
-            cart_vod.save()
-
+        if request.method == 'GET':
             return JsonResponse({
                 'success': True,
-                'message': 'Сумма успешно обновлена',
-                'new_amount': float(cart_vod.summa),
-                'formatted_amount': f"{cart_vod.summa:.2f} руб."
+                'driver_name': f"{driver.first_name} {driver.last_name}",
+                'current_amount': float(cart_vod.summa),
+                'formatted_amount': f"{cart_vod.summa:.2f} руб.",
+                'application_id': application.id,
+                'driver_id': driver.id
             })
 
-        except (ValueError, InvalidOperation):
-            return JsonResponse({'error': 'Неверный формат суммы'}, status=400)
+        elif request.method == 'POST':
+            new_amount = request.POST.get('amount')
+            if not new_amount:
+                return JsonResponse({'error': 'Сумма не указана'}, status=400)
+
+            try:
+                new_amount = Decimal(new_amount)
+                if new_amount < 0:
+                    return JsonResponse({'error': 'Сумма не может быть отрицательной'}, status=400)
+
+                cart_vod.summa = new_amount
+                cart_vod.save()
+
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Сумма успешно обновлена',
+                    'new_amount': float(cart_vod.summa),
+                    'formatted_amount': f"{cart_vod.summa:.2f} руб."
+                })
+
+            except (ValueError, InvalidOperation) as e:
+                return JsonResponse({'error': 'Неверный формат суммы'}, status=400)
+
+    except Exception as e:
+        print(f"Error in driver_wallet_view: {str(e)}")
+        return JsonResponse({'error': 'Внутренняя ошибка сервера'}, status=500)
 
 
 def responsibility_form(request, pk=None):

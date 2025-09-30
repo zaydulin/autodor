@@ -3612,6 +3612,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <script>
 // Функция для открытия модального окна кошелька
 function openWalletModal(driverId) {
+    console.log('Opening wallet modal for driver:', driverId);
     const modalElement = document.getElementById(`modalWallet${driverId}`);
     if (modalElement) {
         // Загружаем текущие данные
@@ -3620,6 +3621,8 @@ function openWalletModal(driverId) {
         // Создаем и показываем модальное окно Bootstrap
         const modal = new bootstrap.Modal(modalElement);
         modal.show();
+    } else {
+        console.error('Modal element not found for driver:', driverId);
     }
 }
 
@@ -3639,22 +3642,33 @@ async function loadDriverWalletData(driverId) {
     const applicationId = document.getElementById('application-id').value;
     const amountDisplay = document.getElementById(`amount-display-${driverId}`);
 
+    console.log('Loading wallet data for driver:', driverId, 'application:', applicationId);
+
     try {
         const response = await fetch(`/application/${applicationId}/driver/${driverId}/wallet/`);
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
         const data = await response.json();
+        console.log('Wallet data received:', data);
 
         if (data.success) {
             amountDisplay.innerHTML = `
                 <span class="fs-4 text-success fw-bold">${data.formatted_amount}</span>
             `;
             // Устанавливаем текущее значение в поле ввода
-            document.getElementById(`amount-input-${driverId}`).value = data.current_amount;
+            const amountInput = document.getElementById(`amount-input-${driverId}`);
+            if (amountInput) {
+                amountInput.value = data.current_amount;
+            }
         } else {
-            amountDisplay.innerHTML = '<span class="text-danger">Ошибка загрузки</span>';
+            amountDisplay.innerHTML = '<span class="text-danger">Ошибка загрузки: ' + (data.error || 'Неизвестная ошибка') + '</span>';
         }
     } catch (error) {
         console.error('Error loading wallet data:', error);
-        amountDisplay.innerHTML = '<span class="text-danger">Ошибка загрузки</span>';
+        amountDisplay.innerHTML = '<span class="text-danger">Ошибка загрузки: ' + error.message + '</span>';
     }
 }
 
@@ -3663,6 +3677,8 @@ async function updateDriverAmount(driverId) {
     const applicationId = document.getElementById('application-id').value;
     const amountInput = document.getElementById(`amount-input-${driverId}`);
     const newAmount = amountInput.value;
+
+    console.log('Updating amount for driver:', driverId, 'new amount:', newAmount);
 
     if (!newAmount || newAmount < 0) {
         alert('Введите корректную сумму');
@@ -3682,7 +3698,12 @@ async function updateDriverAmount(driverId) {
             }
         });
 
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
         const data = await response.json();
+        console.log('Update response:', data);
 
         if (data.success) {
             // Обновляем отображение
@@ -3702,13 +3723,18 @@ async function updateDriverAmount(driverId) {
         }
     } catch (error) {
         console.error('Error updating amount:', error);
-        alert('Ошибка при обновлении суммы');
+        alert('Ошибка при обновлении суммы: ' + error.message);
     }
 }
 
 // Получение CSRF токена
 function getCsrfToken() {
-    return document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (csrfToken) {
+        return csrfToken.value;
+    }
+    console.error('CSRF token not found');
+    return '';
 }
 
 // Показать уведомление
@@ -3742,10 +3768,13 @@ function showNotification(message, type = 'info') {
 
 // Инициализация обработчиков событий
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Initializing wallet functionality...');
+
     // Обработчики для иконок кошелька
     document.querySelectorAll('.wallet-icon').forEach(icon => {
         icon.addEventListener('click', function() {
             const driverId = this.getAttribute('data-driver-id');
+            console.log('Wallet icon clicked for driver:', driverId);
             openWalletModal(driverId);
         });
     });
@@ -3756,6 +3785,19 @@ document.addEventListener('DOMContentLoaded', function() {
             const activeModal = document.querySelector('.modal.show');
             if (activeModal && activeModal.id.startsWith('modalWallet')) {
                 const driverId = activeModal.id.replace('modalWallet', '');
+                console.log('Enter pressed in modal for driver:', driverId);
+                updateDriverAmount(driverId);
+            }
+        }
+    });
+
+    // Обработчик для кнопок сохранения в модальных окнах
+    document.addEventListener('click', function(event) {
+        if (event.target.matches('.btn-primary') && event.target.textContent.includes('Сохранить')) {
+            const modal = event.target.closest('.modal');
+            if (modal && modal.id.startsWith('modalWallet')) {
+                const driverId = modal.id.replace('modalWallet', '');
+                console.log('Save button clicked for driver:', driverId);
                 updateDriverAmount(driverId);
             }
         }
