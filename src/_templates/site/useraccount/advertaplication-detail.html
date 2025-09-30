@@ -774,6 +774,7 @@ body {
                     <div class="card-body">
                         <div class="mb-2"><strong>Статус:</strong> {{ application.get_status_display }}</div>
                         <div class="mb-2"><strong>Создана: </strong>{{ application.created_at|date:"d.m.Y H:i" }}</div>
+                        <div class="mb-2"><strong>Стоимость доставки: </strong>{{ application.delevery_price }}</div>
                         <hr>
                         <div class="mb-2"><strong>Заказчик:</strong></div>
                         <ul class="list-unstyled mb-0">
@@ -1139,6 +1140,8 @@ body {
                 </select>
               </div>
 
+
+
               <!-- Выбор водителей -->
               <div class="mb-3">
                 <label for="edit-drivers" class="form-label">Водители</label>
@@ -1148,6 +1151,11 @@ body {
                   {% endfor %}
                 </select>
               </div>
+
+                <div class="mb-3">
+                  <label for="edit-on-hands" class="form-label">Стоимость доставки</label>
+                  <input type="number" step="0.01" class="form-control" id="edit-on-hands" name="delevery_price" value="{{ application.delevery_price }}">
+                </div>
 
             </form>
           </div>
@@ -1596,11 +1604,13 @@ body {
         // Обработчик кнопки "Сохранить"
         saveBtn?.addEventListener('click', () => {
           // Собираем данные
-          const data = {
-            status: document.getElementById('edit-status').value,
-            user_menager: Array.from(document.getElementById('edit-managers').selectedOptions).map(opt => opt.value),
-            user_drivers: Array.from(document.getElementById('edit-drivers').selectedOptions).map(opt => opt.value),
-          };
+            const data = {
+              status: document.getElementById('edit-status').value,
+              user_menager: Array.from(document.getElementById('edit-managers').selectedOptions).map(opt => opt.value),
+              user_drivers: Array.from(document.getElementById('edit-drivers').selectedOptions).map(opt => opt.value),
+              delevery_price: document.getElementById('edit-on-hands').value   // 👈 добавлено
+            };
+
 
           fetch("{% url 'moderation:update_application' application.id %}", {
             method: 'POST',
