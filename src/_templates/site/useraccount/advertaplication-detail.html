@@ -9,59 +9,6 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-    // Получаем элементы
-    const walletIcon = document.getElementById('wallet-icon');
-    const popup = document.getElementById('wallet-popup');
-    const closeBtn = document.getElementById('popup-close');
-
-    // Открытие попапа
-    walletIcon.addEventListener('click', function() {
-        popup.style.display = 'flex'; // Показываем попап
-    });
-
-    // Закрытие попапа
-    closeBtn.addEventListener('click', function() {
-        popup.style.display = 'none'; // Скрываем попап
-    });
-
-    // Закрытие попапа, если кликнут вне попапа
-    window.addEventListener('click', function(event) {
-        if (event.target === popup) {
-            popup.style.display = 'none'; // Скрываем попап
-        }
-    });
-</script>
-<style>
-    /* Стили для попапа */
-    .popup {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        display: none; /* Скрыто по умолчанию */
-        align-items: center;
-        justify-content: center;
-    }
-
-    .popup-content {
-        background-color: white;
-        padding: 20px;
-        border-radius: 10px;
-        width: 400px;
-        text-align: center;
-    }
-
-    .popup-close {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        font-size: 25px;
-        cursor: pointer;
-    }
-</style>
 
 {% endblock head %}
 
@@ -867,24 +814,125 @@ iframe {
                                     </div>
                                 </div>
                             </div>
-                            <i class="icon ms-auto" title="Кошелек" id="wallet-icon">
+                            <!-- Иконка кошелька с data-target для привязки к попапу -->
+                            <i class="wallet-icon ms-auto" title="Кошелек" data-target="{{ forloop.counter }}">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" width="20" height="20">
                                     <path d="M20 2H4C2.9 2 2 2.9 2 4V20C2 21.1 2.9 22 4 22H20C21.1 22 22 21.1 22 20V4C22 2.9 21.1 2 20 2ZM4 4H20V12H4V4ZM4 20V14H20V20H4Z" fill="currentColor"/>
                                     <path d="M16 7H8V9H16V7Z" fill="currentColor"/>
                                 </svg>
                             </i>
                         </li>
-
-                        <!-- Попап (скрытый по умолчанию) -->
-                        <div id="wallet-popup" class="popup" style="display: none;">
-                            <div class="popup-content">
-                                <span class="popup-close" id="popup-close">&times;</span>
+                        <!-- Попап для каждого элемента (скрытый по умолчанию) -->
+                        <div class="modal modal-{{ forloop.counter }}" style="display: none;">
+                            <div class="modal-content">
+                                <span class="modal-close">&times;</span>
                                 <h3>Информация о кошельке</h3>
-                                <p>Здесь будет информация о кошельке.</p>
+                                <p>Здесь будет информация о кошельке для {{ men.first_name }} {{ men.last_name }}</p>
                             </div>
                         </div>
 
                         {% endfor %}
+                        <style>
+                            /* Общие стили для модального окна */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6); /* Более темный полупрозрачный фон */
+    display: none; /* Скрыт по умолчанию */
+    align-items: center;
+    justify-content: center;
+    z-index: 9999; /* Убедитесь, что попап сверху */
+    transition: opacity 0.3s ease-in-out; /* Плавный переход для открытия/закрытия */
+}
+
+/* Контент попапа */
+.modal-content {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 15px;
+    width: 450px;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Тень для глубины */
+}
+
+/* Кнопка закрытия попапа */
+.modal-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    font-size: 30px;
+    color: #333;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.modal-close:hover {
+    color: #e74c3c; /* Цвет при наведении */
+}
+
+/* Когда модальное окно открыто */
+.modal.is-open {
+    display: flex;
+    opacity: 1;
+}
+
+/* Плавное исчезновение при закрытии */
+.modal.is-closed {
+    opacity: 0;
+}
+
+                        </style>
+                        <script>
+    // Получаем все иконки кошельков
+    const walletIcons = document.querySelectorAll('.wallet-icon');
+
+    // Получаем все попапы
+    const modals = document.querySelectorAll('.modal');
+
+    // Получаем все кнопки закрытия попапов
+    const closeBtns = document.querySelectorAll('.modal-close');
+
+    // Открытие попапа при клике на иконку кошелька
+    walletIcons.forEach(icon => {
+        icon.addEventListener('click', function() {
+            const target = this.getAttribute('data-target');
+            const modal = document.querySelector(`.modal-${target}`);
+            if (modal) {
+                // Убираем inline стиль display: none
+                modal.style.display = 'flex';
+                modal.classList.add('is-open');
+            }
+        });
+    });
+
+    // Закрытие попапа при клике на крестик
+    closeBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const modal = this.closest('.modal');
+            modal.style.display = 'none';  // Скрыть попап
+            modal.classList.remove('is-open');
+        });
+    });
+
+    // Закрытие попапа, если кликнули вне попапа
+    window.addEventListener('click', function(event) {
+        modals.forEach(modal => {
+            if (event.target === modal) {
+                modal.style.display = 'none'; // Скрываем попап, если кликнули за пределы
+                modal.classList.remove('is-open');
+            }
+        });
+    });
+</script>
+
+
+
+
+
                     </ul>
                 </div>
             </div>
@@ -1050,7 +1098,7 @@ iframe {
                             </thead>
                             <tbody>
                             {% for expense in expenses %}
-                            <tr><td>{{ expense.title }}</td><td class="text-end">{{ expense.amount }} {{ advert.currency }}</td><td>{{ expense.created_at|date:"d.m.Y" }}</td></tr>
+                            <tr><td title="{{ expense.title }}">{{ expense.title|slice:":10" }}</td><td class="text-end">{{ expense.amount }} {{ advert.currency }}</td><td>{{ expense.created_at|date:"d.m.Y" }}</td></tr>
                             {% endfor %}
                             </tbody>
                         </table>
