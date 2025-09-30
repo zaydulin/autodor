@@ -887,47 +887,47 @@ iframe {
 
                         </style>
                         <script>
-    // Получаем все иконки кошельков
-    const walletIcons = document.querySelectorAll('.wallet-icon');
+                            // Получаем все иконки кошельков
+                            const walletIcons = document.querySelectorAll('.wallet-icon');
 
-    // Получаем все попапы
-    const modals = document.querySelectorAll('.modal');
+                            // Получаем все попапы
+                            const modals = document.querySelectorAll('.modal');
 
-    // Получаем все кнопки закрытия попапов
-    const closeBtns = document.querySelectorAll('.modal-close');
+                            // Получаем все кнопки закрытия попапов
+                            const closeBtns = document.querySelectorAll('.modal-close');
 
-    // Открытие попапа при клике на иконку кошелька
-    walletIcons.forEach(icon => {
-        icon.addEventListener('click', function() {
-            const target = this.getAttribute('data-target');
-            const modal = document.querySelector(`.modal-${target}`);
-            if (modal) {
-                // Убираем inline стиль display: none
-                modal.style.display = 'flex';
-                modal.classList.add('is-open');
-            }
-        });
-    });
+                            // Открытие попапа при клике на иконку кошелька
+                            walletIcons.forEach(icon => {
+                                icon.addEventListener('click', function() {
+                                    const target = this.getAttribute('data-target');
+                                    const modal = document.querySelector(`.modal-${target}`);
+                                    if (modal) {
+                                        // Убираем inline стиль display: none
+                                        modal.style.display = 'flex';
+                                        modal.classList.add('is-open');
+                                    }
+                                });
+                            });
 
-    // Закрытие попапа при клике на крестик
-    closeBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const modal = this.closest('.modal');
-            modal.style.display = 'none';  // Скрыть попап
-            modal.classList.remove('is-open');
-        });
-    });
+                            // Закрытие попапа при клике на крестик
+                            closeBtns.forEach(btn => {
+                                btn.addEventListener('click', function() {
+                                    const modal = this.closest('.modal');
+                                    modal.style.display = 'none';  // Скрыть попап
+                                    modal.classList.remove('is-open');
+                                });
+                            });
 
-    // Закрытие попапа, если кликнули вне попапа
-    window.addEventListener('click', function(event) {
-        modals.forEach(modal => {
-            if (event.target === modal) {
-                modal.style.display = 'none'; // Скрываем попап, если кликнули за пределы
-                modal.classList.remove('is-open');
-            }
-        });
-    });
-</script>
+                            // Закрытие попапа, если кликнули вне попапа
+                            window.addEventListener('click', function(event) {
+                                modals.forEach(modal => {
+                                    if (event.target === modal) {
+                                        modal.style.display = 'none'; // Скрываем попап, если кликнули за пределы
+                                        modal.classList.remove('is-open');
+                                    }
+                                });
+                            });
+                        </script>
 
 
 
@@ -983,22 +983,6 @@ iframe {
                         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addGroupModal">
                             <i class="bi bi-folder-plus"></i> Добавить отчёт
                         </button>
-
-
-
-                        <ul class="nav nav-tabs" id="galleryTabs" role="tablist" style="margin-top: 20px">
-                                {% for group in application.gallery_groups.all %}
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link {% if forloop.first %}active{% endif %}"
-                                            id="tab-{{ group.id }}" data-bs-toggle="tab"
-                                            data-bs-target="#group-{{ group.id }}" type="button"
-                                            role="tab">
-                                        {{ group.title }}
-                                    </button>
-                                </li>
-                                {% endfor %}
-                            </ul>
-                        <hr>
                         {% endif %}
 
                         {% if application.gallery_groups.exists %}
@@ -1006,45 +990,75 @@ iframe {
 
 
                         <!-- Контейнеры групп -->
-                        <div class="tab-content mt-3" id="galleryTabsContent">
+                        <div class="mt-3" id="galleryTabsContent">
                             {% for group in application.gallery_groups.all %}
-                            <div class="tab-pane fade {% if forloop.first %}show active{% endif %}"
-                                 id="group-{{ group.id }}" role="tabpanel">
+                            <div class="tab-pane fade {% if forloop.first %}show active{% endif %}" id="group-{{ group.id }}" role="tabpanel">
                                 <h6 class="text-muted">{{ group.description }}</h6>
 
                                 {% if group.items.exists %}
-                                <div id="carousel-{{ group.id }}" class="carousel slide mb-3" data-bs-ride="carousel">
-                                    <div class="carousel-inner" id="carousel-inner-{{ group.id }}">
-                                        {% for item in group.items.all %}
-                                        <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                                            {% if item.is_image %}
-                                            <img src="{{ item.file.url }}" class="d-block w-100 gallery-media" alt="">
-                                            {% elif item.is_video %}
-                                            <video class="d-block w-100 gallery-media" controls>
-                                                <source src="{{ item.file.url }}">
-                                            </video>
-                                            {% endif %}
+                                <table class="table ">
+                                    <thead>
+                                    <tr>
+                                        Информация
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for item in group.items.all %}
+
+                                    <tr>
+                                        <td>
                                             {% if item.description %}
-                                            <div class="carousel-caption d-none d-md-block">
-                                                <small class="bg-dark bg-opacity-50 px-2 rounded">{{ item.description }}</small>
-                                            </div>
+                                            <small class="bg-dark bg-opacity-50 px-2 rounded">{{ item.description }}</small>
+                                            {% else %}
+                                            <small class="text-muted">Нет описания</small>
                                             {% endif %}
-                                        </div>
-                                        {% endfor %}
-                                    </div>
-                                    <button class="carousel-control-prev" type="button" data-bs-target="#carousel-{{ group.id }}" data-bs-slide="prev">
-                                        <span class="carousel-control-prev-icon"></span>
-                                    </button>
-                                    <button class="carousel-control-next" type="button" data-bs-target="#carousel-{{ group.id }}" data-bs-slide="next">
-                                        <span class="carousel-control-next-icon"></span>
-                                    </button>
-                                </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            {% if group.items.exists %}
+                                            <div id="carousel-{{ group.id }}" class="carousel slide mb-3" data-bs-ride="carousel">
+                                                <div class="carousel-inner" id="carousel-inner-{{ group.id }}">
+                                                    {% for item in group.items.all %}
+                                                    <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                                                        {% if item.is_image %}
+                                                        <img src="{{ item.file.url }}" class="d-block w-100 gallery-media" alt="">
+                                                        {% elif item.is_video %}
+                                                        <video class="d-block w-100 gallery-media" controls>
+                                                            <source src="{{ item.file.url }}">
+                                                        </video>
+                                                        {% endif %}
+                                                        {% if item.description %}
+                                                        <div class="carousel-caption d-none d-md-block">
+                                                            <small class="bg-dark bg-opacity-50 px-2 rounded">{{ item.description }}</small>
+                                                        </div>
+                                                        {% endif %}
+                                                    </div>
+                                                    {% endfor %}
+                                                </div>
+                                                <button class="carousel-control-prev" type="button" data-bs-target="#carousel-{{ group.id }}" data-bs-slide="prev">
+                                                    <span class="carousel-control-prev-icon"></span>
+                                                </button>
+                                                <button class="carousel-control-next" type="button" data-bs-target="#carousel-{{ group.id }}" data-bs-slide="next">
+                                                    <span class="carousel-control-next-icon"></span>
+                                                </button>
+                                            </div>
+                                            {% else %}
+                                            <p class="text-muted">Нет медиа в этой группе</p>
+                                            {% endif %}
+                                        </td>
+
+                                    </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
                                 {% else %}
                                 <p class="text-muted">Нет медиа в этой группе</p>
                                 {% endif %}
                             </div>
                             {% endfor %}
                         </div>
+
                         {% else %}
                         <p class="text-muted">Группы ещё не созданы</p>
                         {% endif %}
@@ -1482,46 +1496,46 @@ iframe {
 
 
 <div class="modal fade" id="addGroupModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <form id="addGroupWithItemsForm" enctype="multipart/form-data">
-        {% csrf_token %}
-        <div class="modal-header">
-          <h5 class="modal-title">Создать группу и загрузить медиа</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="addGroupWithItemsForm" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">Создать группу и загрузить медиа</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+
+                    <div class="mb-3">
+                        <label class="form-label">Название группы</label>
+                        <input type="text" class="form-control" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Описание группы</label>
+                        <textarea class="form-control" name="description" rows="2"></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Описание для файлов</label>
+                        <input type="text" class="form-control" name="report_description">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Файлы (фото/видео)</label>
+                        <input type="file" name="files[]" accept="image/*,video/*" class="form-control" multiple required>
+                    </div>
+
+                    <!-- превью -->
+                    <div id="groupFilesPreview" class="row g-2"></div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Создать и загрузить</button>
+                </div>
+            </form>
         </div>
-        <div class="modal-body">
-
-          <div class="mb-3">
-            <label class="form-label">Название группы</label>
-            <input type="text" class="form-control" name="title" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Описание группы</label>
-            <textarea class="form-control" name="description" rows="2"></textarea>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Описание для файлов</label>
-            <input type="text" class="form-control" name="report_description">
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Файлы (фото/видео)</label>
-            <input type="file" name="files[]" accept="image/*,video/*" class="form-control" multiple required>
-          </div>
-
-          <!-- превью -->
-          <div id="groupFilesPreview" class="row g-2"></div>
-
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-          <button type="submit" class="btn btn-primary">Создать и загрузить</button>
-        </div>
-      </form>
     </div>
-  </div>
 </div>
 
 
