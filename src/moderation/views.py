@@ -405,6 +405,11 @@ def update_application(request, application_id):
                 users = Profile.objects.filter(id__in=user_ids)
                 application.user.set(users)
 
+            if 'delevery_price' in data:
+                delevery_price = data['delevery_price']
+                delevery_price = int(delevery_price)
+                application.delevery_price = delevery_price
+
             application.save()
 
             return JsonResponse({'success': True})
