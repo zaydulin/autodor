@@ -802,7 +802,21 @@ body {
                             {% for men in application.user_drivers.all %}
                                 <li class="d-flex align-items-center gap-2 mb-2">
                                     <span class="avatar">{{ men.first_name|slice:":1" }}</span>
-                                    <div><div class="fw-semibold">{{ men.first_name }} {{ men.last_name }}</div><div class="small text-muted">{{ men.email }}</div></div>
+                                    <div>
+                                        <div>
+                                            <div class="fw-semibold">
+                                                {{ men.first_name }} {{ men.last_name }}
+                                            </div>
+                                            <div class="small text-muted">
+                                                {{ men.email }}
+                                            </div>
+                                        </div>
+                                         <i class="icon ms-auto" title="Кошелек">
+                                            <svg width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M20 2H4C2.9 2 2 2.9 2 4V20C2 21.1 2.9 22 4 22H20C21.1 22 22 21.1 22 20V4C22 2.9 21.1 2 20 2ZM4 4H20V12H4V4ZM4 20V14H20V20H4Z" fill="currentColor"/>
+                                            </svg>
+                                        </i>
+                                    </div>
                                 </li>
                             {% endfor %}
                         </ul>
