@@ -3,7 +3,7 @@ import io
 import json
 import os
 from datetime import datetime
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from urllib.parse import urlparse
 
 import requests
@@ -33,7 +33,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 
 from .forms import PathForm, PathResponsibilityForm, AdvertAplicationGalleryForm
 from .models import AdvertAplication, ChatMessage, CallSession, AdvertDocument, AdvertExpense, AdvertApplicationImage, \
-    CarModel, CarBrand, AdvertAplicationGallery, ExpenseMask,AdvertAplicationGalleryGroup
+    CarModel, CarBrand, AdvertAplicationGallery, ExpenseMask,AdvertAplicationGalleryGroup,CartVod
 from moderation.models import Advert, AdvertAplication,Path,PathResponsibility, Withdrawal
 from webmain.models import Faqs, Seo
 from useraccount.models import Profile
@@ -157,6 +157,57 @@ def add_gallery_group_with_items(request, pk):
         },
         "items": items_data,
     })
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def driver_wallet_view(request, application_id, driver_id):
+    """View для работы с кошельком водителя"""
+    application = get_object_or_404(AdvertAplication, id=application_id)
+    driver = get_object_or_404(Profile, id=driver_id)
+
+    # Проверяем права доступа
+    if not (request.user in application.user_menager.all() or request.user.employee == 4):
+        return JsonResponse({'error': 'Нет прав доступа'}, status=403)
+
+    try:
+        cart_vod = CartVod.objects.get(application=application, voditel=driver)
+    except CartVod.DoesNotExist:
+        cart_vod = CartVod.objects.create(
+            application=application,
+            voditel=driver,
+            summa=0
+        )
+
+    if request.method == 'GET':
+        return JsonResponse({
+            'success': True,
+            'driver_name': f"{driver.first_name} {driver.last_name}",
+            'current_amount': float(cart_vod.summa),
+            'formatted_amount': f"{cart_vod.summa:.2f} руб.",
+            'application_id': application.id,
+            'driver_id': driver.id
+        })
+
+    elif request.method == 'POST':
+        new_amount = request.POST.get('amount')
+        try:
+            new_amount = Decimal(new_amount)
+            if new_amount < 0:
+                return JsonResponse({'error': 'Сумма не может быть отрицательной'}, status=400)
+
+            cart_vod.summa = new_amount
+            cart_vod.save()
+
+            return JsonResponse({
+                'success': True,
+                'message': 'Сумма успешно обновлена',
+                'new_amount': float(cart_vod.summa),
+                'formatted_amount': f"{cart_vod.summa:.2f} руб."
+            })
+
+        except (ValueError, InvalidOperation):
+            return JsonResponse({'error': 'Неверный формат суммы'}, status=400)
 
 
 def responsibility_form(request, pk=None):

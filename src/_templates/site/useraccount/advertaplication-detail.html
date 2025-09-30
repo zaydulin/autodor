@@ -952,9 +952,8 @@
                         <div class="mb-2"><strong>Водители:</strong></div>
                         <ul class="list-unstyled mb-0">
                             {% for men in application.user_drivers.all %}
-                            <li class="d-flex align-items-center gap-2 mb-2">
-                                <span class="avatar">{{ men.first_name|slice:":1" }}</span>
-                                <div>
+                                <li class="d-flex align-items-center gap-2 mb-2">
+                                    <span class="avatar">{{ men.first_name|slice:":1" }}</span>
                                     <div>
                                         <div class="fw-semibold">
                                             {{ men.first_name }} {{ men.last_name }}
@@ -963,25 +962,65 @@
                                             {{ men.email }}
                                         </div>
                                     </div>
-                                </div>
-                                <!-- Иконка кошелька с data-target для привязки к попапу -->
-                                <i class="wallet-icon ms-auto" title="Кошелек" data-target="{{ forloop.counter }}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" width="20" height="20">
-                                        <path d="M20 2H4C2.9 2 2 2.9 2 4V20C2 21.1 2.9 22 4 22H20C21.1 22 22 21.1 22 20V4C22 2.9 21.1 2 20 2ZM4 4H20V12H4V4ZM4 20V14H20V20H4Z" fill="currentColor"/>
-                                        <path d="M16 7H8V9H16V7Z" fill="currentColor"/>
-                                    </svg>
-                                </i>
-                            </li>
-                            <!-- Попап для каждого элемента (скрытый по умолчанию) -->
-                            <div class="modal modal-{{ forloop.counter }}" style="display: none;">
-                                <div class="modal-content">
-                                    <span class="modal-close">&times;</span>
-                                    <h3>Информация о кошельке</h3>
-                                    <p>Здесь будет информация о кошельке для {{ men.first_name }} {{ men.last_name }}</p>
-                                </div>
-                            </div>
+                                    <!-- Иконка кошелька -->
+                                    <i class="wallet-icon ms-auto"
+                                       title="Кошелек"
+                                       data-driver-id="{{ men.id }}"
+                                       data-driver-name="{{ men.first_name }} {{ men.last_name }}"
+                                       style="cursor: pointer;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" width="20" height="20">
+                                            <path d="M20 2H4C2.9 2 2 2.9 2 4V20C2 21.1 2.9 22 4 22H20C21.1 22 22 21.1 22 20V4C22 2.9 21.1 2 20 2ZM4 4H20V12H4V4ZM4 20V14H20V20H4Z" fill="currentColor"/>
+                                            <path d="M16 7H8V9H16V7Z" fill="currentColor"/>
+                                        </svg>
+                                    </i>
 
-                            {% endfor %}
+                                    <!-- Попап для кошелька -->
+                                    <div class="modal fade modal-wallet-{{ men.id }}" id="modalWallet{{ men.id }}" tabindex="-1">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">💰 Кошелек водителя</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <div class="wallet-info">
+                                                        <div class="driver-name mb-3">
+                                                            <strong>{{ men.first_name }} {{ men.last_name }}</strong>
+                                                        </div>
+                                                        <div class="current-amount mb-3">
+                                                            <label class="form-label">Текущая сумма:</label>
+                                                            <div class="amount-display" id="amount-display-{{ men.id }}">
+                                                                <div class="spinner-border spinner-border-sm" role="status"></div>
+                                                                Загрузка...
+                                                            </div>
+                                                        </div>
+                                                        <div class="amount-edit mb-3">
+                                                            <label for="amount-input-{{ men.id }}" class="form-label">Изменить сумму:</label>
+                                                            <div class="input-group">
+                                                                <input type="number"
+                                                                       step="0.01"
+                                                                       min="0"
+                                                                       class="form-control"
+                                                                       id="amount-input-{{ men.id }}"
+                                                                       placeholder="0.00">
+                                                                <span class="input-group-text">руб.</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button class="btn btn-primary" onclick="updateDriverAmount({{ men.id }})">
+                                                        💾 Сохранить
+                                                    </button>
+                                                    <button class="btn btn-secondary" data-bs-dismiss="modal">
+                                                        ❌ Отмена
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                {% endfor %}
                             <style>
                                 /* Общие стили для модального окна */
     .modal {
@@ -3570,5 +3609,157 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     </script>
+<script>
+// Функция для открытия модального окна кошелька
+function openWalletModal(driverId) {
+    const modalElement = document.getElementById(`modalWallet${driverId}`);
+    if (modalElement) {
+        // Загружаем текущие данные
+        loadDriverWalletData(driverId);
 
+        // Создаем и показываем модальное окно Bootstrap
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+    }
+}
+
+// Функция для закрытия модального окна
+function closeWalletModal(driverId) {
+    const modalElement = document.getElementById(`modalWallet${driverId}`);
+    if (modalElement) {
+        const modal = bootstrap.Modal.getInstance(modalElement);
+        if (modal) {
+            modal.hide();
+        }
+    }
+}
+
+// Загрузка данных кошелька
+async function loadDriverWalletData(driverId) {
+    const applicationId = document.getElementById('application-id').value;
+    const amountDisplay = document.getElementById(`amount-display-${driverId}`);
+
+    try {
+        const response = await fetch(`/application/${applicationId}/driver/${driverId}/wallet/`);
+        const data = await response.json();
+
+        if (data.success) {
+            amountDisplay.innerHTML = `
+                <span class="fs-4 text-success fw-bold">${data.formatted_amount}</span>
+            `;
+            // Устанавливаем текущее значение в поле ввода
+            document.getElementById(`amount-input-${driverId}`).value = data.current_amount;
+        } else {
+            amountDisplay.innerHTML = '<span class="text-danger">Ошибка загрузки</span>';
+        }
+    } catch (error) {
+        console.error('Error loading wallet data:', error);
+        amountDisplay.innerHTML = '<span class="text-danger">Ошибка загрузки</span>';
+    }
+}
+
+// Обновление суммы
+async function updateDriverAmount(driverId) {
+    const applicationId = document.getElementById('application-id').value;
+    const amountInput = document.getElementById(`amount-input-${driverId}`);
+    const newAmount = amountInput.value;
+
+    if (!newAmount || newAmount < 0) {
+        alert('Введите корректную сумму');
+        return;
+    }
+
+    try {
+        const formData = new FormData();
+        formData.append('amount', newAmount);
+        formData.append('csrfmiddlewaretoken', getCsrfToken());
+
+        const response = await fetch(`/application/${applicationId}/driver/${driverId}/wallet/`, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Обновляем отображение
+            const amountDisplay = document.getElementById(`amount-display-${driverId}`);
+            amountDisplay.innerHTML = `<span class="fs-4 text-success fw-bold">${data.formatted_amount}</span>`;
+
+            // Показываем уведомление
+            showNotification('Сумма успешно обновлена', 'success');
+
+            // Закрываем модальное окно через 1 секунду
+            setTimeout(() => {
+                closeWalletModal(driverId);
+            }, 1000);
+
+        } else {
+            alert('Ошибка: ' + (data.error || 'Неизвестная ошибка'));
+        }
+    } catch (error) {
+        console.error('Error updating amount:', error);
+        alert('Ошибка при обновлении суммы');
+    }
+}
+
+// Получение CSRF токена
+function getCsrfToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]').value;
+}
+
+// Показать уведомление
+function showNotification(message, type = 'info') {
+    // Создаем уведомление Bootstrap
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} alert-dismissible fade show`;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1060;
+        min-width: 300px;
+    `;
+    notification.innerHTML = `
+        <strong>${type === 'success' ? '✅ Успех' : 'ℹ️ Информация'}</strong>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    document.body.appendChild(notification);
+
+    // Авто-удаление через 3 секунды
+    setTimeout(() => {
+        if (notification.parentNode) {
+            const bsAlert = new bootstrap.Alert(notification);
+            bsAlert.close();
+        }
+    }, 3000);
+}
+
+// Инициализация обработчиков событий
+document.addEventListener('DOMContentLoaded', function() {
+    // Обработчики для иконок кошелька
+    document.querySelectorAll('.wallet-icon').forEach(icon => {
+        icon.addEventListener('click', function() {
+            const driverId = this.getAttribute('data-driver-id');
+            openWalletModal(driverId);
+        });
+    });
+
+    // Обработчики для полей ввода (Enter для сохранения)
+    document.addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+            const activeModal = document.querySelector('.modal.show');
+            if (activeModal && activeModal.id.startsWith('modalWallet')) {
+                const driverId = activeModal.id.replace('modalWallet', '');
+                updateDriverAmount(driverId);
+            }
+        }
+    });
+});
+</script>
     {% endblock %}
