@@ -11,6 +11,7 @@ urlpatterns = [
     path('create-application/<int:advert_id>/', views.create_application, name='create_application'),
     path("advert/<int:advert_id>/", views.create_application_view, name="advert_apply"),
     path("application/<uuid:pk>/add-media/", views.add_gallery_item, name="add_gallery_item"),
+    path("ajax/expense-masks/", views.expense_masks_json, name="expense_masks_json"),
 
     path("my-applications/", views.AdvertAplicationListView.as_view(), name="my_applications"),
     path("my-applications/<uuid:pk>/", views.AdvertAplicationDetailView.as_view(), name="application_detail"),

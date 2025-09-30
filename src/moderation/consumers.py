@@ -6,12 +6,15 @@ import time
 
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer, AsyncWebsocketConsumer
+from django.contrib.auth.models import AnonymousUser
 from django.core.files import File
 from channels.db import database_sync_to_async
 from django.conf import settings
 from django.utils import timezone
 from useraccount.models import Record, Profile
 from moderation.models import AdvertAplication, ChatMessage, CallSession
+
+from moderation.models import DriverLocation
 
 AUDIO_DIR = os.path.join(settings.MEDIA_ROOT, "audio")
 
@@ -312,3 +315,185 @@ class NotifyConsumer(AsyncWebsocketConsumer):
     async def notify(self, event):
         """Отправка произвольных уведомлений клиенту"""
         await self.send(text_data=json.dumps(event["payload"]))
+
+
+class DriverTrackingConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.application_id = self.scope['url_route']['kwargs']['application_id']
+        self.tracking_group_name = f'tracking_{self.application_id}'
+
+        print(f"Tracking WS: Connecting to application {self.application_id}")
+
+        # Проверяем доступ пользователя к отслеживанию
+        if await self.has_tracking_access():
+            await self.channel_layer.group_add(
+                self.tracking_group_name,
+                self.channel_name
+            )
+            await self.accept()
+            print(f"Tracking WS: Connected successfully")
+
+            # Отправляем текущее местоположение при подключении
+            current_location = await self.get_current_location()
+            if current_location:
+                await self.send_location_update(current_location)
+            else:
+                # Если нет текущего местоположения, отправляем пустые данные
+                await self.send(text_data=json.dumps({
+                    'type': 'no_location',
+                    'message': 'Нет данных о местоположении'
+                }))
+        else:
+            print("Tracking WS: Access denied")
+            await self.close()
+
+    async def disconnect(self, close_code):
+        if hasattr(self, 'tracking_group_name'):
+            await self.channel_layer.group_discard(
+                self.tracking_group_name,
+                self.channel_name
+            )
+        print(f"Tracking WS: Disconnected with code {close_code}")
+
+    async def receive(self, text_data):
+        try:
+            data = json.loads(text_data)
+            action = data.get('action')
+            print(f"Tracking WS: Received action - {action}")
+
+            if action == 'location_update' and self.scope["user"].employee == 3:  # только водители
+                # Сохраняем местоположение от водителя
+                location_data = await self.save_driver_location(data)
+                if location_data:
+                    # Рассылаем всем подписчикам
+                    await self.channel_layer.group_send(
+                        self.tracking_group_name,
+                        {
+                            'type': 'location_update',
+                            'data': location_data
+                        }
+                    )
+
+            elif action == 'get_location':
+                # Запрос текущего местоположения
+                current_location = await self.get_current_location()
+                await self.send_location_update(current_location)
+
+        except Exception as e:
+            print(f"Tracking WS: Error processing message - {e}")
+            await self.send(text_data=json.dumps({
+                'type': 'error',
+                'message': str(e)
+            }))
+
+    async def location_update(self, event):
+        # Отправляем обновление местоположения клиенту
+        await self.send(text_data=json.dumps({
+            'type': 'location_update',
+            'data': event['data']
+        }))
+
+    async def send_location_update(self, location_data):
+        if location_data:
+            await self.send(text_data=json.dumps({
+                'type': 'location_update',
+                'data': location_data
+            }))
+        else:
+            await self.send(text_data=json.dumps({
+                'type': 'no_location',
+                'message': 'Нет данных о местоположении'
+            }))
+
+    @database_sync_to_async
+    def has_tracking_access(self):
+        """Проверяет, имеет ли пользователь доступ к отслеживанию"""
+        user = self.scope["user"]
+        if isinstance(user, AnonymousUser):
+            return False
+
+        try:
+            application = AdvertAplication.objects.get(id=self.application_id)
+
+            # Проверяем, что заявка в статусе "в обработке"
+            if application.status != 'in_progress':
+                return False
+
+            # Доступ имеют: водители этой заявки, менеджеры, администраторы
+            has_access = (
+                    user.employee in [2, 4] or  # менеджеры и админы
+                    user in application.user_drivers.all() or  # водители заявки
+                    user in application.user_menager.all()  # менеджеры заявки
+            )
+
+            print(f"Tracking access check - User: {user.id}, Employee: {user.employee}, Has access: {has_access}")
+            return has_access
+
+        except AdvertAplication.DoesNotExist:
+            print(f"Application {self.application_id} not found")
+            return False
+        except Exception as e:
+            print(f"Error checking tracking access: {e}")
+            return False
+
+    @database_sync_to_async
+    def save_driver_location(self, data):
+        """Сохраняет местоположение водителя"""
+        try:
+            application = AdvertAplication.objects.get(id=self.application_id)
+            driver = self.scope["user"]
+
+            # Проверяем, что пользователь действительно водитель этой заявки
+            if driver not in application.user_drivers.all():
+                print(f"Driver {driver.id} is not assigned to application {self.application_id}")
+                return None
+
+            # Создаем запись о местоположении
+            location = DriverLocation.objects.create(
+                application=application,
+                driver=driver,
+                latitude=data['latitude'],
+                longitude=data['longitude'],
+                accuracy=data.get('accuracy', 0),
+                speed=data.get('speed', 0)
+            )
+
+            location_data = {
+                'driver_id': str(driver.id),
+                'driver_name': f"{driver.first_name} {driver.last_name}",
+                'latitude': float(location.latitude),
+                'longitude': float(location.longitude),
+                'accuracy': location.accuracy,
+                'speed': location.speed,
+                'timestamp': location.timestamp.isoformat()
+            }
+
+            print(f"Location saved: {location_data}")
+            return location_data
+
+        except Exception as e:
+            print(f"Error saving location: {e}")
+            return None
+
+    @database_sync_to_async
+    def get_current_location(self):
+        """Получает последнее известное местоположение водителя"""
+        try:
+            # Ищем последнее местоположение любого водителя этой заявки
+            location = DriverLocation.objects.filter(
+                application_id=self.application_id,
+                is_active=True
+            ).select_related('driver').latest('timestamp')
+
+            return {
+                'driver_id': str(location.driver.id),
+                'driver_name': f"{location.driver.first_name} {location.driver.last_name}",
+                'latitude': float(location.latitude),
+                'longitude': float(location.longitude),
+                'accuracy': location.accuracy,
+                'speed': location.speed,
+                'timestamp': location.timestamp.isoformat()
+            }
+        except DriverLocation.DoesNotExist:
+            print(f"No location found for application {self.application_id}")
+            return None

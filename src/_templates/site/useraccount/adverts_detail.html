@@ -6,6 +6,11 @@
 {% block propertydescription %}{{ seo_propertytitle }}{% endblock propertydescription %}
 {% block propertyimage %}{{ seo_propertydescription }}{% endblock propertyimage %}
 {% block head %}
+<script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.7/dayjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.7/plugin/relativeTime.js"></script>
+<script>
+  dayjs.extend(dayjs_plugin_relativeTime);
+</script>
 
 {% endblock head %}
 
@@ -38,6 +43,7 @@
 }
 </style>
 <div class="container mt-4">
+    {{ advert.updated_at|time_since_updated }}
     <div class="row">
         <!-- Галерея -->
         <div class="col-lg-7">

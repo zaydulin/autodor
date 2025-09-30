@@ -209,7 +209,17 @@ class CarModel(models.Model):
         return f"{self.brand.name} {self.name}"
 
 
+class ExpenseMask(models.Model):
+    """Справочник статей расходов (маски / шаблоны)"""
+    name = models.CharField("Название статьи", max_length=150, unique=True)
 
+    class Meta:
+        verbose_name = "Маска статьи расхода"
+        verbose_name_plural = "Маски статей расходов"
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
 
 
 class AdvertExpense(models.Model):
@@ -261,6 +271,7 @@ class AdvertAplication(models.Model):
         DONE = "done", "Завершена"
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     price = models.DecimalField("Стоимость", max_digits=12, decimal_places=2)
+    delevery_price = models.DecimalField("Стоимость доставки", max_digits=12, decimal_places=2)
 
     user = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
@@ -300,6 +311,33 @@ class AdvertAplication(models.Model):
     def __str__(self):
         return f"Заявка #{self.id} от {self.user} на {self.advert}"
 
+
+class DriverLocation(models.Model):
+    application = models.ForeignKey(
+        'AdvertAplication',
+        on_delete=models.CASCADE,
+        related_name='driver_locations'
+    )
+    driver = models.ForeignKey(
+        Profile,
+        on_delete=models.CASCADE,
+        limit_choices_to={'employee': 3}  # только водители
+    )
+    latitude = models.DecimalField(max_digits=9, decimal_places=6)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6)
+    accuracy = models.FloatField(null=True, blank=True)  # точность в метрах
+    speed = models.FloatField(null=True, blank=True)  # скорость км/ч
+    timestamp = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['-timestamp']
+        indexes = [
+            models.Index(fields=['application', 'driver', '-timestamp']),
+        ]
+
+    def __str__(self):
+        return f"{self.driver} - {self.timestamp}"
 
 class AdvertAplicationGallery(models.Model):
     """Фото/видео-отчёты для заявки"""

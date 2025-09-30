@@ -11,6 +11,7 @@ from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.core.files.base import ContentFile
 from django.core.paginator import Paginator
+from django.db.models.functions import TruncDate
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils import timezone
@@ -31,66 +32,65 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 
 from .forms import PathForm, PathResponsibilityForm, AdvertAplicationGalleryForm
 from .models import AdvertAplication, ChatMessage, CallSession, AdvertDocument, AdvertExpense, AdvertApplicationImage, \
-    CarModel, CarBrand,AdvertAplicationGallery
+    CarModel, CarBrand, AdvertAplicationGallery, ExpenseMask
 from moderation.models import Advert, AdvertAplication,Path,PathResponsibility, Withdrawal
 from webmain.models import Faqs, Seo
 from useraccount.models import Profile
 
 from webmain.models import SettingsGlobale
 from django.db.models import Sum
+
+
+
 class AdvertStatisticsView(UserPassesTestMixin, View):
     def test_func(self):
         return self.request.user.is_superuser
 
     def get(self, request, *args, **kwargs):
-        # Получаем все заявки
-        applications = AdvertAplication.objects.all()
+        applications = AdvertAplication.objects.all().order_by('created_at')
 
-        # Пагинация
-        paginator = Paginator(applications, 5)  # 5 заявок на страницу
+        paginator = Paginator(applications, 5)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
 
-        # Рассчитываем суммы расходов и выплат для каждой заявки
-        expense_stats = []
-        withdrawal_stats = []
-
-        # Общие суммы для всех заявок
         total_expenses_all = 0
         total_withdrawals_all = 0
 
         for application in applications:
-            # Сумма расходов для текущей заявки
             total_expenses = application.expenses.aggregate(Sum('amount'))['amount__sum'] or 0
-
-            # Сумма выплат для текущей заявки
-            withdrawals_for_application = Withdrawal.objects.filter(application=application)
-            total_withdrawals = withdrawals_for_application.aggregate(Sum('amount'))['amount__sum'] or 0
-
-            # Сохраняем результаты в список
-            expense_stats.append({
-                'application': application,
-                'total_expenses': total_expenses,
-            })
-
-            withdrawal_stats.append({
-                'application': application,
-                'total_withdrawals': total_withdrawals,
-            })
-
-            # Суммируем общие суммы
+            total_withdrawals = Withdrawal.objects.filter(application=application).aggregate(Sum('amount'))['amount__sum'] or 0
             total_expenses_all += total_expenses
             total_withdrawals_all += total_withdrawals
 
-        # Формируем контекст
+        # --- данные для графика ---
+        stats_qs = (
+            AdvertAplication.objects
+            .annotate(date=TruncDate('created_at'))
+            .values('date')
+            .annotate(
+                price_sum=Sum('price'),
+                expenses_sum=Sum('expenses__amount'),
+                withdrawals_sum=Sum('withdrawal__amount'),
+            )
+            .order_by('date')
+        )
+
+        chart_labels = [s['date'].strftime('%d.%m') for s in stats_qs if s['date']]
+        chart_prices = [float(s['price_sum'] or 0) for s in stats_qs]
+        chart_expenses = [float(s['expenses_sum'] or 0) for s in stats_qs]
+        chart_withdrawals = [float(s['withdrawals_sum'] or 0) for s in stats_qs]
+
         context = {
             'page_obj': page_obj,
-            'expense_stats': expense_stats,
-            'withdrawal_stats': withdrawal_stats,
             'total_expenses_all': total_expenses_all,
             'total_withdrawals_all': total_withdrawals_all,
+            'chart_labels': chart_labels,
+            'chart_prices': chart_prices,
+            'chart_expenses': chart_expenses,
+            'chart_withdrawals': chart_withdrawals,
         }
         return render(request, 'advert_statistics.html', context)
+
 
 
 
@@ -129,6 +129,15 @@ class AdvertAplicationListView(LoginRequiredMixin, ListView):
             .prefetch_related("user")
             .order_by("-created_at")
         )
+
+def expense_masks_json(request):
+    """Вернёт все маски в JSON для автодополнения"""
+    q = request.GET.get("q", "")
+    masks = ExpenseMask.objects.all()
+    if q:
+        masks = masks.filter(name__icontains=q)
+    return JsonResponse({"results": [m.name for m in masks[:20]]})
+
 
 class AdvertAplicationDetailView(LoginRequiredMixin, DetailView):
     model = AdvertAplication
@@ -180,6 +189,7 @@ class AdvertAplicationDetailView(LoginRequiredMixin, DetailView):
         calls = CallSession.objects.filter(application=application)
         context['documents'] = application.documents.all().order_by('-created_at')
         context['calls'] = calls
+        context['expense_masks'] = ExpenseMask.objects.all()
 
         context['all_managers'] = Profile.objects.filter(type=0,employee=2)
         context['all_drivers'] = Profile.objects.filter(type=0,employee=1)
@@ -699,8 +709,8 @@ def create_application_view(request, advert_id):
         application.user_menager.add(admin)
 
 
-    application.user.add(*users_to_add)
-
+        application.user.add(*users_to_add)
+    advert.published = False
 
     return redirect("moderation:my_applications")
 

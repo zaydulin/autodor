@@ -57,6 +57,11 @@ admin.site.register(CarModel)
 admin.site.register(CarBrand)
 admin.site.register(AdvertAplicationGallery)
 
+@admin.register(ExpenseMask)
+class ExpenseMaskAdmin(admin.ModelAdmin):
+    list_display = ("name",)
+    search_fields = ("name",)
+
 @admin.register(Withdrawal)
 class WithdrawalAdmin(admin.ModelAdmin):
     list_display = ['user', 'amount', 'type', 'create']

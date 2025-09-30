@@ -519,7 +519,78 @@ body {
       .nice-table th,
       .nice-table td{ padding:8px 10px; font-size:13px; }
     }
+
+    #tracking-map {
+        border: 1px solid #dee2e6;
+    }
+
+    .driver-status {
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 6px;
+        border-left: 4px solid #28a745;
+    }
+
+    /* Адаптивность для мобильных */
+    @media (max-width: 768px) {
+        #tracking-map {
+            height: 250px !important;
+        }
+    }
+
+
     </style>
+    <style>
+.gallery-media{
+    object-fit:contain;
+    max-height:420px;
+    background:#000;
+}
+
+.preview-thumb{
+    position:relative;
+    overflow:hidden;
+    border-radius:8px;
+    box-shadow:0 2px 6px rgba(0,0,0,.15);
+    animation:fadeIn .4s ease;
+}
+.preview-thumb img,
+.preview-thumb video{
+    width:100%;
+    height:120px;
+    object-fit:cover;
+}
+.preview-remove{
+    position:absolute;
+    top:5px; right:5px;
+    background:rgba(0,0,0,.6);
+    border:none;
+    color:#fff;
+    border-radius:50%;
+    width:26px;height:26px;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+}
+@keyframes fadeIn{from{opacity:0;transform:scale(.9);}to{opacity:1;transform:scale(1);}}
+</style>
+<style>
+                .preview-thumb .status-label{
+                    position:absolute;
+                    left:0;bottom:0;
+                    width:100%;
+                    font-size:12px;
+                    padding:2px 4px;
+                    text-align:center;
+                    color:#fff;
+                    background:rgba(0,0,0,.55);
+                }
+                .preview-thumb.uploaded .status-label{
+                    background:rgba(40,167,69,.8);          /* зелёный фон */
+                }
+                .preview-thumb.error .status-label{
+                    background:rgba(220,53,69,.8);          /* красный фон */
+                }
+                </style>
     <div class="container py-4">
         <div class="row g-4">
             <!-- Левая колонка -->
@@ -575,6 +646,98 @@ body {
                         </div>
                     </div>
                 </div>
+
+
+                <!-- Блок отслеживания водителя -->
+                {% if application.status == 'in_progress' and application.user_drivers.all %}
+                <div class="card mb-4" id="tracking-card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">📍 Отслеживание водителя</h5>
+                        <span class="badge bg-success" id="tracking-status">Активно</span>
+                    </div>
+                    <div class="card-body">
+                        <!-- Информация о водителе -->
+                        <div id="driver-info" class="mb-3">
+                            <div class="text-center text-muted">
+                                <div class="spinner-border spinner-border-sm" role="status"></div>
+                                <div>Получение данных...</div>
+                            </div>
+                        </div>
+
+                        <!-- Карта отслеживания -->
+                        <div id="tracking-map" style="height: 300px; border-radius: 8px;"></div>
+
+                        <!-- Элементы управления для водителя -->
+                        {% if request.user.employee == 3 and request.user in application.user_drivers.all %}
+                        <div class="mt-3">
+                            <button id="start-tracking-btn" class="btn btn-success btn-sm">
+                                ▶️ Начать отслеживание
+                            </button>
+                            <button id="stop-tracking-btn" class="btn btn-secondary btn-sm">
+                                ⏹️ Остановить
+                            </button>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <style>
+                /* Стили для отслеживания */
+                    .driver-marker {
+                        font-size: 20px;
+                        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+                        animation: pulse 2s infinite;
+                        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+                    }
+
+                    @keyframes pulse {
+                        0% { transform: scale(1); }
+                        50% { transform: scale(1.1); }
+                        100% { transform: scale(1); }
+                    }
+
+                    .driver-marker-icon {
+                        background: none !important;
+                        border: none !important;
+                    }
+
+                    #tracking-status {
+                        font-size: 0.75rem;
+                        animation: blink 2s infinite;
+                    }
+
+                    @keyframes blink {
+                        0%, 50% { opacity: 1; }
+                        51%, 100% { opacity: 0.7; }
+                    }
+
+                    .driver-route {
+                        stroke: #007bff;
+                        stroke-width: 4;
+                        stroke-dasharray: 10, 5;
+                        fill: none;
+                        animation: dash 1s linear infinite;
+                    }
+
+                    @keyframes dash {
+                        to {
+                            stroke-dashoffset: -15;
+                        }
+                    }
+
+                    /* Адаптивность для мобильных */
+                    @media (max-width: 768px) {
+                        #tracking-map {
+                            height: 250px !important;
+                        }
+
+                        .driver-status {
+                            font-size: 0.9rem;
+                        }
+                    }
+                </style>
+                {% endif %}
+
 
             </div>
 
@@ -664,23 +827,25 @@ body {
                       {% if request.user.is_authenticated %}
                       <form id="galleryUploadForm"
                             action="{% url 'moderation:add_gallery_item' application.id %}"
-                            method="post" enctype="multipart/form-data" class="d-inline">
+                            method="post" enctype="multipart/form-data">
                           {% csrf_token %}
                           <label class="btn btn-outline-primary btn-sm mb-0">
                               ➕ Загрузить
                               <input type="file"
+                                     id="galleryInput"
                                      name="file"
                                      accept="image/*,video/*"
-                                     capture="environment"
-                                     multiple
-                                     hidden>
+                                     multiple hidden>
                           </label>
                       </form>
                       {% endif %}
                   </div>
 
+                  <!-- Превью выбранных файлов -->
+                  <div id="previewContainer" class="row g-2 px-3 pb-2" style="display:none;"></div>
+
                   <!-- Прогресс-бар -->
-                  <div class="progress" id="uploadProgress" style="height:4px;display:none;">
+                  <div class="progress rounded-0" id="uploadProgress" style="height:5px;display:none;">
                       <div class="progress-bar progress-bar-striped progress-bar-animated bg-success"
                            role="progressbar" style="width:0%"></div>
                   </div>
@@ -692,11 +857,10 @@ body {
                           {% for item in application.gallery.all %}
                           <div class="carousel-item {% if forloop.first %}active{% endif %}">
                               {% if item.is_image %}
-                                  <img src="{{ item.file.url }}" class="d-block w-100 rounded"
-                                       style="object-fit:contain;max-height:420px;">
+                                  <img src="{{ item.file.url }}" class="d-block w-100 rounded gallery-media"
+                                       alt="preview">
                               {% else %}
-                                  <video class="d-block w-100 rounded" controls
-                                         style="max-height:420px;background:#000;">
+                                  <video class="d-block w-100 rounded gallery-media" controls>
                                       <source src="{{ item.file.url }}">
                                   </video>
                               {% endif %}
@@ -718,11 +882,12 @@ body {
                       </button>
                   </div>
                   {% else %}
-                  <div class="card-body text-center text-muted">
+                  <div class="card-body text-center text-muted" id="emptyGalleryText">
                       Пока нет загруженных фото или видео
                   </div>
                   {% endif %}
                 </div>
+
 
 
 
@@ -865,12 +1030,23 @@ body {
                 <form id="add-expense-form">
                     {% csrf_token %}
                     <div class="mb-3">
-                        <label for="expenseTitle" class="form-label">Статья расходов</label>
-                        <input type="text" class="form-control" id="expenseTitle" required>
-                    </div>
+                      <label for="expenseTitle" class="form-label">Статья расходов</label>
+
+                      <!-- выпадающий список с готовыми масками -->
+                        <select id="expenseMaskSelect" class="form-select mb-2">
+                            <option value="">— выбрать из списка —</option>
+                            {% for mask in expense_masks %}
+                                <option value="{{ mask.name }}">{{ mask.name }}</option>
+                            {% endfor %}
+                        </select>
+
+                      <!-- или ввести своё -->
+                      <input type="text" class="form-control" id="expenseTitle"
+                             placeholder="или введите вручную…">
                     <div class="mb-3">
                         <label for="expenseAmount" class="form-label">Сумма</label>
                         <input type="number" step="0.01" class="form-control" id="expenseAmount" required>
+                    </div>
                     </div>
                 </form>
             </div>
@@ -1934,66 +2110,540 @@ document.addEventListener("DOMContentLoaded", () => {
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-    const form = document.getElementById("galleryUploadForm");
-    const input = form.querySelector("input[name='file']");
-    const progress = document.getElementById("uploadProgress");
-    const bar = progress.querySelector(".progress-bar");
-    const carouselInner = document.getElementById("galleryCarouselInner");
+  const form = document.getElementById("galleryUploadForm");
+  const input = document.getElementById("galleryInput");
+  const preview = document.getElementById("previewContainer");
+  const progress = document.getElementById("uploadProgress");
+  const bar = progress.querySelector(".progress-bar");
+  const carouselInner = document.getElementById("galleryCarouselInner");
+  const emptyText = document.getElementById("emptyGalleryText");
 
-    input.addEventListener("change", () => {
-        if (!input.files.length) return;
+  /** ✅ Превью выбранных файлов */
+  input.addEventListener("change", () => {
+      preview.innerHTML = "";
+      if (!input.files.length) { preview.style.display="none"; return; }
+      preview.style.display = "flex";
 
-        // готовим данные
-        const data = new FormData(form);
-        for (const f of input.files) data.append("file", f);
+      Array.from(input.files).forEach((file, idx) => {
+          const col = document.createElement("div");
+          col.className = "col-4 preview-thumb";
+          const url = URL.createObjectURL(file);
 
-        progress.style.display = "block";
-        bar.style.width = "0%";
+          col.innerHTML = `
+              ${file.type.startsWith("image")
+                  ? `<img src="${url}" alt="">`
+                  : `<video src="${url}"></video>`}
+              <div class="status-label">Загружается…</div>
+              <button class="preview-remove">&times;</button>
+          `;
+          // Удаление
+          col.querySelector(".preview-remove").addEventListener("click",()=>{
+              removeFile(idx);
+              col.remove();
+              if(!preview.children.length) preview.style.display="none";
+          });
+          preview.appendChild(col);
+      });
 
-        fetch(form.action, {
-            method: "POST",
-            body: data,
-            headers: { "X-CSRFToken": "{{ csrf_token }}" }
-        }).then(res => {
-            if (!res.ok) throw new Error("Ошибка сервера");
-            // отслеживаем прогресс (через XHR):
-            return res.json();
-        }).then(json => {
-            progress.style.display = "none";
-            if (json.success && json.items) {
-                json.items.forEach(addItemToCarousel);
-            } else {
-                alert(json.error || "Не удалось загрузить");
-            }
-            input.value = "";
-        }).catch(err => {
-            console.error(err);
-            progress.style.display = "none";
-            alert("Ошибка при загрузке");
-        });
-    });
+      // После добавления сразу грузим
+      uploadFiles();
+  });
 
-    /** функция добавления нового медиа в слайдер */
-    function addItemToCarousel(item){
-        const div = document.createElement("div");
-        div.className = "carousel-item";
-        div.innerHTML = item.is_image
-            ? `<img src="${item.url}" class="d-block w-100 rounded"
-                     style="object-fit:contain;max-height:420px;">`
-            : `<video class="d-block w-100 rounded" controls
-                      style="max-height:420px;background:#000;">
-                   <source src="${item.url}">
-               </video>`;
+  /** ⚙️ Удаление файла из input */
+  function removeFile(index){
+      const dt = new DataTransfer();
+      Array.from(input.files).forEach((f,i)=>{ if(i!==index) dt.items.add(f); });
+      input.files = dt.files;
+  }
 
-        // если это первый элемент – делаем активным
-        if (!carouselInner.querySelector(".carousel-item")) {
-            div.classList.add("active");
-        }
-        carouselInner.appendChild(div);
-    }
+  /** 🚀 Загрузка файлов */
+  function uploadFiles(){
+      const data = new FormData();
+      for(const f of input.files) data.append("file", f);
+
+      progress.style.display="block";
+      bar.style.width="0%";
+
+      fetch(form.action, {
+          method: "POST",
+          body: data,
+          headers:{ "X-CSRFToken": "{{ csrf_token }}" }
+      })
+      .then(res=>res.json())
+      .then(json=>{
+          progress.style.display="none";
+          if(json.success && json.items){
+              // отмечаем каждый как загруженный
+              preview.querySelectorAll('.preview-thumb').forEach(div=>{
+                div.classList.add('uploaded');
+                div.querySelector('.status-label').textContent = "✅ Загружено";
+
+                // ⏳ Скрываем превью через 2 секунды
+                setTimeout(() => {
+                    div.remove();
+                    if(!preview.children.length){
+                        preview.style.display = "none";
+                    }
+                }, 1000);
+            });
+
+              if(emptyText) emptyText.remove();
+              json.items.forEach(addToCarousel);
+              input.value="";
+          }else{
+              preview.querySelectorAll('.preview-thumb').forEach(div=>{
+                  div.classList.add('error');
+                  div.querySelector('.status-label').textContent = "❌ Ошибка";
+              });
+              alert(json.error || "Не удалось загрузить");
+          }
+      })
+      .catch(()=>{
+          progress.style.display="none";
+          preview.querySelectorAll('.preview-thumb').forEach(div=>{
+              div.classList.add('error');
+              div.querySelector('.status-label').textContent = "❌ Ошибка сети";
+          });
+      });
+  }
+
+  /** ➕ Добавление слайда в галерею */
+  function addToCarousel(item){
+      const div = document.createElement("div");
+      div.className = "carousel-item";
+      div.innerHTML = item.is_image
+          ? `<img src="${item.url}" class="d-block w-100 rounded gallery-media">`
+          : `<video class="d-block w-100 rounded gallery-media" controls>
+                 <source src="${item.url}">
+             </video>`;
+      if(!carouselInner.querySelector(".carousel-item")) div.classList.add("active");
+      carouselInner.appendChild(div);
+  }
 });
 </script>
 
 
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const selectMask = document.getElementById("expenseMaskSelect");
+  const inputTitle = document.getElementById("expenseTitle");
+
+  // Подстановка выбранной маски в текстовое поле
+  selectMask.addEventListener("change", () => {
+      inputTitle.value = selectMask.value;
+  });
+
+  // Автопоиск при вводе
+  inputTitle.addEventListener("input", async () => {
+      const q = inputTitle.value.trim();
+      const res = await fetch(`/ajax/expense-masks/?q=${encodeURIComponent(q)}`);
+      const data = await res.json();
+
+      // Очищаем селект и наполняем новыми масками
+      selectMask.innerHTML = '<option value="">— выбрать из списка —</option>';
+      data.results.forEach(name => {
+          const opt = document.createElement("option");
+          opt.value = name;
+          opt.textContent = name;
+          selectMask.appendChild(opt);
+      });
+  });
+});
+
+</script>
+<!-- Добавьте этот блок после существующего скрипта чата -->
+<script>
+// Отслеживание местоположения водителя
+class DriverTracker {
+    constructor(applicationId) {
+        this.applicationId = applicationId;
+        this.trackingSocket = null;
+        this.driverMarker = null;
+        this.trackingMap = null;
+        this.watchId = null;
+        this.isDriver = {{ request.user.employee }} === 3;
+        this.isTrackingActive = false;
+        this.reconnectAttempts = 0;
+        this.maxReconnectAttempts = 5;
+
+        console.log('DriverTracker initialized:', {
+            applicationId,
+            isDriver: this.isDriver,
+            user: '{{ request.user.first_name }} {{ request.user.last_name }}'
+        });
+
+        this.init();
+    }
+
+    async init() {
+        try {
+            await this.initMap();
+            this.connectWebSocket();
+
+            if (this.isDriver) {
+                this.startTracking();
+            }
+        } catch (error) {
+            console.error('Failed to initialize DriverTracker:', error);
+        }
+    }
+
+    async initMap() {
+        // Создаем карту для отслеживания
+        this.trackingMap = L.map('tracking-map').setView([55.7558, 37.6173], 13);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(this.trackingMap);
+
+        // Иконка для водителя
+        this.driverIcon = L.divIcon({
+            html: '<div class="driver-marker">🚗</div>',
+            iconSize: [30, 30],
+            className: 'driver-marker-icon'
+        });
+
+        console.log('Tracking map initialized');
+    }
+
+    connectWebSocket() {
+        const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+        const wsUrl = `${protocol}://${location.host}/ws/tracking/${this.applicationId}/`;
+
+        console.log('Connecting to WebSocket:', wsUrl);
+
+        try {
+            this.trackingSocket = new WebSocket(wsUrl);
+
+            this.trackingSocket.onopen = () => {
+                console.log('Tracking WebSocket connected');
+                this.isTrackingActive = true;
+                this.reconnectAttempts = 0;
+                this.updateTrackingStatus('connected');
+
+                // Запрашиваем текущее местоположение
+                this.trackingSocket.send(JSON.stringify({
+                    action: 'get_location'
+                }));
+            };
+
+            this.trackingSocket.onmessage = (e) => {
+                try {
+                    const data = JSON.parse(e.data);
+                    console.log('Tracking WebSocket message:', data);
+
+                    if (data.type === 'location_update' && data.data) {
+                        this.updateDriverPosition(data.data);
+                    } else if (data.type === 'no_location') {
+                        this.showNoLocationMessage();
+                    } else if (data.type === 'error') {
+                        this.showNotification(data.message, 'error');
+                    }
+                } catch (error) {
+                    console.error('Error processing WebSocket message:', error);
+                }
+            };
+
+            this.trackingSocket.onclose = (e) => {
+                console.log('Tracking WebSocket disconnected:', e.code, e.reason);
+                this.isTrackingActive = false;
+                this.updateTrackingStatus('disconnected');
+
+                // Попытка переподключения
+                if (this.reconnectAttempts < this.maxReconnectAttempts) {
+                    this.reconnectAttempts++;
+                    console.log(`Attempting reconnect ${this.reconnectAttempts}/${this.maxReconnectAttempts}`);
+                    setTimeout(() => this.connectWebSocket(), 3000);
+                } else {
+                    this.showNotification('Соединение с сервером отслеживания потеряно', 'error');
+                }
+            };
+
+            this.trackingSocket.onerror = (error) => {
+                console.error('Tracking WebSocket error:', error);
+                this.updateTrackingStatus('error');
+            };
+
+        } catch (error) {
+            console.error('Failed to create WebSocket connection:', error);
+        }
+    }
+
+    startTracking() {
+        if (!navigator.geolocation) {
+            this.showNotification('Ваш браузер не поддерживает геолокацию', 'error');
+            return;
+        }
+
+        // Запрашиваем разрешение на геолокацию
+        if (this.isDriver) {
+            const options = {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            };
+
+            // Сначала проверяем доступность
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    // Разрешение получено, запускаем отслеживание
+                    this.watchId = navigator.geolocation.watchPosition(
+                        (position) => this.handlePositionUpdate(position),
+                        (error) => this.handlePositionError(error),
+                        options
+                    );
+                    console.log('Driver tracking started');
+                    this.updateDriverControls(true);
+                },
+                (error) => this.handlePositionError(error),
+                options
+            );
+        }
+    }
+
+    stopTracking() {
+        if (this.watchId) {
+            navigator.geolocation.clearWatch(this.watchId);
+            this.watchId = null;
+        }
+        console.log('Driver tracking stopped');
+        this.updateDriverControls(false);
+    }
+
+    handlePositionUpdate(position) {
+        const { latitude, longitude, accuracy, speed } = position.coords;
+
+        console.log('Position update:', { latitude, longitude, accuracy, speed });
+
+        // Отправляем обновление на сервер
+        if (this.trackingSocket && this.trackingSocket.readyState === WebSocket.OPEN) {
+            this.trackingSocket.send(JSON.stringify({
+                action: 'location_update',
+                latitude: latitude,
+                longitude: longitude,
+                accuracy: accuracy,
+                speed: speed ? speed * 3.6 : 0 // конвертируем м/с в км/ч
+            }));
+        }
+    }
+
+    handlePositionError(error) {
+        console.error('Geolocation error:', error);
+
+        let message = 'Ошибка получения местоположения';
+        switch(error.code) {
+            case error.PERMISSION_DENIED:
+                message = 'Для отслеживания необходимо разрешить доступ к геолокации';
+                break;
+            case error.POSITION_UNAVAILABLE:
+                message = 'Информация о местоположении недоступна';
+                break;
+            case error.TIMEOUT:
+                message = 'Время ожидания получения местоположения истекло';
+                break;
+        }
+
+        this.showNotification(message, 'error');
+    }
+
+    updateDriverPosition(locationData) {
+        const { latitude, longitude, driver_name, speed, timestamp } = locationData;
+
+        console.log('Updating driver position:', locationData);
+
+        // Обновляем маркер на карте
+        if (this.driverMarker) {
+            this.driverMarker.setLatLng([latitude, longitude]);
+        } else {
+            this.driverMarker = L.marker([latitude, longitude], {
+                icon: this.driverIcon,
+                zIndexOffset: 1000
+            }).addTo(this.trackingMap);
+        }
+
+        // Центрируем карту на водителе
+        this.trackingMap.setView([latitude, longitude], 13);
+
+        // Обновляем всплывающую подсказку
+        let popupContent = `<strong>${driver_name}</strong><br>`;
+        popupContent += `Обновлено: ${new Date(timestamp).toLocaleTimeString()}`;
+        if (speed && speed > 0) {
+            popupContent += `<br>Скорость: ${Math.round(speed)} км/ч`;
+        }
+
+        this.driverMarker.bindPopup(popupContent).openPopup();
+
+        // Обновляем информацию в интерфейсе
+        this.updateDriverInfo(locationData);
+    }
+
+    updateDriverInfo(locationData) {
+        const driverInfoEl = document.getElementById('driver-info');
+        if (driverInfoEl) {
+            driverInfoEl.innerHTML = `
+                <div class="driver-status">
+                    <h6>🚗 ${locationData.driver_name}</h6>
+                    <div class="small text-muted">
+                        Обновлено: ${new Date(locationData.timestamp).toLocaleString()}
+                        ${locationData.speed && locationData.speed > 0 ?
+                          `• Скорость: ${Math.round(locationData.speed)} км/ч` : ''}
+                        ${locationData.accuracy ?
+                          `• Точность: ${Math.round(locationData.accuracy)}м` : ''}
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    showNoLocationMessage() {
+        const driverInfoEl = document.getElementById('driver-info');
+        if (driverInfoEl) {
+            driverInfoEl.innerHTML = `
+                <div class="text-center text-muted">
+                    <div>📍 Ожидание данных о местоположении</div>
+                    <small>Водитель еще не начал передавать местоположение</small>
+                </div>
+            `;
+        }
+    }
+
+    updateTrackingStatus(status) {
+        const statusEl = document.getElementById('tracking-status');
+        if (statusEl) {
+            const statusConfig = {
+                'connected': { text: 'Активно', class: 'bg-success' },
+                'disconnected': { text: 'Неактивно', class: 'bg-secondary' },
+                'error': { text: 'Ошибка', class: 'bg-danger' }
+            };
+
+            const config = statusConfig[status] || statusConfig.disconnected;
+            statusEl.textContent = config.text;
+            statusEl.className = `badge ${config.class}`;
+        }
+    }
+
+    updateDriverControls(tracking) {
+        const startBtn = document.getElementById('start-tracking-btn');
+        const stopBtn = document.getElementById('stop-tracking-btn');
+
+        if (startBtn && stopBtn) {
+            startBtn.disabled = tracking;
+            stopBtn.disabled = !tracking;
+        }
+    }
+
+    showNotification(message, type = 'info') {
+        // Создаем уведомление
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type === 'error' ? 'danger' : 'info'} alert-dismissible fade show`;
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            min-width: 300px;
+        `;
+        notification.innerHTML = `
+            <strong>${type === 'error' ? '⚠️ Ошибка' : 'ℹ️ Информация'}</strong>
+            <div>${message}</div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+
+        document.body.appendChild(notification);
+
+        // Автоматическое скрытие через 5 секунд
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 5000);
+    }
+}
+
+// Инициализация отслеживания когда страница загружена
+document.addEventListener('DOMContentLoaded', function() {
+    const applicationId = "{{ application.id }}";
+    const applicationStatus = "{{ application.status }}";
+
+    // Запускаем отслеживание только если заявка в обработке и есть водители
+    const hasDrivers = {{ application.user_drivers.all|length }} > 0;
+    const shouldTrack = applicationStatus === 'in_progress' && hasDrivers;
+
+    console.log('Page loaded - Tracking conditions:', {
+        applicationId,
+        applicationStatus,
+        hasDrivers,
+        shouldTrack
+    });
+
+    if (shouldTrack) {
+        window.driverTracker = new DriverTracker(applicationId);
+    } else {
+        console.log('Tracking not started - conditions not met');
+        // Скрываем блок отслеживания если условия не выполнены
+        const trackingCard = document.getElementById('tracking-card');
+        if (trackingCard) {
+            trackingCard.style.display = 'none';
+        }
+    }
+});
+</script>
+
+<script>
+// Управление отслеживанием для водителей
+document.addEventListener('DOMContentLoaded', function() {
+    const startBtn = document.getElementById('start-tracking-btn');
+    const stopBtn = document.getElementById('stop-tracking-btn');
+
+    if (startBtn && stopBtn) {
+        startBtn.addEventListener('click', function() {
+            if (window.driverTracker) {
+                window.driverTracker.startTracking();
+            }
+        });
+
+        stopBtn.addEventListener('click', function() {
+            if (window.driverTracker) {
+                window.driverTracker.stopTracking();
+            }
+        });
+
+        // По умолчанию для водителей отслеживание запущено
+        if ({{ request.user.employee }} === 3) {
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+        } else {
+            // Для не-водителей скрываем кнопки управления
+            startBtn.style.display = 'none';
+            stopBtn.style.display = 'none';
+        }
+    }
+});
+</script>
+    <script>
+// Управление отслеживанием для водителей
+document.addEventListener('DOMContentLoaded', function() {
+    const startBtn = document.getElementById('start-tracking-btn');
+    const stopBtn = document.getElementById('stop-tracking-btn');
+
+    if (startBtn && stopBtn && window.driverTracker) {
+        startBtn.addEventListener('click', function() {
+            window.driverTracker.startTracking();
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+        });
+
+        stopBtn.addEventListener('click', function() {
+            window.driverTracker.stopTracking();
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+        });
+
+        // По умолчанию отслеживание запущено для водителей
+        startBtn.disabled = true;
+    }
+});
+</script>
 
 {% endblock %}
