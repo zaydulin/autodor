@@ -944,11 +944,6 @@ iframe {
                             <input type="file" name="file" accept="image/*,video/*" multiple class="form-control mt-2">
                             <input type="hidden" name="group" id="galleryGroupHidden">
 
-                            <button class="btn btn-primary mt-2">Загрузить</button>
-
-                            <button class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#addGroupModal">
-                                <i class="bi bi-folder-plus"></i> Новая группа
-                            </button>
 
                             <ul class="nav nav-tabs" id="galleryTabs" role="tablist" style="margin-top: 20px">
                                 {% for group in application.gallery_groups.all %}
