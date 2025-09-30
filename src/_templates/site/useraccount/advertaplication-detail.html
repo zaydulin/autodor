@@ -572,6 +572,23 @@ body {
     cursor:pointer;
 }
 @keyframes fadeIn{from{opacity:0;transform:scale(.9);}to{opacity:1;transform:scale(1);}}
+
+.gallery-media {
+    width: 100%;
+    height: 360px;              /* одна высота */
+    object-fit: contain;        /* фото / видео без обрезки */
+    background: #000;           /* фон за фото/видео */
+    border-radius: 8px;
+}
+
+/* для видео, чтобы оно не разъезжалось */
+.gallery-media video,
+.gallery-media source {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
 </style>
 <style>
                 .preview-thumb .status-label{
@@ -822,71 +839,102 @@ body {
                 <!-- ГАЛЕРЕЯ фото / видео -->
                 <div class="card mb-4" id="galleryCard">
                   <div class="card-header d-flex justify-content-between align-items-center">
-                      <h5 class="mb-0">Фото / Видео отчёты</h5>
-
-                      {% if request.user.is_authenticated %}
-                      <form id="galleryUploadForm"
-                            action="{% url 'moderation:add_gallery_item' application.id %}"
-                            method="post" enctype="multipart/form-data">
-                          {% csrf_token %}
-                          <label class="btn btn-outline-primary btn-sm mb-0">
-                              ➕ Загрузить
-                              <input type="file"
-                                     id="galleryInput"
-                                     name="file"
-                                     accept="image/*,video/*"
-                                     multiple hidden>
-                          </label>
-                      </form>
-                      {% endif %}
+                    <h5 class="mb-0">Фото / Видео отчёты</h5>
                   </div>
+                  <div class="card-body">
 
-                  <!-- Превью выбранных файлов -->
-                  <div id="previewContainer" class="row g-2 px-3 pb-2" style="display:none;"></div>
+                    {% if request.user.is_authenticated %}
+                    <!-- Форма загрузки -->
+                      <!-- Превью файлов -->
+                    <div id="galleryPreview" class="row g-2 mb-2" style="display:none;"></div>
+                    <div class="progress mb-2" id="galleryProgress" style="display:none; height: 6px;">
+                      <div class="progress-bar progress-bar-striped progress-bar-animated"
+                           role="progressbar" style="width: 0%"></div>
+                    </div>
 
-                  <!-- Прогресс-бар -->
-                  <div class="progress rounded-0" id="uploadProgress" style="height:5px;display:none;">
-                      <div class="progress-bar progress-bar-striped progress-bar-animated bg-success"
-                           role="progressbar" style="width:0%"></div>
-                  </div>
+                    <form id="galleryUploadForm"
+                          action="{% url 'moderation:add_gallery_item' application.id %}"
+                          method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        {{ gallery_form.group }}
+                        {{ gallery_form.description }}
+                        <input type="file" name="file" accept="image/*,video/*" multiple class="form-control mt-2">
+                        <input type="hidden" name="group" id="galleryGroupHidden">
 
-                  <!-- Слайдер -->
-                  {% if application.gallery.all %}
-                  <div id="galleryCarousel" class="carousel slide" data-bs-ride="carousel">
-                      <div class="carousel-inner" id="galleryCarouselInner">
-                          {% for item in application.gallery.all %}
-                          <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                              {% if item.is_image %}
-                                  <img src="{{ item.file.url }}" class="d-block w-100 rounded gallery-media"
-                                       alt="preview">
-                              {% else %}
-                                  <video class="d-block w-100 rounded gallery-media" controls>
-                                      <source src="{{ item.file.url }}">
-                                  </video>
-                              {% endif %}
-                              <div class="carousel-caption d-none d-md-block">
-                                  <small class="bg-dark bg-opacity-50 px-2 rounded">
-                                      {{ item.uploaded_at|date:"d.m.Y H:i" }}
-                                  </small>
+                        <button class="btn btn-primary mt-2">Загрузить</button>
+
+                        <button class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#addGroupModal">
+                            <i class="bi bi-folder-plus"></i> Новая группа
+                          </button>
+
+                        <ul class="nav nav-tabs" id="galleryTabs" role="tablist" style="margin-top: 20px">
+                        {% for group in application.gallery_groups.all %}
+                          <li class="nav-item" role="presentation">
+                            <button class="nav-link {% if forloop.first %}active{% endif %}"
+                                    id="tab-{{ group.id }}" data-bs-toggle="tab"
+                                    data-bs-target="#group-{{ group.id }}" type="button"
+                                    role="tab">
+                              {{ group.title }}
+                            </button>
+                          </li>
+                        {% endfor %}
+                      </ul>
+                    </form>
+                    <hr>
+                    {% endif %}
+
+
+
+                    {% if application.gallery_groups.exists %}
+                      <!-- Вкладки групп -->
+
+
+                      <!-- Контейнеры групп -->
+                      <div class="tab-content mt-3" id="galleryTabsContent">
+                        {% for group in application.gallery_groups.all %}
+                          <div class="tab-pane fade {% if forloop.first %}show active{% endif %}"
+                               id="group-{{ group.id }}" role="tabpanel">
+                            <h6 class="text-muted">{{ group.description }}</h6>
+
+                            {% if group.items.exists %}
+                              <div id="carousel-{{ group.id }}" class="carousel slide mb-3" data-bs-ride="carousel">
+                              <div class="carousel-inner" id="carousel-inner-{{ group.id }}">
+                                {% for item in group.items.all %}
+                                  <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                                    {% if item.is_image %}
+                                      <img src="{{ item.file.url }}" class="d-block w-100 gallery-media" alt="">
+                                    {% elif item.is_video %}
+                                      <video class="d-block w-100 gallery-media" controls>
+                                        <source src="{{ item.file.url }}">
+                                      </video>
+                                    {% endif %}
+                                    {% if item.description %}
+                                      <div class="carousel-caption d-none d-md-block">
+                                        <small class="bg-dark bg-opacity-50 px-2 rounded">{{ item.description }}</small>
+                                      </div>
+                                    {% endif %}
+                                  </div>
+                                {% endfor %}
                               </div>
+                              <button class="carousel-control-prev" type="button" data-bs-target="#carousel-{{ group.id }}" data-bs-slide="prev">
+                                <span class="carousel-control-prev-icon"></span>
+                              </button>
+                              <button class="carousel-control-next" type="button" data-bs-target="#carousel-{{ group.id }}" data-bs-slide="next">
+                                <span class="carousel-control-next-icon"></span>
+                              </button>
+                            </div>
+                            {% else %}
+                              <p class="text-muted">Нет медиа в этой группе</p>
+                            {% endif %}
                           </div>
-                          {% endfor %}
+                        {% endfor %}
                       </div>
-                      <button class="carousel-control-prev" type="button"
-                              data-bs-target="#galleryCarousel" data-bs-slide="prev">
-                          <span class="carousel-control-prev-icon"></span>
-                      </button>
-                      <button class="carousel-control-next" type="button"
-                              data-bs-target="#galleryCarousel" data-bs-slide="next">
-                          <span class="carousel-control-next-icon"></span>
-                      </button>
+                    {% else %}
+                      <p class="text-muted">Группы ещё не созданы</p>
+                    {% endif %}
                   </div>
-                  {% else %}
-                  <div class="card-body text-center text-muted" id="emptyGalleryText">
-                      Пока нет загруженных фото или видео
-                  </div>
-                  {% endif %}
                 </div>
+
 
 
 
@@ -1297,6 +1345,37 @@ body {
         </div>
     </div>
 </div>
+
+
+
+<div class="modal fade" id="addGroupModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="addGroupForm">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title">Создать группу</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Название</label>
+            <input type="text" class="form-control" name="title" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Описание</label>
+            <textarea class="form-control" name="description" rows="2"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+          <button type="submit" class="btn btn-primary">Создать</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 
 <!-- Модальное окно редактирования ответственности -->
 <div class="modal fade" id="addResponsibilityModal" tabindex="-1">
@@ -2645,5 +2724,146 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("addGroupForm");
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const data = {
+      title: form.querySelector("[name=title]").value,
+      description: form.querySelector("[name=description]").value,
+      application_id: "{{ application.id }}"
+    };
+
+    try {
+      const res = await fetch("{% url 'moderation:add_gallery_group' %}", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": "{{ csrf_token }}"
+        },
+        body: JSON.stringify(data)
+      });
+      const json = await res.json();
+
+      if (json.success) {
+        location.reload(); // 🔄 обновим страницу, чтобы вкладка группы появилась
+      } else {
+        alert("Ошибка: " + (json.error || "Неизвестная"));
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Ошибка сети");
+    }
+  });
+});
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const uploadForm = document.getElementById("galleryUploadForm");
+  const input = uploadForm.querySelector("input[type=file]");
+  const preview = document.getElementById("galleryPreview");
+  const progress = document.getElementById("galleryProgress");
+  const bar = progress.querySelector(".progress-bar");
+
+  // 📌 Превью выбранных файлов
+  input.addEventListener("change", () => {
+    preview.innerHTML = "";
+    if (!input.files.length) { preview.style.display="none"; return; }
+    preview.style.display = "flex";
+
+    Array.from(input.files).forEach((file, idx) => {
+      const col = document.createElement("div");
+      col.className = "col-4 preview-thumb";
+      const url = URL.createObjectURL(file);
+
+      col.innerHTML = `
+        ${file.type.startsWith("image")
+          ? `<img src="${url}" class="img-fluid rounded">`
+          : `<video src="${url}" class="img-fluid rounded"></video>`}
+        <div class="status-label">⏳ Ожидание</div>
+      `;
+      preview.appendChild(col);
+    });
+  });
+
+  // 📌 Загрузка с отображением прогресса
+  uploadForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData(uploadForm);
+
+    // Берём активную группу
+    const activeTab = document.querySelector("#galleryTabs .nav-link.active");
+    if (!activeTab) {
+      alert("Выберите группу");
+      return;
+    }
+    const groupId = activeTab.id.replace("tab-", "");
+    formData.set("group", groupId);
+
+    progress.style.display = "block";
+    bar.style.width = "0%";
+
+    try {
+      const res = await fetch(uploadForm.action, {
+        method: "POST",
+        body: formData,
+        headers: { "X-CSRFToken": "{{ csrf_token }}" }
+      });
+
+      const json = await res.json();
+      bar.style.width = "100%";
+
+      if (json.success) {
+        // ✅ обновляем превью
+        preview.querySelectorAll('.status-label').forEach(el=>{
+          el.textContent = "✅ Загружено";
+          el.parentElement.classList.add("uploaded");
+        });
+
+        // обновляем галерею
+        const item = json.item;
+       const inner = document.getElementById(`carousel-inner-${item.group_id}`);
+
+        // убираем active только у текущего активного
+        const activeNow = inner.querySelector(".carousel-item.active");
+        if (activeNow) activeNow.classList.remove("active");
+
+        // делаем новый активным
+        const div = document.createElement("div");
+        div.className = "carousel-item active";
+        div.innerHTML = item.is_image
+          ? `<img src="${item.url}" class="d-block w-100 gallery-media">`
+          : `<video class="d-block w-100 gallery-media" controls><source src="${item.url}"></video>`;
+        inner.appendChild(div);
+
+
+        // очистка
+        setTimeout(()=>{
+          preview.style.display="none";
+          input.value = "";
+          progress.style.display="none";
+        }, 1500);
+      } else {
+        preview.querySelectorAll('.status-label').forEach(el=>{
+          el.textContent = "❌ Ошибка";
+        });
+        alert("Ошибка: " + (json.error || JSON.stringify(json.errors)));
+      }
+    } catch(err) {
+      preview.querySelectorAll('.status-label').forEach(el=>{
+        el.textContent = "❌ Сеть";
+      });
+      console.error(err);
+      alert("Ошибка сети при загрузке");
+    }
+  });
+});
+
+</script>
+
 
 {% endblock %}

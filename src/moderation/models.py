@@ -339,16 +339,52 @@ class DriverLocation(models.Model):
     def __str__(self):
         return f"{self.driver} - {self.timestamp}"
 
+
+class AdvertAplicationGalleryGroup(models.Model):
+    """
+    Группа (альбом) медиа-файлов внутри заявки
+    Например: 'Доставка', 'Отгрузка', 'Склад', …
+    """
+    application = models.ForeignKey(
+        AdvertAplication,
+        on_delete=models.CASCADE,
+        related_name="gallery_groups"
+    )
+    title = models.CharField("Название группы", max_length=120)
+    description = models.TextField("Описание группы", blank=True)
+    position = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["position", "id"]
+        verbose_name = "Группа медиа"
+        verbose_name_plural = "Группы медиа"
+
+    def __str__(self):
+        return f"{self.title} — {self.application}"
+
+
 class AdvertAplicationGallery(models.Model):
-    """Фото/видео-отчёты для заявки"""
+    """Фото/видео-отчёты"""
     application = models.ForeignKey(
         AdvertAplication,
         on_delete=models.CASCADE,
         related_name="gallery"
     )
+    group = models.ForeignKey(
+        AdvertAplicationGalleryGroup,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="items",
+        help_text="Можно прикрепить к альбому"
+    )
     file = models.FileField(
         upload_to="advert_gallery/",
         help_text="Фото или видео"
+    )
+    description = models.CharField(
+        "Описание файла",
+        max_length=255,
+        blank=True
     )
     uploaded_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -366,11 +402,15 @@ class AdvertAplicationGallery(models.Model):
 
     @property
     def is_image(self):
-        return self.file.name.lower().endswith((".png", ".jpg", ".jpeg", ".gif", ".webp"))
+        return self.file.name.lower().endswith(
+            (".png", ".jpg", ".jpeg", ".gif", ".webp")
+        )
 
     @property
     def is_video(self):
-        return self.file.name.lower().endswith((".mp4", ".mov", ".webm", ".mkv"))
+        return self.file.name.lower().endswith(
+            (".mp4", ".mov", ".webm", ".mkv")
+        )
 
 class Withdrawal(models.Model):
     """Выплаты"""

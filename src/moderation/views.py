@@ -32,7 +32,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 
 from .forms import PathForm, PathResponsibilityForm, AdvertAplicationGalleryForm
 from .models import AdvertAplication, ChatMessage, CallSession, AdvertDocument, AdvertExpense, AdvertApplicationImage, \
-    CarModel, CarBrand, AdvertAplicationGallery, ExpenseMask
+    CarModel, CarBrand, AdvertAplicationGallery, ExpenseMask,AdvertAplicationGalleryGroup
 from moderation.models import Advert, AdvertAplication,Path,PathResponsibility, Withdrawal
 from webmain.models import Faqs, Seo
 from useraccount.models import Profile
@@ -91,28 +91,48 @@ class AdvertStatisticsView(UserPassesTestMixin, View):
         }
         return render(request, 'advert_statistics.html', context)
 
-
+@csrf_exempt
+def add_gallery_group(request):
+    if request.method == "POST" and request.user.is_authenticated:
+        try:
+            data = json.loads(request.body)
+            app = AdvertAplication.objects.get(id=data.get("application_id"))
+            group = AdvertAplicationGalleryGroup.objects.create(
+                application=app,
+                title=data.get("title"),
+                description=data.get("description", "")
+            )
+            return JsonResponse({"success": True, "id": group.id})
+        except Exception as e:
+            return JsonResponse({"success": False, "error": str(e)})
+    return JsonResponse({"success": False, "error": "Неверный запрос"})
 
 
 @login_required
 @require_POST
 def add_gallery_item(request, pk):
-    """Загрузка фото/видео в галерею"""
-    app = get_object_or_404(AdvertAplication, pk=pk)
+    application = get_object_or_404(AdvertAplication, pk=pk)
+
     form = AdvertAplicationGalleryForm(request.POST, request.FILES)
     if form.is_valid():
-        obj = form.save(commit=False)
-        obj.application = app
-        obj.uploaded_by = request.user
-        obj.save()
-    return JsonResponse({
-        'success': True,
-        'items': [{
-            'url': obj.file.url,
-            'is_image': obj.is_image,
-            'id': obj.id,
-        }]
-    })
+        item = form.save(commit=False)
+        item.application = application
+        item.uploaded_by = request.user
+        item.save()
+        return JsonResponse({
+            "success": True,
+            "item": {
+                "id": item.id,
+                "url": item.file.url,
+                "description": item.description,
+                "is_image": item.is_image,
+                "is_video": item.is_video,
+                "group_id": item.group_id,
+                "group_title": item.group.title if item.group else "",
+                "uploaded_at": item.uploaded_at.strftime("%d.%m.%Y %H:%M"),
+            },
+        })
+    return JsonResponse({"success": False, "errors": form.errors}, status=400)
 
 
 class AdvertAplicationListView(LoginRequiredMixin, ListView):
