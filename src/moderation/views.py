@@ -739,7 +739,11 @@ class FaqsModerView(ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        return Faqs.objects.filter(publishet=True,employee=self.request.user.employee)
+        if self.request.user.is_authenticated:
+            faqs = Faqs.objects.filter(publishet=True, employee=self.request.user.employee)
+        else:
+            faqs = Faqs.objects.filter(publishet=True,employee=0)
+        return faqs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
