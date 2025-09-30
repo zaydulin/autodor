@@ -12,8 +12,19 @@ class ProfileAdmin(admin.ModelAdmin):
         if obj.avatar:
             return format_html('<img src="{}" alt="{}" height="100" />', obj.avatar.url, obj.username)
         return ''
-
     display_avatar.short_description = 'Аватарка'
+
+    def get_gender_display(self, obj):
+        return obj.get_gender_display()
+    get_gender_display.short_description = 'Пол'
+
+    def get_type_display(self, obj):
+        return obj.get_type_display()
+    get_type_display.short_description = 'Тип пользователя'
+
+    def get_employee_display(self, obj):
+        return obj.get_employee_display()
+    get_employee_display.short_description = 'Должность'
 
 
 @admin.register(Notification)
