@@ -70,6 +70,18 @@ class Profile(AbstractUser):
     company_data_registration = models.DateField(verbose_name='Дата регистрации', blank=True, null=True)
     company_type_activity = models.TextField("Основной вид деятельности", blank=True, null=True)
 
+    def get_gender_display(self):
+        """Метод для отображения полового признака"""
+        return dict(self.GENDER_CHOICE).get(self.gender, 'Не указано')
+
+    def get_type_display(self):
+        """Метод для отображения типа пользователя"""
+        return dict(self.TYPE).get(self.type, 'Не указан')
+
+    def get_employee_display(self):
+        """Метод для отображения должности"""
+        return dict(self.EMPLOYEE).get(self.employee, 'Не указана')
+
 
     class Meta:
         verbose_name = "Пользователь"
