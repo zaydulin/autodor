@@ -80,24 +80,28 @@
         var newType = $('#new-type').val();
 
         $.ajax({
-            url: '{% url "moderation:change_car_model_type" 0 %}'.replace('0', carId),
-            method: 'POST',
-            data: {
-                'pagetype': newType,
-                'csrfmiddlewaretoken': $('input[name="csrfmiddlewaretoken"]').val()
-            },
-            success: function(response) {
-                if (response.success) {
-                    alert(response.message);
-                    location.reload();  // Перезагружаем страницу, чтобы обновить список
-                } else {
-                    alert(response.message);
-                }
-            },
-            error: function() {
-                alert("Произошла ошибка при изменении типа модели.");
-            }
-        });
+    url: '{% url "moderation:change_car_model_type" 0 %}'.replace('0', carId),
+    method: 'POST',
+    headers: {
+        'X-CSRFToken': $('input[name="csrfmiddlewaretoken"]').val()  // Получаем CSRF токен из формы
+    },
+    data: {
+        'pagetype': newType,
+        'csrfmiddlewaretoken': $('input[name="csrfmiddlewaretoken"]').val()  // Убедитесь, что это присутствует в данных
+    },
+    success: function(response) {
+        if (response.success) {
+            alert(response.message);
+            location.reload();  // Перезагружаем страницу, чтобы обновить список
+        } else {
+            alert(response.message);
+        }
+    },
+    error: function() {
+        alert("Произошла ошибка при изменении типа модели.");
+    }
+});
+
 
         $('#change-type-modal').modal('hide');
     });
