@@ -26,6 +26,7 @@
             <td>{{ forloop.counter }}</td>
             <td>{{ car.brand.name }}</td>
             <td>{{ car.name }}</td>
+            <td>{{ car.get_pagetype_display }}</td>
         </tr>
         {% empty %}
         <tr>

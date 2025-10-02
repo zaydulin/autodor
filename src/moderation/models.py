@@ -199,6 +199,11 @@ class CarModel(models.Model):
         verbose_name="Марка автомобиля",
         related_name="models"  # позволяет получать все модели марки через brand.models.all()
     )
+    PAGE_CHOICE = [
+        (1, 'Легковая'),
+        (2, 'Грузовая'),
+    ]
+    pagetype = models.PositiveSmallIntegerField('Тип', unique=True, choices=PAGE_CHOICE, blank=False, default=1)
 
     class Meta:
         verbose_name = "Модель автомобиля"
