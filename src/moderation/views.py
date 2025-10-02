@@ -10,6 +10,7 @@ import requests
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 from django.core.paginator import Paginator
 from django.db.models.functions import TruncDate
 from django.db.models.signals import post_save
