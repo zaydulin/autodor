@@ -14,24 +14,24 @@
     <!-- Таблица -->
     <table class="table table-bordered table-striped">
         <thead>
-            <tr>
-                <th>№</th>
-                <th>Название модели</th>
-                <th>Марка автомобиля</th>
-            </tr>
+        <tr>
+            <th>№</th>
+            <th>Марка автомобиля</th>
+            <th>Название модели</th>
+        </tr>
         </thead>
         <tbody>
-            {% for car in car_models %}
-                <tr>
-                    <td>{{ forloop.counter }}</td>
-                    <td>{{ car.name }}</td>
-                    <td>{{ car.brand.name }}</td>
-                </tr>
-            {% empty %}
-                <tr>
-                    <td colspan="3">Нет доступных моделей автомобилей.</td>
-                </tr>
-            {% endfor %}
+        {% for car in car_models %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ car.brand.name }}</td>
+            <td>{{ car.name }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="3">Нет доступных моделей автомобилей.</td>
+        </tr>
+        {% endfor %}
         </tbody>
     </table>
 </div>
