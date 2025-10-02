@@ -13,9 +13,7 @@
     <!-- Owl Carousel CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.theme.default.min.css">
-    <!-- jQuery -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <!-- Owl Carousel JS -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
     {% endblock head %}
 
@@ -554,7 +552,7 @@
         .gallery-media{
             object-fit:contain;
             max-height:420px;
-            background:#000;
+
         }
 
         .preview-thumb{
@@ -587,7 +585,6 @@
             width: 100%;
             height: 360px;              /* одна высота */
             object-fit: contain;        /* фото / видео без обрезки */
-            background: #000;           /* фон за фото/видео */
             border-radius: 8px;
         }
 
@@ -633,7 +630,6 @@
       position: relative;
       border-radius: 10px;
       overflow: hidden;
-      background: #000;
       cursor: pointer;
       transition: transform 0.3s ease;
     }
@@ -820,7 +816,6 @@
     position: relative;
     border-radius: 12px;
     overflow: hidden;
-    background: #000;
     cursor: pointer;
     transition: all 0.3s ease;
     aspect-ratio: 1 / 1; /* Квадратное соотношение */
@@ -903,7 +898,47 @@
     }
 }
 </style>
+<style>
+.gallery-thumbnail {
+    transition: all 0.3s ease;
+    width: 100%;
+    height: 100%;
+    border: 2px solid transparent;
+}
+.img-fluid {
+    height: 100%;
+}
 
+.gallery-thumbnail:hover {
+    transform: scale(1.05);
+    border-color: #0d6efd;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+    background-size: 1.5rem;
+}
+
+.gallery-item {
+    overflow: hidden;
+}
+
+/* Стили для модальных окон галереи */
+.modal-xl {
+    max-width: 95%;
+}
+
+.modal-content {
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.modal-body img,
+.modal-body video {
+    border-radius: 8px;
+}
+</style>
     <div class="container py-4">
         <div class="row g-4">
             <!-- Левая колонка -->
@@ -1220,48 +1255,48 @@
     }
 
                             </style>
-                            <script>
-                                // Получаем все иконки кошельков
-                                const walletIcons = document.querySelectorAll('.wallet-icon');
+<script>
+// Получаем все иконки кошельков
+const walletIcons = document.querySelectorAll('.wallet-icon');
 
-                                // Получаем все попапы
-                                const modals = document.querySelectorAll('.modal');
+// Получаем все попапы
+const modals = document.querySelectorAll('.modal');
 
-                                // Получаем все кнопки закрытия попапов
-                                const closeBtns = document.querySelectorAll('.modal-close');
+// Получаем все кнопки закрытия попапов
+const closeBtns = document.querySelectorAll('.modal-close');
 
-                                // Открытие попапа при клике на иконку кошелька
-                                walletIcons.forEach(icon => {
-                                    icon.addEventListener('click', function() {
-                                        const target = this.getAttribute('data-target');
-                                        const modal = document.querySelector(`.modal-${target}`);
-                                        if (modal) {
-                                            // Убираем inline стиль display: none
-                                            modal.style.display = 'flex';
-                                            modal.classList.add('is-open');
-                                        }
-                                    });
-                                });
+// Открытие попапа при клике на иконку кошелька
+walletIcons.forEach(icon => {
+    icon.addEventListener('click', function() {
+        const target = this.getAttribute('data-target');
+        const modal = document.querySelector(`.modal-${target}`);
+        if (modal) {
+            // Убираем inline стиль display: none
+            modal.style.display = 'flex';
+            modal.classList.add('is-open');
+        }
+    });
+});
 
-                                // Закрытие попапа при клике на крестик
-                                closeBtns.forEach(btn => {
-                                    btn.addEventListener('click', function() {
-                                        const modal = this.closest('.modal');
-                                        modal.style.display = 'none';  // Скрыть попап
-                                        modal.classList.remove('is-open');
-                                    });
-                                });
+// Закрытие попапа при клике на крестик
+closeBtns.forEach(btn => {
+    btn.addEventListener('click', function() {
+        const modal = this.closest('.modal');
+        modal.style.display = 'none';  // Скрыть попап
+        modal.classList.remove('is-open');
+    });
+});
 
-                                // Закрытие попапа, если кликнули вне попапа
-                                window.addEventListener('click', function(event) {
-                                    modals.forEach(modal => {
-                                        if (event.target === modal) {
-                                            modal.style.display = 'none'; // Скрываем попап, если кликнули за пределы
-                                            modal.classList.remove('is-open');
-                                        }
-                                    });
-                                });
-                            </script>
+// Закрытие попапа, если кликнули вне попапа
+window.addEventListener('click', function(event) {
+    modals.forEach(modal => {
+        if (event.target === modal) {
+            modal.style.display = 'none'; // Скрываем попап, если кликнули за пределы
+            modal.classList.remove('is-open');
+        }
+    });
+});
+</script>
 
 
 
@@ -1299,118 +1334,161 @@
                     </div>
 
                     <!-- ГАЛЕРЕЯ фото / видео -->
-                    <div class="card mb-4" id="galleryCard">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">Фото / Видео отчёты</h5>
-                        </div>
-                        <div class="card-body">
+<div class="card mb-4" id="galleryCard">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Фото / Видео отчёты</h5>
+    </div>
+    <div class="card-body">
+        {% if request.user.is_authenticated %}
+        <!-- Форма загрузки -->
+        <div id="galleryPreview" class="row g-2 mb-2" style="display:none;"></div>
+        <div class="progress mb-2" id="galleryProgress" style="display:none; height: 6px;">
+            <div class="progress-bar progress-bar-striped progress-bar-animated"
+                 role="progressbar" style="width: 0%">
+            </div>
+        </div>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addGroupModal">
+            <i class="bi bi-folder-plus"></i> Добавить отчёт
+        </button>
+        {% endif %}
 
-                            {% if request.user.is_authenticated %}
-                            <!-- Форма загрузки -->
-                            <!-- Превью файлов -->
-                            <div id="galleryPreview" class="row g-2 mb-2" style="display:none;"></div>
-                            <div class="progress mb-2" id="galleryProgress" style="display:none; height: 6px;">
-                                <div class="progress-bar progress-bar-striped progress-bar-animated"
-                                     role="progressbar" style="width: 0%">
-                                </div>
-                            </div>
-                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addGroupModal">
-                                <i class="bi bi-folder-plus"></i> Добавить отчёт
+        {% if application.gallery_groups.exists %}
+        <!-- Контейнеры групп -->
+        <div class="mt-3" id="galleryTabsContent">
+            {% for group in application.gallery_groups.all %}
+            <div class="gallery-group mb-5">
+                <h5 class="mb-2">{{ group.title }}</h5>
+                {% if group.description %}
+                <p class="text-muted mb-3">{{ group.description }}</p>
+                {% endif %}
+
+                {% if group.items.all %}
+                <!-- Карусель с 3 элементами в слайде -->
+                <div id="carousel-{{ group.id }}" class="carousel slide" data-bs-ride="carousel">
+                    <!-- Индикаторы -->
+                    {% with items_count=group.items.all|length %}
+                        {% with slides_count=items_count|add:"2"|divisibleby:"3" %}
+                        {% if slides_count > 1 %}
+                        <div class="carousel-indicators">
+                            {% for i in "x"|ljust:slides_count %}
+                            <button type="button"
+                                    data-bs-target="#carousel-{{ group.id }}"
+                                    data-bs-slide-to="{{ forloop.counter0 }}"
+                                    class="{% if forloop.first %}active{% endif %}">
                             </button>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        {% endwith %}
+                    {% endwith %}
+
+                    <!-- Слайды -->
+                    <div class="carousel-inner">
+                        {% for item in group.items.all %}
+                            {% if forloop.counter0|divisibleby:"3" %}
+                            <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                                <div class="row g-3">
                             {% endif %}
 
-                            {% if application.gallery_groups.exists %}
-                            <!-- Вкладки групп -->
-
-
-                            <!-- Контейнеры групп -->
-                            <div class="mt-3" id="galleryTabsContent">
-
-                                <div>
-                                    <h6 class="text-muted"></h6>
-                                    <table class="table ">
-                                        <thead>
-
-                                        </thead>
-                                        <tbody>
-                                        {% for group in application.gallery_groups.all %}
-
-                                        {% if group.description %}
-
+                                    <div class="col-md-4">
+                                        {% if item.is_image %}
+                                        <div class="gallery-item position-relative">
+                                            <img src="{{ item.file.url }}"
+                                                 class="img-fluid rounded gallery-thumbnail"
+                                                 style=" width: 100%; object-fit: cover; cursor: pointer;"
+                                                 data-bs-toggle="modal"
+                                                 data-bs-target="#modal-{{ item.id }}"
+                                                 alt="Изображение {{ forloop.counter }}">
+                                            <div class="position-absolute top-0 end-0 m-2">
+                                                <span class="badge bg-primary">Фото</span>
+                                            </div>
+                                        </div>
+                                        {% elif item.is_video %}
+                                        <div class="gallery-item position-relative">
+                                            <video class="img-fluid rounded gallery-thumbnail"
+                                                   style="height: 200px; width: 100%; object-fit: cover; cursor: pointer;"
+                                                   data-bs-toggle="modal"
+                                                   data-bs-target="#modal-{{ item.id }}">
+                                                <source src="{{ item.file.url }}">
+                                            </video>
+                                            <div class="position-absolute top-0 end-0 m-2">
+                                                <span class="badge bg-success">Видео</span>
+                                            </div>
+                                            <div class="position-absolute top-50 start-50 translate-middle">
+                                                <i class="bi bi-play-circle-fill text-white fs-1 opacity-75"></i>
+                                            </div>
+                                        </div>
                                         {% endif %}
-                                        <tr>
-                                            <td style="max-width: 250px">
-                                                <div class="row" style="max-width: 250px">
-                                                      <h5 class="mb-1">Название - "{{ group.title }}"</h5>
-                                                      <p class="mb-1">Описание - {{ group.description }}</p>
+                                    </div>
 
-                                                    {% for item in group.items.all %}
-
-
-                                                    <div class="col-6 col-md-4 col-lg-3 mb-3"> <!-- Изменено с col-3 -->
-                                                        {% if item.is_image %}
-                                                        <!-- Миниатюра изображения -->
-                                                        <img src="{{ item.file.url }}" class="img-thumbnail gallery-thumbnail" data-bs-toggle="modal" data-bs-target="#modal-{{ item.id }}" alt="">
-                                                        {% elif item.is_video %}
-                                                        <!-- Миниатюра видео -->
-                                                        <video class="img-thumbnail gallery-thumbnail" style="max-width: 100px; max-height: 100px;" data-bs-toggle="modal" data-bs-target="#modal-{{ item.id }}" controls>
-                                                            <source src="{{ item.file.url }}">
-                                                        </video>
-                                                        {% endif %}
-                                                    </div>
-                                                    {% endfor %}
-                                                </div>
-                                            </td>
-                                            <!-- Модальные окна для полноразмерных изображений или видео -->
-                                            {% for item in group.items.all %}
-                                            {% if item.is_image %}
-                                            <div class="modal fade" id="modal-{{ item.id }}" tabindex="-1" aria-labelledby="modalLabel-{{ item.id }}" aria-hidden="true">
-                                                <div class="modal-dialog modal-lg">
-                                                    <div class="modal-content">
-                                                        <div class="modal-header">
-                                                            <h5 class="modal-title" id="modalLabel-{{ item.id }}">Полноразмерное изображение</h5>
-                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                        </div>
-                                                        <div class="modal-body">
-                                                            <img src="{{ item.file.url }}" class="d-block w-100" alt="Полноразмерное изображение">
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            {% elif item.is_video %}
-                                            <div class="modal fade" id="modal-{{ item.id }}" tabindex="-1" aria-labelledby="modalLabel-{{ item.id }}" aria-hidden="true">
-                                                <div class="modal-dialog modal-lg">
-                                                    <div class="modal-content">
-                                                        <div class="modal-header">
-                                                            <h5 class="modal-title" id="modalLabel-{{ item.id }}">Полноразмерное видео</h5>
-                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                        </div>
-                                                        <div class="modal-body">
-                                                            <video class="d-block w-100" controls>
-                                                                <source src="{{ item.file.url }}">
-                                                            </video>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            {% endif %}
-                                            {% endfor %}
-
-
-                                        </tr>
-                                        {% endfor %}
-                                        </tbody>
-
-                                    </table>
-
+                            {% if forloop.counter|divisibleby:"3" or forloop.last %}
                                 </div>
                             </div>
-
-                            {% else %}
-                            <p class="text-muted">Группы ещё не созданы</p>
                             {% endif %}
+                        {% endfor %}
+                    </div>
+
+                    <!-- Кнопки навигации -->
+                    {% if group.items.all|length > 3 %}
+                    <button class="carousel-control-prev" type="button" data-bs-target="#carousel-{{ group.id }}" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon bg-dark rounded-circle p-2" aria-hidden="true"></span>
+                        <span class="visually-hidden">Предыдущий</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#carousel-{{ group.id }}" data-bs-slide="next">
+                        <span class="carousel-control-next-icon bg-dark rounded-circle p-2" aria-hidden="true"></span>
+                        <span class="visually-hidden">Следующий</span>
+                    </button>
+                    {% endif %}
+                </div>
+                {% else %}
+                <p class="text-muted">В этой группе пока нет медиафайлов</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Модальные окна для полноразмерных изображений или видео -->
+        {% for group in application.gallery_groups.all %}
+            {% for item in group.items.all %}
+            {% if item.is_image %}
+            <div class="modal fade" id="modal-{{ item.id }}" tabindex="-1" aria-labelledby="modalLabel-{{ item.id }}" aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="modalLabel-{{ item.id }}">{{ group.title }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body text-center p-0">
+                            <img src="{{ item.file.url }}" class="img-fluid" style="max-height: 80vh; object-fit: contain;" alt="Полноразмерное изображение">
                         </div>
                     </div>
+                </div>
+            </div>
+            {% elif item.is_video %}
+            <div class="modal fade" id="modal-{{ item.id }}" tabindex="-1" aria-labelledby="modalLabel-{{ item.id }}" aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="modalLabel-{{ item.id }}">{{ group.title }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body p-0">
+                            <video class="w-100" controls style="max-height: 80vh;">
+                                <source src="{{ item.file.url }}">
+                            </video>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        {% endfor %}
+
+        {% else %}
+        <p class="text-muted">Группы ещё не созданы</p>
+        {% endif %}
+    </div>
+</div>
 
 
 
@@ -3948,5 +4026,344 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+</script>
+<script>
+// Исправленный скрипт для модальных окон галереи
+document.addEventListener('DOMContentLoaded', function() {
+    // Автоматическое управление видео при закрытии модального окна
+    const modals = document.querySelectorAll('.modal');
+
+    if (modals.length > 0) {
+        modals.forEach(modal => {
+            modal.addEventListener('hidden.bs.modal', function () {
+                // Останавливаем все видео в закрытом модальном окне
+                const videos = this.querySelectorAll('video');
+                videos.forEach(video => {
+                    video.pause();
+                    video.currentTime = 0;
+                });
+            });
+        });
+    }
+
+    // Обработка ошибок загрузки медиа
+    const galleryThumbnails = document.querySelectorAll('.gallery-thumbnail');
+
+    if (galleryThumbnails.length > 0) {
+        galleryThumbnails.forEach(thumb => {
+            thumb.addEventListener('error', function() {
+                console.error('Ошибка загрузки медиафайла:', this.src);
+                this.style.display = 'none';
+                const parent = this.closest('.gallery-item');
+                if (parent) {
+                    parent.innerHTML = '<div class="alert alert-warning w-100 text-center">Файл не найден</div>';
+                }
+            });
+        });
+    }
+
+    // Добавляем обработчики для клавиатуры
+    document.addEventListener('keydown', function(e) {
+        const activeModal = document.querySelector('.modal.show');
+        if (activeModal && e.key === 'Escape') {
+            const modal = bootstrap.Modal.getInstance(activeModal);
+            if (modal) {
+                modal.hide();
+            }
+        }
+    });
+
+    // Дополнительная проверка для инициализации модальных окон
+    function initGalleryModals() {
+        const galleryItems = document.querySelectorAll('.gallery-item');
+
+        galleryItems.forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                // Находим ближайший элемент с data-bs-target
+                const target = this.querySelector('[data-bs-target]');
+                if (target) {
+                    const modalId = target.getAttribute('data-bs-target');
+                    const modalElement = document.querySelector(modalId);
+
+                    if (modalElement) {
+                        const modal = new bootstrap.Modal(modalElement);
+                        modal.show();
+                    } else {
+                        console.warn('Модальное окно не найдено:', modalId);
+                    }
+                }
+            });
+        });
+    }
+
+    // Инициализируем галерею после загрузки DOM
+    initGalleryModals();
+});
+
+// Исправленный скрипт для кошельков с проверками
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Initializing wallet functionality...');
+
+    // Обработчики для иконок кошелька
+    const walletIcons = document.querySelectorAll('.wallet-icon');
+
+    if (walletIcons.length > 0) {
+        walletIcons.forEach(icon => {
+            icon.addEventListener('click', function() {
+                const driverId = this.getAttribute('data-driver-id');
+                console.log('Wallet icon clicked for driver:', driverId);
+                if (driverId) {
+                    openWalletModal(driverId);
+                } else {
+                    console.error('Driver ID not found');
+                }
+            });
+        });
+    }
+
+    // Обработчики для полей ввода (Enter для сохранения)
+    document.addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+            const activeModal = document.querySelector('.modal.show');
+            if (activeModal && activeModal.id.startsWith('modalWallet')) {
+                const driverId = activeModal.id.replace('modalWallet', '');
+                console.log('Enter pressed in modal for driver:', driverId);
+                if (driverId) {
+                    updateDriverAmount(driverId);
+                }
+            }
+        }
+    });
+
+    // Обработчик для кнопок сохранения в модальных окнах
+    document.addEventListener('click', function(event) {
+        if (event.target.matches('.btn-primary') && event.target.textContent.includes('Сохранить')) {
+            const modal = event.target.closest('.modal');
+            if (modal && modal.id.startsWith('modalWallet')) {
+                const driverId = modal.id.replace('modalWallet', '');
+                console.log('Save button clicked for driver:', driverId);
+                if (driverId) {
+                    updateDriverAmount(driverId);
+                }
+            }
+        }
+    });
+});
+
+// Функция для открытия модального окна кошелька с проверками
+function openWalletModal(driverId) {
+    if (!driverId) {
+        console.error('Driver ID is required');
+        return;
+    }
+
+    console.log('Opening wallet modal for driver:', driverId);
+    const modalElement = document.getElementById(`modalWallet${driverId}`);
+
+    if (modalElement) {
+        // Загружаем текущие данные
+        loadDriverWalletData(driverId);
+
+        // Создаем и показываем модальное окно Bootstrap
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+    } else {
+        console.error('Modal element not found for driver:', driverId);
+    }
+}
+
+// Функция для закрытия модального окна с проверками
+function closeWalletModal(driverId) {
+    if (!driverId) {
+        console.error('Driver ID is required');
+        return;
+    }
+
+    const modalElement = document.getElementById(`modalWallet${driverId}`);
+    if (modalElement) {
+        const modal = bootstrap.Modal.getInstance(modalElement);
+        if (modal) {
+            modal.hide();
+        }
+    }
+}
+
+// Загрузка данных кошелька с проверками
+async function loadDriverWalletData(driverId) {
+    if (!driverId) {
+        console.error('Driver ID is required');
+        return;
+    }
+
+    const applicationId = document.getElementById('application-id');
+    if (!applicationId) {
+        console.error('Application ID element not found');
+        return;
+    }
+
+    const amountDisplay = document.getElementById(`amount-display-${driverId}`);
+    if (!amountDisplay) {
+        console.error('Amount display element not found for driver:', driverId);
+        return;
+    }
+
+    console.log('Loading wallet data for driver:', driverId, 'application:', applicationId.value);
+
+    try {
+        const response = await fetch(`/application/${applicationId.value}/driver/${driverId}/wallet/`);
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Wallet data received:', data);
+
+        if (data.success) {
+            amountDisplay.innerHTML = `
+                <span class="fs-4 text-success fw-bold">${data.formatted_amount}</span>
+            `;
+            // Устанавливаем текущее значение в поле ввода
+            const amountInput = document.getElementById(`amount-input-${driverId}`);
+            if (amountInput) {
+                amountInput.value = data.current_amount;
+            }
+        } else {
+            amountDisplay.innerHTML = '<span class="text-danger">Ошибка загрузки: ' + (data.error || 'Неизвестная ошибка') + '</span>';
+        }
+    } catch (error) {
+        console.error('Error loading wallet data:', error);
+        if (amountDisplay) {
+            amountDisplay.innerHTML = '<span class="text-danger">Ошибка загрузки: ' + error.message + '</span>';
+        }
+    }
+}
+
+// Обновление суммы с проверками
+async function updateDriverAmount(driverId) {
+    if (!driverId) {
+        console.error('Driver ID is required');
+        return;
+    }
+
+    const applicationId = document.getElementById('application-id');
+    if (!applicationId) {
+        alert('Ошибка: не найден ID заявки');
+        return;
+    }
+
+    const amountInput = document.getElementById(`amount-input-${driverId}`);
+    if (!amountInput) {
+        alert('Ошибка: поле ввода суммы не найдено');
+        return;
+    }
+
+    const newAmount = amountInput.value;
+
+    console.log('Updating amount for driver:', driverId, 'new amount:', newAmount);
+
+    if (!newAmount || newAmount < 0) {
+        alert('Введите корректную сумму');
+        return;
+    }
+
+    try {
+        const formData = new FormData();
+        formData.append('amount', newAmount);
+
+        const csrfToken = getCsrfToken();
+        if (csrfToken) {
+            formData.append('csrfmiddlewaretoken', csrfToken);
+        }
+
+        const response = await fetch(`/application/${applicationId.value}/driver/${driverId}/wallet/`, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Update response:', data);
+
+        if (data.success) {
+            // Обновляем отображение
+            const amountDisplay = document.getElementById(`amount-display-${driverId}`);
+            if (amountDisplay) {
+                amountDisplay.innerHTML = `<span class="fs-4 text-success fw-bold">${data.formatted_amount}</span>`;
+            }
+
+            // Показываем уведомление
+            showNotification('Сумма успешно обновлена', 'success');
+
+            // Закрываем модальное окно через 1 секунду
+            setTimeout(() => {
+                closeWalletModal(driverId);
+            }, 1000);
+
+        } else {
+            alert('Ошибка: ' + (data.error || 'Неизвестная ошибка'));
+        }
+    } catch (error) {
+        console.error('Error updating amount:', error);
+        alert('Ошибка при обновлении суммы: ' + error.message);
+    }
+}
+
+// Получение CSRF токена с проверками
+function getCsrfToken() {
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (csrfToken) {
+        return csrfToken.value;
+    }
+    console.error('CSRF token not found');
+    return null;
+}
+
+// Показать уведомление с проверками
+function showNotification(message, type = 'info') {
+    // Создаем уведомление Bootstrap
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} alert-dismissible fade show`;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1060;
+        min-width: 300px;
+    `;
+    notification.innerHTML = `
+        <strong>${type === 'success' ? '✅ Успех' : 'ℹ️ Информация'}</strong>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    document.body.appendChild(notification);
+
+    // Авто-удаление через 3 секунды
+    setTimeout(() => {
+        if (notification.parentNode) {
+            const bsAlert = new bootstrap.Alert(notification);
+            bsAlert.close();
+        }
+    }, 3000);
+}
+
+// Глобальная функция для отладки
+window.debugGallery = function() {
+    console.log('=== Gallery Debug Info ===');
+    console.log('Gallery items:', document.querySelectorAll('.gallery-item').length);
+    console.log('Modals:', document.querySelectorAll('.modal').length);
+    console.log('Wallet icons:', document.querySelectorAll('.wallet-icon').length);
+    console.log('Application ID element:', document.getElementById('application-id'));
+    console.log('========================');
+};
 </script>
     {% endblock %}
