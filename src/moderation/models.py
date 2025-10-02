@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.core.files.base import ContentFile
 from django.db import models
 from django.conf import settings
@@ -261,9 +263,6 @@ class AdvertExpense(models.Model):
         return f"{self.title} — {self.amount} ({self.aplication.advert.name})"
 
 
-
-
-
 class AdvertAplication(models.Model):
     class Status(models.TextChoices):
         NEW = "new", "Новая"
@@ -303,6 +302,20 @@ class AdvertAplication(models.Model):
     )
     created_at = models.DateTimeField("Дата создания", auto_now_add=True)
 
+    def save(self, *args, **kwargs):
+        if self.user_drivers:
+            for user in self.user_drivers.all():
+                if CartVod.objects.filter(voditel=user):
+                    pass
+                else:
+                    CartVod.objects.create(
+                        voditel=user,
+                        application=self,
+                        summa=Decimal('0.01')  # или нужное вам значение, большее или равное 0.01
+                    )
+
+
+
     class Meta:
         verbose_name = "Заявка на объявление"
         verbose_name_plural = "Заявки на объявления"
@@ -310,6 +323,81 @@ class AdvertAplication(models.Model):
 
     def __str__(self):
         return f"Заявка #{self.id} от {self.user} на {self.advert}"
+
+
+class CartVod(models.Model):
+    """
+    Модель корзины водителя для учета выплат за выполнение заявок.
+    Связывает водителя, заявку и сумму выплаты.
+    """
+
+    voditel = models.ForeignKey(
+        Profile,
+        on_delete=models.CASCADE,
+        verbose_name='Водитель',
+        related_name='driver_carts',
+        help_text='Водитель, выполняющий заявку'
+    )
+
+    application = models.ForeignKey(
+        'moderation.AdvertAplication',
+        on_delete=models.CASCADE,
+        verbose_name='Заявка',
+        related_name='driver_payments',
+        help_text='Заявка, за которую производится выплата'
+    )
+
+    summa = models.DecimalField(
+        verbose_name='Сумма выплаты',
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal('0.00'))],  # Разрешаем 0
+        default=0.00,
+        help_text='Сумма к выплате водителю'
+    )
+
+    created_at = models.DateTimeField(
+        verbose_name='Дата создания',
+        auto_now_add=True,
+        help_text='Время создания записи о выплате'
+    )
+
+    updated_at = models.DateTimeField(
+        verbose_name='Дата обновления',
+        auto_now=True,
+        help_text='Время последнего обновления записи'
+    )
+
+    class Meta:
+        verbose_name = 'Выплата водителю'
+        verbose_name_plural = 'Выплаты водителям'
+        db_table = 'driver_carts'
+        unique_together = ['voditel', 'application']
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['voditel', 'created_at']),
+            models.Index(fields=['application']),
+        ]
+
+    def __str__(self):
+        return f"{self.voditel} - {self.summa} руб. ({self.application})"
+
+    @property
+    def formatted_summa(self):
+        """Форматированная сумма с разделителями"""
+        return f"{self.summa:,.2f} руб."
+
+    @classmethod
+    def get_driver_total(cls, driver):
+        """Общая сумма выплат водителю"""
+        return cls.objects.filter(voditel=driver).aggregate(
+            total=models.Sum('summa')
+        )['total'] or Decimal('0.00')
+
+    @classmethod
+    def get_application_payments(cls, application):
+        """Все выплаты по конкретной заявке"""
+        return cls.objects.filter(application=application).select_related('voditel')
 
 
 class DriverLocation(models.Model):

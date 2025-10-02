@@ -1,0 +1,59 @@
+<!-- moderation/includes/responsibility_form.html -->
+<form id="responsibility-inner-form"
+      data-instance-id="{{ form.instance.id|default_if_none:'' }}"
+      class="form-updated">
+  {{ form.non_field_errors }}
+
+  <div class="mb-3">
+    <label for="id_status" class="form-label">Статус</label>
+    <select name="status" class="form-select" id="id_status" required
+            onchange="this.classList.add('field-updated')">
+      {% for value, label in form.fields.status.choices %}
+        <option value="{{ value }}"
+                {% if form.status.value|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}>
+          {{ label }}
+        </option>
+      {% endfor %}
+    </select>
+    {% if form.status.errors %}
+      <div class="text-danger small mt-1">{{ form.status.errors }}</div>
+    {% endif %}
+  </div>
+
+  <div class="mb-3">
+    <label for="id_additional" class="form-label">Дополнение</label>
+    <textarea name="additional" class="form-control" id="id_additional" rows="3"
+              placeholder="Описание этапа..."
+              oninput="this.classList.add('field-updated')">{{ form.additional.value|default_if_none:'' }}</textarea>
+    {% if form.additional.errors %}
+      <div class="text-danger small mt-1">{{ form.additional.errors }}</div>
+    {% endif %}
+  </div>
+
+  <div class="mb-3">
+    <label for="id_responsible" class="form-label">Ответственный</label>
+    <select name="responsible" class="form-select" id="id_responsible" required
+            onchange="this.classList.add('field-updated')">
+      <option value="">-- Выберите ответственного --</option>
+      {% for value, label in form.fields.responsible.choices %}
+        <option value="{{ value }}"
+                {% if form.responsible.value|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}>
+          {{ label }}
+        </option>
+      {% endfor %}
+    </select>
+    {% if form.responsible.errors %}
+      <div class="text-danger small mt-1">{{ form.responsible.errors }}</div>
+    {% endif %}
+  </div>
+
+  <input type="hidden" name="id" value="{{ form.instance.id|default_if_none:'' }}">
+
+  <!-- Индикатор автосохранения -->
+  <div class="mt-3">
+    <small class="text-muted">
+      <i class="fas fa-sync-alt me-1"></i>
+      Изменения сохраняются автоматически
+    </small>
+  </div>
+</form>

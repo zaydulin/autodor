@@ -3,7 +3,7 @@ import io
 import json
 import os
 from datetime import datetime
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from urllib.parse import urlparse
 
 import requests
@@ -33,7 +33,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 
 from .forms import PathForm, PathResponsibilityForm, AdvertAplicationGalleryForm
 from .models import AdvertAplication, ChatMessage, CallSession, AdvertDocument, AdvertExpense, AdvertApplicationImage, \
-    CarModel, CarBrand, AdvertAplicationGallery, ExpenseMask,AdvertAplicationGalleryGroup
+    CarModel, CarBrand, AdvertAplicationGallery, ExpenseMask,AdvertAplicationGalleryGroup,CartVod
 from moderation.models import Advert, AdvertAplication,Path,PathResponsibility, Withdrawal
 from webmain.models import Faqs, Seo
 from useraccount.models import Profile
@@ -164,11 +164,69 @@ def add_gallery_group_with_items(request, pk):
     })
 
 
+@login_required
+@require_http_methods(["GET", "POST"])
+def driver_wallet_view(request, application_id, driver_id):
+    """View для работы с кошельком водителя"""
+    try:
+        application = get_object_or_404(AdvertAplication, id=application_id)
+        driver = get_object_or_404(Profile, id=driver_id)
+
+        # Проверяем права доступа
+        if not (request.user in application.user_menager.all() or request.user.employee == 4):
+            return JsonResponse({'error': 'Нет прав доступа'}, status=403)
+
+        # Получаем или создаем кошелек
+        cart_vod, created = CartVod.objects.get_or_create(
+            application=application,
+            voditel=driver,
+            defaults={'summa': 0}
+        )
+
+        if request.method == 'GET':
+            return JsonResponse({
+                'success': True,
+                'driver_name': f"{driver.first_name} {driver.last_name}",
+                'current_amount': float(cart_vod.summa),
+                'formatted_amount': f"{cart_vod.summa:.2f} руб.",
+                'application_id': application.id,
+                'driver_id': driver.id
+            })
+
+        elif request.method == 'POST':
+            new_amount = request.POST.get('amount')
+            if not new_amount:
+                return JsonResponse({'error': 'Сумма не указана'}, status=400)
+
+            try:
+                new_amount = Decimal(new_amount)
+                if new_amount < 0:
+                    return JsonResponse({'error': 'Сумма не может быть отрицательной'}, status=400)
+
+                cart_vod.summa = new_amount
+                cart_vod.save()
+
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Сумма успешно обновлена',
+                    'new_amount': float(cart_vod.summa),
+                    'formatted_amount': f"{cart_vod.summa:.2f} руб."
+                })
+
+            except (ValueError, InvalidOperation) as e:
+                return JsonResponse({'error': 'Неверный формат суммы'}, status=400)
+
+    except Exception as e:
+        print(f"Error in driver_wallet_view: {str(e)}")
+        return JsonResponse({'error': 'Внутренняя ошибка сервера'}, status=500)
+
+
 def responsibility_form(request, pk=None):
     instance = get_object_or_404(PathResponsibility, pk=pk) if pk else None
-    form = PathResponsibilityForm(request.POST or None, instance=instance)
 
     if request.method == "POST":
+        form = PathResponsibilityForm(request.POST, instance=instance)
+        print(form)
         if form.is_valid():
             obj = form.save()
             return JsonResponse({
@@ -176,16 +234,26 @@ def responsibility_form(request, pk=None):
                 "responsibility": {
                     "id": obj.id,
                     "additional": obj.additional,
-                    "status": obj.status,
+                    "status": obj.get_status_display(),
                     "responsible": str(obj.responsible),
                 }
             })
-        # ошибки
-        html = render_to_string("moderation/includes/responsibility_form.html", {"form": form}, request=request)
-        return JsonResponse({"success": False, "html": html})
+        else:
+            # Возвращаем форму с ошибками
+            html = render_to_string(
+                "moderation/includes/responsibility_form.html",
+                {"form": form},
+                request=request
+            )
+            return JsonResponse({"success": False, "html": html})
 
-    # GET → отдаем форму
-    html = render_to_string("moderation/includes/responsibility_form.html", {"form": form}, request=request)
+    # GET request
+    form = PathResponsibilityForm(instance=instance)
+    html = render_to_string(
+        "moderation/includes/responsibility_form.html",
+        {"form": form},
+        request=request
+    )
     return JsonResponse({"success": True, "html": html})
 
 
@@ -676,7 +744,11 @@ class FaqsModerView(ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        return Faqs.objects.filter(publishet=True,employee=self.request.user.employee)
+        if self.request.user.is_authenticated:
+            faqs = Faqs.objects.filter(publishet=True, employee=self.request.user.employee)
+        else:
+            faqs = Faqs.objects.filter(publishet=True,employee=0)
+        return faqs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
