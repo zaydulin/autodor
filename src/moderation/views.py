@@ -48,7 +48,6 @@ def car_model_list(request):
 
     # Передаем модели в шаблон
     return render(request, 'car_model_list.html', {'car_models': car_models})
-
 def change_car_model_type(request, model_id):
     # Получаем модель автомобиля по ID
     car_model = get_object_or_404(CarModel, id=model_id)
@@ -76,10 +75,12 @@ def change_car_model_type(request, model_id):
                 'success': True,
                 'message': f"Тип модели {car_model.name} успешно изменен на {car_model.get_pagetype_display()}"
             })
-        except ValueError:
-            return JsonResponse({'success': False, 'message': 'Неверный формат типа модели'})
+        except ValueError as e:
+            # Логируем ошибку для отладки
+            return JsonResponse({'success': False, 'message': f'Неверный формат типа модели: {str(e)}'})
 
     return JsonResponse({'success': False, 'message': 'Неверный метод запроса'})
+
 
 class AdvertStatisticsView(UserPassesTestMixin, View):
     def test_func(self):
