@@ -203,7 +203,7 @@ class CarModel(models.Model):
         (1, 'Легковая'),
         (2, 'Грузовая'),
     ]
-    pagetype = models.PositiveSmallIntegerField('Тип', unique=True, choices=PAGE_CHOICE, blank=False, default=1)
+    pagetype = models.PositiveSmallIntegerField('Тип', choices=PAGE_CHOICE, blank=False, default=1)
 
     class Meta:
         verbose_name = "Модель автомобиля"
@@ -214,6 +214,7 @@ class CarModel(models.Model):
 
     def __str__(self):
         return f"{self.brand.name} {self.name}"
+
 
 
 class ExpenseMask(models.Model):
