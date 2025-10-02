@@ -10,7 +10,13 @@
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
+    <!-- Owl Carousel CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.theme.default.min.css">
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <!-- Owl Carousel JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
     {% endblock head %}
 
     {% block content %}
@@ -1412,24 +1418,30 @@
 
                     <!-- Расходы -->
                     <div class="card">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <table class="nice-table">
-                                <thead>
+                        <div class="table-responsive mb-3">
+                        <table class="table table-sm table-borderless mb-0" style="font-size: 10px;">
+                            <thead>
                                 <tr>
-                                    <th>Баланс</th>
-                                    <th>Остаток</th>
-                                    <th>Израсходовано</th>
+                                    <th class="text-start">Баланс</th>
+                                    <th class="text-center">Остаток</th>
+                                    <th class="text-end">Израсходовано</th>
                                 </tr>
-                                </thead>
-                                <tbody>
+                            </thead>
+                            <tbody>
                                 <tr>
-                                    <td><span class="badge badge-blue">{{total_price}} {{ advert.currency }}</span></td>
-                                    <td><span class="badge badge-green">{{total_ost}} {{ advert.currency }}</span></td>
-                                    <td><span class="badge badge-red">{{total_expenses}} {{ advert.currency }}</span></td>
+                                    <td class="text-start">
+                                        <span class="badge badge-blue">{{total_price}} {{ advert.currency }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge badge-green">{{total_ost}} {{ advert.currency }}</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <span class="badge badge-red">{{total_expenses}} {{ advert.currency }}</span>
+                                    </td>
                                 </tr>
-                                </tbody>
-                            </table>
-                        </div>
+                            </tbody>
+                        </table>
+                    </div>
                         {% if request.user in application.user_menager.all or request.user.employee == 4 %}
                         <button type="button" style="margin-top: 10px;" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addExpenseModal">
                             <i class="bi bi-plus"></i> Добавить расход
