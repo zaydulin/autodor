@@ -20,6 +20,7 @@ urlpatterns = [
     path("responsibility/form/", views.responsibility_form, name="responsibility_create"),
     path("responsibility/<int:pk>/form/", views.responsibility_form, name="responsibility_update"),
 
+    path('car-models/', views.car_model_list, name='car_model_list'),
 
     path("my-applications/", views.AdvertAplicationListView.as_view(), name="my_applications"),
     path("my-applications/<uuid:pk>/", views.AdvertAplicationDetailView.as_view(), name="application_detail"),

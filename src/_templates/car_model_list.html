@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Список моделей автомобилей</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+
+<div class="container mt-4">
+    <h1>Список моделей автомобилей</h1>
+
+    <!-- Таблица -->
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>№</th>
+                <th>Название модели</th>
+                <th>Марка автомобиля</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for car in car_models %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ car.name }}</td>
+                    <td>{{ car.brand.name }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="3">Нет доступных моделей автомобилей.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>

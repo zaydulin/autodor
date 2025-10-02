@@ -41,7 +41,12 @@ from useraccount.models import Profile
 from webmain.models import SettingsGlobale
 from django.db.models import Sum
 
+def car_model_list(request):
+    # Получаем все модели автомобилей
+    car_models = CarModel.objects.all()
 
+    # Передаем модели в шаблон
+    return render(request, 'car_model_list.html', {'car_models': car_models})
 
 class AdvertStatisticsView(UserPassesTestMixin, View):
     def test_func(self):
