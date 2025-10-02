@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Список моделей автомобилей</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+        <meta name="csrf-token" content="{{ csrf_token }}">
+
 </head>
 <body>
 
@@ -69,6 +71,7 @@
 
 <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
 <script>
     $(document).on('click', '.change-type-btn', function() {
         var carId = $(this).data('car-id');
@@ -78,35 +81,34 @@
     $('#save-change-type-btn').click(function() {
         var carId = $('#change-type-modal').data('car-id');
         var newType = $('#new-type').val();
+        var csrfToken = $('meta[name="csrf-token"]').attr('content');  // Получаем CSRF токен
 
         $.ajax({
-    url: '{% url "moderation:change_car_model_type" 0 %}'.replace('0', carId),
-    method: 'POST',
-    headers: {
-        'X-CSRFToken': $('input[name="csrfmiddlewaretoken"]').val()  // Получаем CSRF токен из формы
-    },
-    data: {
-        'pagetype': newType,
-        'csrfmiddlewaretoken': $('input[name="csrfmiddlewaretoken"]').val()  // Убедитесь, что это присутствует в данных
-    },
-    success: function(response) {
-        if (response.success) {
-            alert(response.message);
-            location.reload();  // Перезагружаем страницу, чтобы обновить список
-        } else {
-            alert(response.message);
-        }
-    },
-    error: function() {
-        alert("Произошла ошибка при изменении типа модели.");
-    }
-});
-
+            url: '{% url "moderation:change_car_model_type" 0 %}'.replace('0', carId),
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken  // Отправляем токен в заголовке
+            },
+            data: {
+                'pagetype': newType,
+                'csrfmiddlewaretoken': csrfToken
+            },
+            success: function(response) {
+                if (response.success) {
+                    alert(response.message);
+                    location.reload();  // Перезагружаем страницу, чтобы обновить список
+                } else {
+                    alert(response.message);
+                }
+            },
+            error: function() {
+                alert("Произошла ошибка при изменении типа модели.");
+            }
+        });
 
         $('#change-type-modal').modal('hide');
     });
 </script>
-
 
 </body>
 </html>
