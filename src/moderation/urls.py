@@ -19,6 +19,10 @@ urlpatterns = [
     ),
     path("responsibility/form/", views.responsibility_form, name="responsibility_create"),
     path("responsibility/<int:pk>/form/", views.responsibility_form, name="responsibility_update"),
+
+    path('car-models/', views.car_model_list, name='car_model_list'),
+    path('car_models/change_type/<int:model_id>/', views.change_car_model_type, name='change_car_model_type'),
+
     path('application/<uuid:application_id>/driver/<uuid:driver_id>/wallet/', views.driver_wallet_view, name='driver_wallet'),
 
     path("my-applications/", views.AdvertAplicationListView.as_view(), name="my_applications"),

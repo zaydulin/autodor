@@ -42,6 +42,45 @@ from webmain.models import SettingsGlobale
 from django.db.models import Sum
 
 
+def car_model_list(request):
+    # Получаем все модели автомобилей
+    car_models = CarModel.objects.all()
+
+    # Передаем модели в шаблон
+    return render(request, 'car_model_list.html', {'car_models': car_models})
+def change_car_model_type(request, model_id):
+    # Получаем модель автомобиля по ID
+    car_model = get_object_or_404(CarModel, id=model_id)
+
+    if request.method == 'POST':
+        # Получаем новый тип модели из POST-запроса
+        new_type = request.POST.get('pagetype')
+
+        if not new_type:
+            return JsonResponse({'success': False, 'message': 'Тип не указан'})
+
+        try:
+            # Преобразуем в целое число
+            new_type = int(new_type)
+
+            # Проверяем, что новый тип модели существует в Choices
+            if new_type not in [choice[0] for choice in CarModel.PAGE_CHOICE]:
+                return JsonResponse({'success': False, 'message': 'Некорректный тип модели'})
+
+            # Изменяем тип модели
+            car_model.pagetype = new_type
+            car_model.save()
+
+            return JsonResponse({
+                'success': True,
+                'message': f"Тип модели {car_model.name} успешно изменен на {car_model.get_pagetype_display()}"
+            })
+        except ValueError as e:
+            # Логируем ошибку для отладки
+            return JsonResponse({'success': False, 'message': f'Неверный формат типа модели: {str(e)}'})
+
+    return JsonResponse({'success': False, 'message': 'Неверный метод запроса'})
+
 
 class AdvertStatisticsView(UserPassesTestMixin, View):
     def test_func(self):

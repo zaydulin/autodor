@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Список моделей автомобилей</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+        <meta name="csrf-token" content="{{ csrf_token }}">
+
+</head>
+<body>
+
+<div class="container mt-4">
+    <h1>Список моделей автомобилей</h1>
+
+    <!-- Таблица -->
+    <table class="table table-bordered table-striped">
+        <thead>
+        <tr>
+            <th>№</th>
+            <th>Марка автомобиля</th>
+            <th>Название модели</th>
+            <th>Тип</th>
+            <th>Действие</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for car in car_models %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ car.brand.name }}</td>
+            <td>{{ car.name }}</td>
+            <td>{{ car.get_pagetype_display }}</td>
+            <td>
+                <!-- Кнопка изменения типа -->
+<button class="btn btn-warning change-type-btn" data-car-id="{{ car.id }}">Изменить тип</button>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5">Нет доступных моделей автомобилей.</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+<!-- Модальное окно для выбора типа -->
+<div id="change-type-modal" class="modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Изменить тип модели</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <label for="new-type">Выберите тип:</label>
+                <select id="new-type" class="form-control">
+                    <option value="1">Легковая</option>
+                    <option value="2">Грузовая</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+                <button type="button" class="btn btn-primary" id="save-change-type-btn">Сохранить изменения</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<script>
+    $(document).on('click', '.change-type-btn', function() {
+        var carId = $(this).data('car-id');
+        $('#change-type-modal').data('car-id', carId).modal('show');
+    });
+
+    $('#save-change-type-btn').click(function() {
+        var carId = $('#change-type-modal').data('car-id');
+        var newType = $('#new-type').val();
+        var csrfToken = $('meta[name="csrf-token"]').attr('content');  // Получаем CSRF токен
+
+        $.ajax({
+            url: '{% url "moderation:change_car_model_type" 0 %}'.replace('0', carId),
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken  // Отправляем токен в заголовке
+            },
+            data: {
+                'pagetype': newType,
+                'csrfmiddlewaretoken': csrfToken
+            },
+            success: function(response) {
+                if (response.success) {
+                    alert(response.message);
+                    location.reload();  // Перезагружаем страницу, чтобы обновить список
+                } else {
+                    alert(response.message);
+                }
+            },
+            error: function() {
+                alert("Произошла ошибка при изменении типа модели.");
+            }
+        });
+
+        $('#change-type-modal').modal('hide');
+    });
+</script>
+
+</body>
+</html>
