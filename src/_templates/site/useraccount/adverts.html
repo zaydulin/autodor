@@ -29,6 +29,21 @@
                                 <input type="text" name="q" class="form-control" value="{{ params.q }}">
                             </div>
 
+                            <div class="row g-2 mt-2">
+                                <div class="col-12">
+                                    <label class="form-label">Тип автомобиля</label>
+                                    <select name="pagetype" id="pagetype-select" class="form-select">
+                                        <option value="">Все типы</option>
+                                        {% for val, label in pagetype_choices %}
+                                        <option value="{{ val }}" {% if params.pagetype == val|stringformat:"s" %}selected{% endif %}>
+                                            {{ label }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+
                             <div class="row g-2">
                                 <div class="col-12 col-lg-6">
                                     <label class="form-label">Марка</label>
@@ -265,56 +280,102 @@
 </script>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        // Обработчик клика по элементам с data-href
-        document.querySelectorAll("[data-href]").forEach(function (el) {
-            el.style.cursor = "pointer";
-            el.addEventListener("click", function () {
-                window.location.href = el.getAttribute("data-href");
-            });
+document.addEventListener("DOMContentLoaded", function () {
+    // Обработчик клика по элементам с data-href
+    document.querySelectorAll("[data-href]").forEach(function (el) {
+        el.style.cursor = "pointer";
+        el.addEventListener("click", function () {
+            window.location.href = el.getAttribute("data-href");
+        });
+    });
+
+    // Данные для фильтрации
+    const carModelsData = {{ carmodels_dict|safe }};
+    const carbrandsByType = {{ carbrands_by_type|safe }};
+    const carmodelsDictByType = {{ carmodels_dict_by_type|safe }};
+
+    const pagetypeSelect = document.getElementById('pagetype-select');
+    const brandSelect = document.querySelector('select[name="brand"]');
+    const modelSelect = document.getElementById('model-select');
+
+    function updateBrandOptions() {
+        const selectedPagetype = pagetypeSelect.value;
+        const currentBrand = '{{ params.brand }}';
+
+        // Очищаем select
+        brandSelect.innerHTML = '<option value="">Любая</option>';
+
+        let brandsToShow = [];
+
+        if (selectedPagetype && carbrandsByType[selectedPagetype]) {
+            // Показываем только марки выбранного типа
+            brandsToShow = carbrandsByType[selectedPagetype];
+        } else {
+            // Показываем все марки
+            brandsToShow = [
+                {% for b in carbrands %}
+                    '{{ b }}'{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ];
+        }
+
+        // Добавляем марки в select
+        brandsToShow.forEach(brandName => {
+            const newOption = document.createElement('option');
+            newOption.value = brandName;
+            newOption.textContent = brandName;
+            newOption.selected = (brandName === currentBrand);
+            brandSelect.appendChild(newOption);
         });
 
-        // Динамическое обновление моделей
-        const carModelsData = {{ carmodels_dict|safe }};
-        const brandSelect = document.querySelector('select[name="brand"]');
-        const modelSelect = document.getElementById('model-select');
+        // Обновляем модели после обновления марок
+        updateModelOptions();
+    }
 
-        if (brandSelect && modelSelect) {
-            function updateModelOptions() {
-                const selectedBrand = brandSelect.value;
-                const currentModel = '{{ params.model_auto }}';
+    function updateModelOptions() {
+        const selectedPagetype = pagetypeSelect.value;
+        const selectedBrand = brandSelect.value;
+        const currentModel = '{{ params.model_auto }}';
 
-                // Очищаем select
-                modelSelect.innerHTML = '<option value="">Любая</option>';
+        // Очищаем select
+        modelSelect.innerHTML = '<option value="">Любая</option>';
 
-                let modelsToShow = [];
+        let modelsToShow = [];
 
-                if (selectedBrand && carModelsData[selectedBrand]) {
-                    // Показываем только модели выбранной марки
-                    modelsToShow = carModelsData[selectedBrand];
-                } else {
-                    // Показываем все модели
-                    modelsToShow = [
-                        {% for m in carmodels %}
-                            '{{ m }}'{% if not forloop.last %},{% endif %}
-                        {% endfor %}
-                    ];
-                }
-
-                // Добавляем модели в select
-                modelsToShow.forEach(modelName => {
-                    const newOption = document.createElement('option');
-                    newOption.value = modelName;
-                    newOption.textContent = modelName;
-                    newOption.selected = (modelName === currentModel);
-                    modelSelect.appendChild(newOption);
-                });
-            }
-
-            brandSelect.addEventListener('change', updateModelOptions);
-            updateModelOptions(); // Инициализация
+        if (selectedBrand && selectedPagetype && carmodelsDictByType[selectedBrand] && carmodelsDictByType[selectedBrand][selectedPagetype]) {
+            // Показываем модели выбранной марки и типа
+            modelsToShow = carmodelsDictByType[selectedBrand][selectedPagetype];
+        } else if (selectedBrand && carModelsData[selectedBrand]) {
+            // Показываем все модели выбранной марки (для обратной совместимости)
+            modelsToShow = carModelsData[selectedBrand];
+        } else {
+            // Показываем все модели
+            modelsToShow = [
+                {% for m in carmodels %}
+                    '{{ m }}'{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ];
         }
-    });
+
+        // Добавляем модели в select
+        modelsToShow.forEach(modelName => {
+            const newOption = document.createElement('option');
+            newOption.value = modelName;
+            newOption.textContent = modelName;
+            newOption.selected = (modelName === currentModel);
+            modelSelect.appendChild(newOption);
+        });
+    }
+
+    // Назначаем обработчики событий
+    if (pagetypeSelect && brandSelect && modelSelect) {
+        pagetypeSelect.addEventListener('change', updateBrandOptions);
+        brandSelect.addEventListener('change', updateModelOptions);
+
+        // Инициализация при загрузке
+        updateBrandOptions();
+    }
+});
 </script>
 
 
