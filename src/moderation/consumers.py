@@ -319,10 +319,10 @@ class NotifyConsumer(AsyncWebsocketConsumer):
 
 class DriverTrackingConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        self.application_id = self.scope['url_route']['kwargs']['application_id']
-        self.tracking_group_name = f'tracking_{self.application_id}'
+        self.aplications_id = self.scope['url_route']['kwargs']['aplications_id']
+        self.tracking_group_name = f'tracking_{self.aplications_id}'
 
-        print(f"Tracking WS: Connecting to application {self.application_id}")
+        print(f"Tracking WS: Connecting to application {self.aplications_id}")
 
         # Проверяем доступ пользователя к отслеживанию
         if await self.has_tracking_access():
@@ -413,7 +413,7 @@ class DriverTrackingConsumer(AsyncWebsocketConsumer):
             return False
 
         try:
-            application = AdvertAplication.objects.get(id=self.application_id)
+            application = AdvertAplication.objects.get(id=self.aplications_id)
 
             # Проверяем, что заявка в статусе "в обработке"
             if application.status != 'in_progress':
@@ -430,7 +430,7 @@ class DriverTrackingConsumer(AsyncWebsocketConsumer):
             return has_access
 
         except AdvertAplication.DoesNotExist:
-            print(f"Application {self.application_id} not found")
+            print(f"Application {self.aplications_id} not found")
             return False
         except Exception as e:
             print(f"Error checking tracking access: {e}")
@@ -440,12 +440,12 @@ class DriverTrackingConsumer(AsyncWebsocketConsumer):
     def save_driver_location(self, data):
         """Сохраняет местоположение водителя"""
         try:
-            application = AdvertAplication.objects.get(id=self.application_id)
+            application = AdvertAplication.objects.get(id=self.aplications_id)
             driver = self.scope["user"]
 
             # Проверяем, что пользователь действительно водитель этой заявки
             if driver not in application.user_drivers.all():
-                print(f"Driver {driver.id} is not assigned to application {self.application_id}")
+                print(f"Driver {driver.id} is not assigned to application {self.aplications_id}")
                 return None
 
             # Создаем запись о местоположении
@@ -481,7 +481,7 @@ class DriverTrackingConsumer(AsyncWebsocketConsumer):
         try:
             # Ищем последнее местоположение любого водителя этой заявки
             location = DriverLocation.objects.filter(
-                application_id=self.application_id,
+                application_id=self.aplications_id,
                 is_active=True
             ).select_related('driver').latest('timestamp')
 
@@ -495,5 +495,5 @@ class DriverTrackingConsumer(AsyncWebsocketConsumer):
                 'timestamp': location.timestamp.isoformat()
             }
         except DriverLocation.DoesNotExist:
-            print(f"No location found for application {self.application_id}")
+            print(f"No location found for application {self.aplications_id}")
             return None
