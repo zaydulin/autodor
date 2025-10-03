@@ -1347,7 +1347,7 @@ window.addEventListener('click', function(event) {
                  role="progressbar" style="width: 0%">
             </div>
         </div>
-        {% if request.user.type != 0 %}
+        {% if request.user.employee != 0 %}
         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addGroupModal">
             <i class="bi bi-folder-plus"></i> Добавить отчёт
         </button>
