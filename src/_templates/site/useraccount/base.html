@@ -398,8 +398,10 @@
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
                             <li><a class="dropdown-item" href="{% url 'useraccount:edit_profile' %}">Профиль</a></li>
                             <li><a class="dropdown-item" href="{% url 'moderation:my_applications' %}">Мои заявки</a></li>
-                            {% if request.user.type != 0 %}
+                            {% if request.user.employee == 4  %}
                             <li><a class="dropdown-item" href="{% url 'moderation:statistics' %}">Статистика</a></li>
+                            {% endif %}
+                            {% if request.user.employee != 0 and request.user.employee != 4  %}
                             <li><a class="dropdown-item" href="{% url 'useraccount:withdraw' %}">Начисление</a></li>
                             {% endif %}
                             <li><hr class="dropdown-divider"></li>
