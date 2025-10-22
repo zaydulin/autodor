@@ -10,6 +10,7 @@ import requests
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 from django.core.paginator import Paginator
 from django.db.models.functions import TruncDate
 from django.db.models.signals import post_save
@@ -22,7 +23,7 @@ from moderation.tasks import start_call_task, end_call_task
 from django.contrib.auth.mixins import UserPassesTestMixin
 
 from django.contrib.auth.decorators import login_required
-from django.db import models, transaction
+from django.db import models, transaction, IntegrityError
 from django.http import JsonResponse, HttpResponse, HttpResponseServerError, FileResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.csrf import csrf_exempt
@@ -723,6 +724,35 @@ class AdvertView(ListView):
         ctx = super().get_context_data(**kwargs)
         g = self.request.GET
 
+        # Создаем словарь: тип автомобиля -> [марки]
+        carbrands_by_type = {}
+        for choice_value, choice_label in CarModel.PAGE_CHOICE:
+            # Получаем марки для данного типа
+            brands_for_type = CarBrand.objects.filter(
+                models__pagetype=choice_value
+            ).distinct().values_list('name', flat=True).order_by('name')
+            carbrands_by_type[choice_value] = list(brands_for_type)
+
+        ctx['carbrands_by_type'] = carbrands_by_type
+
+        # Создаем словарь марка: [модели] с учетом типа
+        carmodels_dict_by_type = {}
+        carbrands_with_models = CarBrand.objects.prefetch_related(
+            Prefetch('models', queryset=CarModel.objects.order_by('name'))
+        ).order_by('name')
+
+        for brand in carbrands_with_models:
+            # Для каждой марки создаем под-словарь по типам
+            carmodels_dict_by_type[brand.name] = {}
+            for choice_value, choice_label in CarModel.PAGE_CHOICE:
+                models_for_type = brand.models.filter(
+                    pagetype=choice_value
+                ).values_list('name', flat=True)
+                carmodels_dict_by_type[brand.name][choice_value] = list(models_for_type)
+
+        ctx['carmodels_dict_by_type'] = carmodels_dict_by_type
+
+        # Остальной контекст без изменений...
         ctx['brands'] = (Advert.objects.values_list('brand', flat=True)
                          .exclude(brand__isnull=True).exclude(brand__exact='')
                          .distinct().order_by('brand'))
@@ -732,32 +762,31 @@ class AdvertView(ListView):
         ctx['currencies'] = (Advert.objects.values_list('currency', flat=True)
                              .exclude(currency__isnull=True).exclude(currency__exact='')
                              .distinct().order_by('currency'))
-        ctx['colors'] = (Advert.objects.values_list('color',flat=True).exclude(currency__isnull=True).exclude(currency__exact='').distinct().order_by('color'))
-        ctx['doors'] = (Advert.objects.values_list('doors',flat=True).exclude(currency__isnull=True).exclude(currency__exact='').distinct().order_by('doors'))
-        ctx['carmodels'] = (CarModel.objects.values_list('name',flat=True).distinct().order_by('name'))
-        ctx['carbrands'] = (CarBrand.objects.values_list('name',flat=True).distinct().order_by('name'))
-        carbrands_with_models = CarBrand.objects.prefetch_related(
-            Prefetch('models', queryset=CarModel.objects.order_by('name'))
-        ).order_by('name')
+        ctx['colors'] = (Advert.objects.values_list('color', flat=True).exclude(currency__isnull=True).exclude(
+            currency__exact='').distinct().order_by('color'))
+        ctx['doors'] = (Advert.objects.values_list('doors', flat=True).exclude(currency__isnull=True).exclude(
+            currency__exact='').distinct().order_by('doors'))
+        ctx['carmodels'] = (CarModel.objects.values_list('name', flat=True).distinct().order_by('name'))
+        ctx['carbrands'] = (CarBrand.objects.values_list('name', flat=True).distinct().order_by('name'))
 
-        # Создаем словарь марка: [модели]
+        ctx['pagetype_choices'] = CarModel.PAGE_CHOICE
+        ctx['pagetype_values'] = [choice[0] for choice in CarModel.PAGE_CHOICE]
+        ctx['pagetype_labels'] = [choice[1] for choice in CarModel.PAGE_CHOICE]
+
+        # Старый словарь для обратной совместимости
         ctx['carmodels_dict'] = {
             brand.name: list(brand.models.values_list('name', flat=True))
             for brand in carbrands_with_models
         }
-        print(ctx['carmodels_dict'])
-
 
         ctx['transmission_choices'] = Advert.TransmissionType.choices
         ctx['fuel_choices'] = Advert.FuelType.choices
         ctx['drive_choices'] = Advert.DriveType.choices
 
-        # чтобы в шаблоне не вызывать getlist(...)
         ctx['selected_transmissions'] = g.getlist('transmission')
         ctx['selected_fuels'] = g.getlist('fuel')
         ctx['selected_drives'] = g.getlist('drive')
 
-        # для остальных полей оставим доступ к params.*
         ctx['params'] = g
         return ctx
 
@@ -850,54 +879,79 @@ def create_application(request, advert_id):
 @login_required
 @transaction.atomic
 def create_application_view(request, advert_id):
-    """Создание заявки для текущего пользователя - оптимизированная версия"""
-    # Используем select_related/prefetch_related если нужны связанные данные
-    advert = get_object_or_404(Advert, id=advert_id)
+    """Создание заявки для текущего пользователя - исправленная версия"""
+    try:
+        advert = get_object_or_404(Advert, id=advert_id)
 
-    # Создаем заявку одним запросом
-    application = AdvertAplication.objects.create(
-        advert=advert,
-        price=0,
-        status=AdvertAplication.Status.NEW,
-    )
+        # Создаем заявку с явным указанием статуса
+        application = AdvertAplication.objects.create(
+            advert=advert,
+            price=0,
+            status=AdvertAplication.Status.NEW  # ✅ Явно указываем статус
+        )
 
-    # Получаем настройки и документы за один запрос
-    settings = SettingsGlobale.objects.only(
-        'document_file_1', 'document_file_2', 'document_file_3',
-        'document_file_4', 'document_file_5', 'document_file_6',
-        'document_file_7', 'document_file_8'
-    ).first()
+        print(f"Создана заявка: {application.id}")
 
-    # Подготавливаем bulk создание документов
-    documents_to_create = []
-    for i in range(1, 9):
-        file_field_name = f'document_file_{i}'
-        file_obj = getattr(settings, file_field_name, None)
-        if file_obj:
-            documents_to_create.append(AdvertDocument(
-                aplication=application,
-                file=file_obj,
-                document_type=2,
-                type=i,
-                name=file_obj.name,
-            ))
+        # Получаем настройки
+        settings = SettingsGlobale.objects.first()
+        print(f"Настройки: {settings}")
 
-    # Bulk создание документов
-    if documents_to_create:
-        AdvertDocument.objects.bulk_create(documents_to_create)
+        # Создаем документы только если settings существует
+        documents_to_create = []
+        if settings:
+            for i in range(1, 9):
+                file_field_name = f'document_file_{i}'
+                file_obj = getattr(settings, file_field_name, None)
 
-    # Bulk добавление пользователей
-    admin = Profile.objects.filter(employee=4).only('id').first()
-    users_to_add = [request.user]
-    if admin:
-        users_to_add.append(admin)
-        application.user_menager.add(admin)
+                # Проверяем, что файл существует и валиден
+                if file_obj and file_obj.name:
+                    # Проверяем существование файла в хранилище
+                    if default_storage.exists(file_obj.name):
+                        documents_to_create.append(AdvertDocument(
+                            aplication=application,
+                            file=file_obj,
+                            document_type=2,
+                            type=i,
+                            name=file_obj.name,
+                        ))
+                        print(f"Добавлен документ: {file_obj.name}")
+                    else:
+                        print(f"Файл не найден в хранилище: {file_obj.name}")
 
+        # Bulk создание документов
+        if documents_to_create:
+            AdvertDocument.objects.bulk_create(documents_to_create)
+            print(f"Создано документов: {len(documents_to_create)}")
+        else:
+            print("Нет документов для создания")
 
-        application.user.add(*users_to_add)
-    advert.published = False
+        # Добавляем пользователей
+        admin = Profile.objects.filter(employee=4).first()
+        users_to_add = [request.user]
 
-    return redirect("moderation:my_applications")
+        if admin:
+            users_to_add.append(admin)
+            # ✅ Сначала сохраняем заявку, потом добавляем связи
+            application.user_menager.add(admin)
+            print(f"Добавлен менеджер: {admin}")
+
+        application.user.set(users_to_add)
+        print(f"Добавлены пользователи: {[user.username for user in users_to_add]}")
+
+        # Обновляем объявление
+        advert.published = False
+        advert.save()  # ✅ Убедимся, что у Advert есть корректный save()
+        print(f"Объявление обновлено: published=False")
+
+        return redirect("moderation:my_applications")
+
+    except IntegrityError as e:
+        print(f"Ошибка целостности данных: {e}")
+        # Здесь можно добавить логирование или отображение ошибки пользователю
+        return redirect("error_page")
+    except Exception as e:
+        print(f"Общая ошибка: {e}")
+        return redirect("error_page")
 
 
 def application_list(request):

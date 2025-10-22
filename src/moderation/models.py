@@ -166,11 +166,15 @@ class Advert(models.Model):
         return False
 
     def save(self, *args, **kwargs):
-        if self.doors > 5:
-            self.doors = 5
-        elif self.doors == None:
+        # Исправленная логика для doors
+        if self.doors:
+            if self.doors > 5:
+                self.doors = 5
+        elif self.doors is None:  # ✅ Правильная проверка на None
             self.doors = 5
 
+        # ✅ Обязательно вызываем родительский save
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
@@ -346,24 +350,28 @@ class AdvertAplication(models.Model):
         NEW = "new", "Новая"
         IN_PROGRESS = "in_progress", "В обработке"
         DONE = "done", "Завершена"
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    price = models.DecimalField("Стоимость", max_digits=12, decimal_places=2)
-    delevery_price = models.DecimalField("Стоимость доставки", max_digits=12, decimal_places=2)
+    price = models.DecimalField("Стоимость", max_digits=12, decimal_places=2, blank=True, null=True)
+    delevery_price = models.DecimalField("Стоимость доставки", max_digits=12, decimal_places=2, blank=True, null=True)
 
     user = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
         verbose_name="Пользователь",
-        related_name="advert_requests"
+        related_name="advert_requests",
+        blank=True
     )
     user_menager = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
         verbose_name="Менеджеры",
-        related_name="advert_menager"
+        related_name="advert_menager",
+        blank=True
     )
     user_drivers = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
         verbose_name="Водители",
-        related_name="advert_drivers"
+        related_name="advert_drivers",
+        blank=True
     )
 
     advert = models.ForeignKey(
@@ -371,28 +379,30 @@ class AdvertAplication(models.Model):
         on_delete=models.CASCADE,
         verbose_name="Объявление",
         related_name="requests"
-    )
+    )  # ✅ Убрал blank=True, null=True - это должно быть обязательным полем
+
     status = models.CharField(
         "Статус",
         max_length=20,
         choices=Status.choices,
         default=Status.NEW
-    )
+    )  # ✅ Убрал blank=True, null=True
+
     created_at = models.DateTimeField("Дата создания", auto_now_add=True)
 
     def save(self, *args, **kwargs):
-        if self.user_drivers:
+        # ✅ Сначала сохраняем объект
+        super().save(*args, **kwargs)
+
+        # ✅ Потом работаем с ManyToMany
+        if hasattr(self, 'user_drivers'):
             for user in self.user_drivers.all():
-                if CartVod.objects.filter(voditel=user):
-                    pass
-                else:
+                if not CartVod.objects.filter(voditel=user, application=self).exists():
                     CartVod.objects.create(
                         voditel=user,
                         application=self,
-                        summa=Decimal('0.01')  # или нужное вам значение, большее или равное 0.01
+                        summa=Decimal('0.01')
                     )
-
-
 
     class Meta:
         verbose_name = "Заявка на объявление"
@@ -400,7 +410,9 @@ class AdvertAplication(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self):
-        return f"Заявка #{self.id} от {self.user} на {self.advert}"
+        users = self.user.all()
+        user_str = users[0].username if users.exists() else "нет пользователя"
+        return f"Заявка #{self.id} от {user_str} на {self.advert.name if self.advert else 'нет объявления'}"
 
 
 class CartVod(models.Model):
