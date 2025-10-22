@@ -12,6 +12,79 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from useraccount.models import Profile
 
 
+class Advertpayment(models.Model):
+    # Основные
+    name = models.CharField("Название", max_length=255)
+    car_brand = models.ForeignKey('CarBrand', on_delete=models.CASCADE, null=True, blank=True)
+    car_model = models.ForeignKey('CarModel', on_delete=models.CASCADE, null=True, blank=True)
+
+    brand = models.CharField("марка", max_length=255)
+    model_auto = models.CharField("модель", max_length=255)
+    link = models.URLField("Ссылка", max_length=500)
+    original_link = models.URLField("Оригинальная ссылка", max_length=500, blank=True, null=True)
+    price = models.IntegerField("Стоимость")
+    currency = models.CharField("Валюта", max_length=10)  # например, 'USD', 'EUR', 'KZT'
+    description = models.TextField("Описание", blank=True, null=True)
+    images = models.JSONField("Список ссылок на изображения", blank=True, null=True)  # храним list[str]
+    subtitle = models.CharField("Подзаголовок", max_length=255, blank=True, null=True)
+    article = models.CharField("Артикул", max_length=100, blank=True, null=True)
+    address = models.CharField('Адрес', max_length=100,blank=True,null=True)
+    # Характеристики авто
+    mileage = models.PositiveIntegerField("Километраж (км)", blank=True, null=True)
+    color = models.CharField("Цвет", max_length=50, blank=True, null=True)
+    doors = models.PositiveSmallIntegerField("Количество дверей", blank=True, null=True)
+
+    power = models.PositiveIntegerField("Мощность (л.с.)", blank=True, null=True)
+    engine_volume = models.DecimalField("Объём двигателя (л)", max_digits=4, decimal_places=1, blank=True, null=True)
+    year = models.PositiveSmallIntegerField(
+        "Год выпуска",
+        blank=True,
+        null=True,
+        validators=[MinValueValidator(1900), MaxValueValidator(2100)]
+    )
+    published = models.BooleanField("Опубликовано", default=True)
+    updated_at = models.DateTimeField("Обновлено", auto_now=True)
+
+    class TransmissionType(models.TextChoices):
+        MANUAL = "manual", "Механика"
+        AUTOMATIC = "automatic", "Автомат"
+        CVT = "cvt", "Вариатор"
+        ROBOT = "robot", "Робот"
+
+    transmission = models.CharField(
+        "Коробка передач", max_length=20, choices=TransmissionType.choices, blank=True, null=True
+    )
+
+    class FuelType(models.TextChoices):
+        GASOLINE = "gasoline", "Бензин"
+        DIESEL = "diesel", "Дизель"
+        ELECTRIC = "electric", "Электро"
+        HYBRID = "hybrid", "Гибрид"
+
+    fuel = models.CharField(
+        "Топливо", max_length=20, choices=FuelType.choices, blank=True, null=True
+    )
+
+    class DriveType(models.TextChoices):
+        FWD = "fwd", "Передний"
+        RWD = "rwd", "Задний"
+        AWD = "awd", "Полный"
+
+    drive = models.CharField(
+        "Привод", max_length=10, choices=DriveType.choices, blank=True, null=True
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Купленное"
+        verbose_name_plural = "Купленные"
+
+
+
+    def __str__(self):
+        return self.name
+
 class Advert(models.Model):
     # Основные
     name = models.CharField("Название", max_length=255)
@@ -36,7 +109,6 @@ class Advert(models.Model):
 
     power = models.PositiveIntegerField("Мощность (л.с.)", blank=True, null=True)
     engine_volume = models.DecimalField("Объём двигателя (л)", max_digits=4, decimal_places=1, blank=True, null=True)
-
     year = models.PositiveSmallIntegerField(
         "Год выпуска",
         blank=True,
