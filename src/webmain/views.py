@@ -354,7 +354,7 @@ class AdvertViewFree(ListView):
         return ctx
 
 
-class AdvertPaymentDetailViewFree(DetailView):
+class AdvertDetailViewFree(DetailView):
     """Страница новости"""
     model = Advert
     template_name = 'site/website/adverts_detailfree.html'
