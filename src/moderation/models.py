@@ -85,12 +85,12 @@ class Advertpayment(models.Model):
     def __str__(self):
         return self.name
 
+
 class Advert(models.Model):
     # Основные
     name = models.CharField("Название", max_length=255)
     car_brand = models.ForeignKey('CarBrand', on_delete=models.CASCADE, null=True, blank=True)
     car_model = models.ForeignKey('CarModel', on_delete=models.CASCADE, null=True, blank=True)
-
     brand = models.CharField("марка", max_length=255)
     model_auto = models.CharField("модель", max_length=255)
     link = models.URLField("Ссылка", max_length=500)
@@ -101,7 +101,7 @@ class Advert(models.Model):
     images = models.JSONField("Список ссылок на изображения", blank=True, null=True)  # храним list[str]
     subtitle = models.CharField("Подзаголовок", max_length=255, blank=True, null=True)
     article = models.CharField("Артикул", max_length=100, blank=True, null=True)
-    address = models.CharField('Адрес', max_length=100,blank=True,null=True)
+    address = models.CharField('Адрес', max_length=100, blank=True, null=True)
     # Характеристики авто
     mileage = models.PositiveIntegerField("Километраж (км)", blank=True, null=True)
     color = models.CharField("Цвет", max_length=50, blank=True, null=True)
@@ -153,6 +153,33 @@ class Advert(models.Model):
         verbose_name = "Объявление"
         verbose_name_plural = "Объявления"
 
+    def clean_fields(self, exclude=None):
+        """Очистка полей перед валидацией"""
+        super().clean_fields(exclude=exclude)
+
+        # Заменяем * и / на пробелы в текстовых полях
+        text_fields = ['name', 'brand', 'model_auto', 'description', 'subtitle', 'address', 'color']
+
+        for field_name in text_fields:
+            current_value = getattr(self, field_name)
+            if current_value:
+                cleaned_value = current_value.replace('*', ' ').replace('/', ' ')
+                setattr(self, field_name, cleaned_value)
+
+    def save(self, *args, **kwargs):
+        # Очищаем поля от * и / перед сохранением
+        self.clean_fields()
+
+        # Исправленная логика для doors
+        if self.doors:
+            if self.doors > 5:
+                self.doors = 5
+        elif self.doors is None:  # ✅ Правильная проверка на None
+            self.doors = 5
+
+        # ✅ Обязательно вызываем родительский save
+        super().save(*args, **kwargs)
+
     def delete_if_old(self, hours_threshold=5):
         """
         Удаляет объект если он не обновлялся более указанного количества часов
@@ -164,17 +191,6 @@ class Advert(models.Model):
             self.delete()
             return True
         return False
-
-    def save(self, *args, **kwargs):
-        # Исправленная логика для doors
-        if self.doors:
-            if self.doors > 5:
-                self.doors = 5
-        elif self.doors is None:  # ✅ Правильная проверка на None
-            self.doors = 5
-
-        # ✅ Обязательно вызываем родительский save
-        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
