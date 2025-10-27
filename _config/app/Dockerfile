@@ -7,15 +7,6 @@ ENV USER app
 RUN set -x && apt-get -qq update \
     && apt-get install -y --no-install-recommends \
     libpq-dev python3-dev \
-    ffmpeg \
-    libavcodec-dev \
-    libavformat-dev \
-    libavdevice-dev \
-    libavutil-dev \
-    libavfilter-dev \
-    libswscale-dev \
-    libswresample-dev \
-    pkg-config \
     && apt-get purge -y --auto-remove \
     && rm -rf /var/lib/apt/lists/*
 
@@ -25,6 +16,7 @@ RUN useradd -m -d /home/${USER} ${USER} \
     && chown -R ${USER} /home/${USER} \
     && chown -R ${USER} /app
 
+
 ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.9.0/wait ${PROJECTPATH}/wait
 RUN chmod +x ${PROJECTPATH}/wait
 
@@ -33,4 +25,3 @@ RUN pip install --no-cache-dir -r ${PROJECTPATH}/requirements.txt
 
 COPY ./src ${PROJECTPATH}
 
-USER ${USER}
