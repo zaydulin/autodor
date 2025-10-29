@@ -19,6 +19,65 @@
 
     {% block content %}
     <style>
+        #phasesRow {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    overflow-y: auto;
+    max-height: 600px;
+    gap: 1rem;
+    padding-right: 1rem;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+}
+
+#phasesRow::-webkit-scrollbar {
+    width: 12px;
+}
+
+#phasesRow::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 6px;
+}
+
+#phasesRow::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 6px;
+    border: 2px solid #f1f1f1;
+}
+
+#phasesRow::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+#phasesRow::-webkit-scrollbar-thumb:active {
+    background: #888;
+}
+
+#phasesRow .col-md-4 {
+    width: 100%;
+    margin-bottom: 0;
+    flex: 0 0 auto;
+}
+
+/* Гарантия что контент не будет обрезан */
+#phasesRow .phase-card {
+    min-height: auto;
+}
+#stepsRow {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    width: 100% !important;
+}
+
+#stepsRow .col-md-4 {
+    flex: 0 0 auto !important;
+    width: 300px !important;
+    float: none !important;
+    margin-bottom: 0 !important;
+}
         iframe {
         height: 500px;
         width: 100%;
@@ -938,65 +997,7 @@
 .modal-body video {
     border-radius: 8px;
 }
-    #phasesRow {
-    display: flex;
-    flex-direction: column;
-    flex-wrap: nowrap;
-    overflow-y: auto;
-    max-height: 600px;
-    gap: 1rem;
-    padding-right: 1rem;
-    scroll-behavior: smooth;
-    -webkit-overflow-scrolling: touch;
-}
 
-#phasesRow::-webkit-scrollbar {
-    width: 12px;
-}
-
-#phasesRow::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 6px;
-}
-
-#phasesRow::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 6px;
-    border: 2px solid #f1f1f1;
-}
-
-#phasesRow::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
-}
-
-#phasesRow::-webkit-scrollbar-thumb:active {
-    background: #888;
-}
-
-#phasesRow .col-md-4 {
-    width: 100%;
-    margin-bottom: 0;
-    flex: 0 0 auto;
-}
-
-/* Гарантия что контент не будет обрезан */
-#phasesRow .phase-card {
-    min-height: auto;
-}
-#stepsRow {
-    display: flex !important;
-    flex-direction: row !important;
-    flex-wrap: nowrap !important;
-    overflow-x: auto !important;
-    width: 100% !important;
-}
-
-#stepsRow .col-md-4 {
-    flex: 0 0 auto !important;
-    width: 300px !important;
-    float: none !important;
-    margin-bottom: 0 !important;
-}
 </style>
     <div class="container py-4">
         <div class="row g-4">
