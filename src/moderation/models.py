@@ -19,7 +19,7 @@ class Advertpayment(models.Model):
     car_model = models.ForeignKey('CarModel', on_delete=models.CASCADE, null=True, blank=True)
 
     brand = models.CharField("марка", max_length=255, null=True, blank=True)
-    model_auto = models.CharField("модель", max_length=255)
+    model_auto = models.CharField("модель", max_length=255, null=True, blank=True)
     link = models.URLField("Ссылка", max_length=500)
     original_link = models.URLField("Оригинальная ссылка", max_length=500, blank=True, null=True)
     price = models.IntegerField("Стоимость")
@@ -39,8 +39,7 @@ class Advertpayment(models.Model):
     year = models.PositiveSmallIntegerField(
         "Год выпуска",
         blank=True,
-        null=True,
-        validators=[MinValueValidator(1900), MaxValueValidator(2100)]
+        null=True
     )
     published = models.BooleanField("Опубликовано", default=True)
     updated_at = models.DateTimeField("Обновлено", auto_now=True)
@@ -92,7 +91,7 @@ class Advert(models.Model):
     car_brand = models.ForeignKey('CarBrand', on_delete=models.CASCADE, null=True, blank=True)
     car_model = models.ForeignKey('CarModel', on_delete=models.CASCADE, null=True, blank=True)
     brand = models.CharField("марка", max_length=255, null=True, blank=True)
-    model_auto = models.CharField("модель", max_length=255)
+    model_auto = models.CharField("модель", max_length=255, null=True, blank=True)
     link = models.URLField("Ссылка", max_length=500)
     original_link = models.URLField("Оригинальная ссылка", max_length=500, blank=True, null=True)
     price = models.IntegerField("Стоимость")
