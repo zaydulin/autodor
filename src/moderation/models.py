@@ -170,9 +170,9 @@ class Advert(models.Model):
         # Очищаем поля от * и / перед сохранением
         self.clean_fields()
 
-        # Автоматический поиск марки и модели из названия, если не указаны
-        if not self.car_brand or not self.car_model:
-            self.advanced_find_brand_and_model()
+        # Автоматический поиск марки и модели из названия ВСЕГДА при сохранении
+        # (и при создании, и при обновлении)
+        self.advanced_find_brand_and_model()
 
         # Автоматическое заполнение brand и model_auto из связанных объектов
         if self.car_brand:
@@ -197,6 +197,7 @@ class Advert(models.Model):
     def advanced_find_brand_and_model(self):
         """
         Улучшенный поиск марки и модели с учетом популярных комбинаций
+        Работает при каждом сохранении (создании и обновлении)
         """
         if not self.name:
             return
@@ -211,9 +212,13 @@ class Advert(models.Model):
             'audi': ['a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8', 'q2', 'q3', 'q5', 'q7', 'q8'],
             'bmw': ['1er', '2er', '3er', '4er', '5er', '6er', '7er', '8er', 'x1', 'x2', 'x3', 'x4', 'x5', 'x6', 'x7'],
             'mercedes': ['a-klasse', 'b-klasse', 'c-klasse', 'e-klasse', 's-klasse', 'gla', 'glb', 'glc', 'gle', 'gls'],
+            'mercedes-benz': ['a-klasse', 'b-klasse', 'c-klasse', 'e-klasse', 's-klasse', 'gla', 'glb', 'glc', 'gle',
+                              'gls'],
             'volkswagen': ['golf', 'passat', 'polo', 'tiguan', 'touareg', 't-roc', 'arteon', 'id.3', 'id.4'],
             'toyota': ['corolla', 'camry', 'rav4', 'highlander', 'land cruiser', 'prado'],
             'ford': ['focus', 'fiesta', 'mondeo', 'kuga', 'explorer', 'mustang'],
+            'hyundai': ['solaris', 'elantra', 'sonata', 'creta', 'tucson', 'santa fe'],
+            'kia': ['rio', 'ceed', 'optima', 'sportage', 'sorento', 'stinger'],
             # Добавьте другие марки по необходимости
         }
 
@@ -266,11 +271,12 @@ class Advert(models.Model):
                             break
                     break
 
-        # Устанавливаем найденные значения
-        if found_brand and not self.car_brand:
+        # Устанавливаем найденные значения (даже если они уже были установлены)
+        # Это позволяет обновить марку/модель если изменилось название объявления
+        if found_brand:
             self.car_brand = found_brand
 
-        if found_model and not self.car_model:
+        if found_model:
             self.car_model = found_model
 
         # Логируем результат для отладки
