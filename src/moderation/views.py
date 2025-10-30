@@ -955,11 +955,16 @@ def create_application_view(request, advert_id):
         return redirect("error_page")
 
 def application_list(request):
-    # Получаем все заявки с документами
-    applications = AdvertAplication.objects.all().prefetch_related(
+    # Получаем только те заявки, в которых участвует текущий пользователь
+    applications = AdvertAplication.objects.filter(
+        # Пользователь может быть в любой из трех групп
+        Q(user=request.user) |
+        Q(user_menager=request.user) |
+        Q(user_drivers=request.user)
+    ).prefetch_related(
         'user_menager',
         'user_drivers'
-    )
+    ).distinct()  # Добавляем distinct() чтобы избежать дубликатов
 
     # Создаем пагинатор
     paginator = Paginator(applications, 10)  # 10 заявок на страницу
@@ -975,7 +980,6 @@ def application_list(request):
             'documents': page_obj,  # для совместимости с шаблоном
         }
     )
-
 
 @login_required
 @require_POST
