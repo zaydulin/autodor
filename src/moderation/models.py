@@ -172,7 +172,7 @@ class Advert(models.Model):
 
         # Автоматический поиск марки и модели из названия, если не указаны
         if not self.car_brand or not self.car_model:
-            self.find_brand_and_model_from_name()
+            self.advanced_find_brand_and_model()
 
         # Автоматическое заполнение brand и model_auto из связанных объектов
         if self.car_brand:
@@ -192,46 +192,79 @@ class Advert(models.Model):
         elif self.doors is None:
             self.doors = 5
 
-        # Обязательно вызываем родительский save
         super().save(*args, **kwargs)
 
-    def find_brand_and_model_from_name(self):
+    def advanced_find_brand_and_model(self):
         """
-        Автоматически ищет марку и модель в поле name
+        Улучшенный поиск марки и модели с учетом популярных комбинаций
         """
         if not self.name:
             return
 
-        # Приводим название к нижнему регистру для поиска
-        name_lower = self.name.lower()
-
-        # Ищем марку автомобиля
         from .models import CarBrand, CarModel
 
-        # Сначала ищем точное совпадение марки
-        brands = CarBrand.objects.all()
+        name_lower = self.name.lower()
+        words = name_lower.split()
+
+        # Популярные комбинации марок и моделей
+        popular_combinations = {
+            'audi': ['a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8', 'q2', 'q3', 'q5', 'q7', 'q8'],
+            'bmw': ['1er', '2er', '3er', '4er', '5er', '6er', '7er', '8er', 'x1', 'x2', 'x3', 'x4', 'x5', 'x6', 'x7'],
+            'mercedes': ['a-klasse', 'b-klasse', 'c-klasse', 'e-klasse', 's-klasse', 'gla', 'glb', 'glc', 'gle', 'gls'],
+            'volkswagen': ['golf', 'passat', 'polo', 'tiguan', 'touareg', 't-roc', 'arteon', 'id.3', 'id.4'],
+            'toyota': ['corolla', 'camry', 'rav4', 'highlander', 'land cruiser', 'prado'],
+            'ford': ['focus', 'fiesta', 'mondeo', 'kuga', 'explorer', 'mustang'],
+            # Добавьте другие марки по необходимости
+        }
+
         found_brand = None
         found_model = None
 
-        for brand in brands:
-            brand_name_lower = brand.name.lower()
+        # Поиск по популярным комбинациям
+        for brand_name, models in popular_combinations.items():
+            if brand_name in name_lower:
+                # Нашли марку, ищем модель
+                brand = CarBrand.objects.filter(name__iexact=brand_name).first()
+                if brand:
+                    found_brand = brand
 
-            # Проверяем, содержится ли название марки в названии объявления
-            if brand_name_lower in name_lower:
-                found_brand = brand
-                # После нахождения марки ищем модель
-                models = CarModel.objects.filter(brand=brand)
+                    # Ищем модель из популярных комбинаций
+                    for model_name in models:
+                        if any(model_name in word for word in words):
+                            model = CarModel.objects.filter(
+                                brand=brand,
+                                name__iexact=model_name
+                            ).first()
+                            if model:
+                                found_model = model
+                                break
 
-                for model in models:
-                    model_name_lower = model.name.lower()
+                    # Если не нашли по популярным, ищем среди всех моделей бренда
+                    if not found_model:
+                        models = CarModel.objects.filter(brand=brand)
+                        for model in models:
+                            model_name_lower = model.name.lower()
+                            if any(model_name_lower in word for word in words):
+                                found_model = model
+                                break
 
-                    # Ищем модель в названии (учитываем различные форматы)
-                    if self._check_model_in_name(model_name_lower, name_lower):
-                        found_model = model
-                        break
+                    break
 
-                # Если нашли марку, прерываем поиск
-                break
+        # Если не нашли через популярные комбинации, используем общий поиск
+        if not found_brand:
+            brands = CarBrand.objects.all()
+            for brand in brands:
+                brand_name_lower = brand.name.lower()
+                if brand_name_lower in name_lower:
+                    found_brand = brand
+                    # Ищем модель для найденной марки
+                    models = CarModel.objects.filter(brand=brand)
+                    for model in models:
+                        model_name_lower = model.name.lower()
+                        if any(model_name_lower in word for word in words):
+                            found_model = model
+                            break
+                    break
 
         # Устанавливаем найденные значения
         if found_brand and not self.car_brand:
@@ -240,26 +273,9 @@ class Advert(models.Model):
         if found_model and not self.car_model:
             self.car_model = found_model
 
-    def _check_model_in_name(self, model_name_lower, name_lower):
-        """
-        Проверяет наличие модели в названии с учетом различных форматов
-        """
-        # Прямое вхождение
-        if model_name_lower in name_lower:
-            return True
-
-        # Проверяем варианты с пробелами и без
-        model_variants = [
-            model_name_lower,
-            model_name_lower.replace(' ', ''),
-            model_name_lower.replace(' ', '-'),
-        ]
-
-        for variant in model_variants:
-            if variant in name_lower:
-                return True
-
-        return False
+        # Логируем результат для отладки
+        if found_brand or found_model:
+            print(f"Найдено для '{self.name}': марка={found_brand}, модель={found_model}")
 
     def delete_if_old(self, hours_threshold=5):
         """
