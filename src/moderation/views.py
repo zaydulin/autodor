@@ -938,10 +938,11 @@ def create_application_view(request, advert_id):
         application.user.set(users_to_add)
         print(f"Добавлены пользователи: {[user.username for user in users_to_add]}")
 
-        # Обновляем объявление
-        advert.published = False
-        advert.save()  # ✅ Убедимся, что у Advert есть корректный save()
-        print(f"Объявление обновлено: published=False")
+        # ⚠️ УБИРАЕМ обновление объявления - это основная проблема
+        # advert.published = False
+        # advert.save()  # ❌ ЭТО ОБНОВЛЯЕТ ДАННЫЕ МОДЕЛИ Advert
+
+        print(f"Объявление НЕ обновлялось - published остался прежним")
 
         return redirect("moderation:my_applications")
 
@@ -952,7 +953,6 @@ def create_application_view(request, advert_id):
     except Exception as e:
         print(f"Общая ошибка: {e}")
         return redirect("error_page")
-
 
 def application_list(request):
     # Получаем все заявки с документами
