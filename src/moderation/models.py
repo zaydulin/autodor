@@ -170,9 +170,9 @@ class Advert(models.Model):
         # Очищаем поля от * и / перед сохранением
         self.clean_fields()
 
-        # Если не указаны car_brand и car_model, пытаемся найти их в поле name
+        # Автоматический поиск марки и модели из названия, если не указаны
         if not self.car_brand or not self.car_model:
-            self._find_brand_and_model_from_name()
+            self.find_brand_and_model_from_name()
 
         # Автоматическое заполнение brand и model_auto из связанных объектов
         if self.car_brand:
@@ -189,94 +189,77 @@ class Advert(models.Model):
         if self.doors:
             if self.doors > 5:
                 self.doors = 5
-        elif self.doors is None:  # ✅ Правильная проверка на None
+        elif self.doors is None:
             self.doors = 5
 
-        # ✅ Обязательно вызываем родительский save
+        # Обязательно вызываем родительский save
         super().save(*args, **kwargs)
 
-    def _find_brand_and_model_from_name(self):
+    def find_brand_and_model_from_name(self):
         """
-        Пытается найти марку и модель автомобиля в поле name
+        Автоматически ищет марку и модель в поле name
         """
         if not self.name:
             return
 
-        name_lower = self.name.lower().strip()
+        # Приводим название к нижнему регистру для поиска
+        name_lower = self.name.lower()
 
-        # Сначала ищем марку автомобиля
-        if not self.car_brand:
-            from .models import CarBrand  # Импортируем здесь чтобы избежать циклического импорта
+        # Ищем марку автомобиля
+        from .models import CarBrand, CarModel
 
-            # Ищем марку в названии
-            brands = CarBrand.objects.all()
-            for brand in brands:
-                brand_name_lower = brand.name.lower()
-                if brand_name_lower in name_lower:
-                    self.car_brand = brand
-                    break
-
-        # Если нашли марку, ищем модель
-        if self.car_brand and not self.car_model:
-            from .models import CarModel
-
-            # Ищем модели этой марки в названии
-            models = CarModel.objects.filter(brand=self.car_brand)
-            for car_model in models:
-                model_name_lower = car_model.name.lower()
-                if model_name_lower in name_lower:
-                    self.car_model = car_model
-                    break
-
-        # Дополнительная логика: если не нашли точное совпадение, попробуем разбить название на слова
-        if not self.car_brand:
-            self._find_brand_by_words(name_lower)
-
-        if self.car_brand and not self.car_model:
-            self._find_model_by_words(name_lower)
-
-    def _find_brand_by_words(self, name_lower):
-        """
-        Ищет марку по отдельным словам в названии
-        """
-        from .models import CarBrand
-
-        words = name_lower.split()
+        # Сначала ищем точное совпадение марки
         brands = CarBrand.objects.all()
+        found_brand = None
+        found_model = None
 
         for brand in brands:
-            brand_words = brand.name.lower().split()
-            # Проверяем, содержатся ли все слова названия марки в названии объявления
-            if all(word in name_lower for word in brand_words):
-                self.car_brand = brand
-                return
+            brand_name_lower = brand.name.lower()
 
-    def _find_model_by_words(self, name_lower):
+            # Проверяем, содержится ли название марки в названии объявления
+            if brand_name_lower in name_lower:
+                found_brand = brand
+                # После нахождения марки ищем модель
+                models = CarModel.objects.filter(brand=brand)
+
+                for model in models:
+                    model_name_lower = model.name.lower()
+
+                    # Ищем модель в названии (учитываем различные форматы)
+                    if self._check_model_in_name(model_name_lower, name_lower):
+                        found_model = model
+                        break
+
+                # Если нашли марку, прерываем поиск
+                break
+
+        # Устанавливаем найденные значения
+        if found_brand and not self.car_brand:
+            self.car_brand = found_brand
+
+        if found_model and not self.car_model:
+            self.car_model = found_model
+
+    def _check_model_in_name(self, model_name_lower, name_lower):
         """
-        Ищет модель по отдельным словам в названии для найденной марки
+        Проверяет наличие модели в названии с учетом различных форматов
         """
-        from .models import CarModel
+        # Прямое вхождение
+        if model_name_lower in name_lower:
+            return True
 
-        if not self.car_brand:
-            return
+        # Проверяем варианты с пробелами и без
+        model_variants = [
+            model_name_lower,
+            model_name_lower.replace(' ', ''),
+            model_name_lower.replace(' ', '-'),
+        ]
 
-        words = name_lower.split()
-        models = CarModel.objects.filter(brand=self.car_brand)
+        for variant in model_variants:
+            if variant in name_lower:
+                return True
 
-        for car_model in models:
-            model_words = car_model.name.lower().split()
-            # Проверяем, содержатся ли все слова названия модели в названии объявления
-            if all(word in name_lower for word in model_words):
-                self.car_model = car_model
-                return
-
-        # Если точного совпадения нет, ищем частичное совпадение
-        for car_model in models:
-            model_name_lower = car_model.name.lower()
-            # Ищем модель как подстроку в названии
-            if model_name_lower in name_lower:
-                self.car_model = car_model
-                return
+        return False
 
     def delete_if_old(self, hours_threshold=5):
         """
