@@ -40,7 +40,7 @@ class Advertpayment(models.Model):
         "Год выпуска",
         blank=True,
         null=True,
-        validators=[MinValueValidator(1900), MaxValueValidator(2100)]
+
     )
     published = models.BooleanField("Опубликовано", default=True)
     updated_at = models.DateTimeField("Обновлено", auto_now=True)
