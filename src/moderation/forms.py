@@ -124,19 +124,30 @@ class PathResponsibilityForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        # 🔑 получаем application_id, переданный из view
         application_id = kwargs.pop("application_id", None)
         super().__init__(*args, **kwargs)
 
-        # ✅ фильтруем пути только по этой заявке
-        print(kwargs,12)
-        if application_id:
-            self.fields["path_choice"].queryset = Path.objects.filter(aplication_id=application_id)
+        # если редактируем — не даём менять path_choice,
+        # но в queryset обязательно включаем текущий путь,
+        # чтобы select корректно отрисовался
+        if self.instance and self.instance.pk:
+            self.fields["path_choice"].queryset = Path.objects.filter(pk=self.instance.path_choice_id)
+            self.fields["path_choice"].disabled = True
+            self.fields["path_choice"].required = False
         else:
-            self.fields["path_choice"].queryset = Path.objects.none()
+            if application_id:
+                self.fields["path_choice"].queryset = Path.objects.filter(aplication_id=application_id)
+            else:
+                self.fields["path_choice"].queryset = Path.objects.none()
 
-        # ✅ только сотрудники
         self.fields["responsible"].queryset = Profile.objects.filter(type=0)
+
+    # при редактировании всегда возвращаем исходный path_choice из instance,
+    # чтобы валидация не падала из-за disabled/select без значения в POST
+    def clean_path_choice(self):
+        if self.instance and self.instance.pk:
+            return self.instance.path_choice
+        return self.cleaned_data.get('path_choice')
 
 
 class AdvertAplicationGalleryForm(forms.ModelForm):

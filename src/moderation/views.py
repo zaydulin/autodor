@@ -256,12 +256,22 @@ def driver_wallet_view(request, application_id, driver_id):
         return JsonResponse({'error': 'Внутренняя ошибка сервера'}, status=500)
 
 
+# moderation/views.py
+STATUS_DISPLAY = {
+    'принял': 'Принял',
+    'закончил': 'Закончил',
+}
+
 def responsibility_form(request, pk=None):
     instance = get_object_or_404(PathResponsibility, pk=pk) if pk else None
 
+    def resolve_application_id():
+        if instance and instance.path_choice_id:
+            return instance.path_choice.aplication_id
+        return request.GET.get('application_id') or request.POST.get('application_id')
+
     if request.method == "POST":
-        form = PathResponsibilityForm(request.POST, instance=instance)
-        print(form)
+        form = PathResponsibilityForm(request.POST, instance=instance, application_id=resolve_application_id())
         if form.is_valid():
             obj = form.save()
             return JsonResponse({
@@ -269,27 +279,18 @@ def responsibility_form(request, pk=None):
                 "responsibility": {
                     "id": obj.id,
                     "additional": obj.additional,
-                    "status": obj.get_status_display(),
+                    # было: obj.get_status_display()
+                    "status": STATUS_DISPLAY.get(obj.status, obj.status),
                     "responsible": str(obj.responsible),
                 }
             })
-        else:
-            # Возвращаем форму с ошибками
-            html = render_to_string(
-                "moderation/includes/responsibility_form.html",
-                {"form": form},
-                request=request
-            )
-            return JsonResponse({"success": False, "html": html})
+        html = render_to_string("moderation/includes/responsibility_form.html", {"form": form}, request=request)
+        return JsonResponse({"success": False, "html": html})
 
-    # GET request
-    form = PathResponsibilityForm(instance=instance)
-    html = render_to_string(
-        "moderation/includes/responsibility_form.html",
-        {"form": form},
-        request=request
-    )
+    form = PathResponsibilityForm(instance=instance, application_id=resolve_application_id())
+    html = render_to_string("moderation/includes/responsibility_form.html", {"form": form}, request=request)
     return JsonResponse({"success": True, "html": html})
+
 
 
 class AdvertAplicationListView(LoginRequiredMixin, ListView):

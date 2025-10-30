@@ -3579,319 +3579,197 @@ window.addEventListener('click', function(event) {
     });
 
     </script>
-    <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const modal = new bootstrap.Modal(document.getElementById("responsibilityModal"));
-      const form = document.getElementById("responsibilityForm");
-      const body = document.getElementById("responsibilityFormBody");
+<script>
+(() => {
+  let shouldReload = false; // флаг перезагрузки после закрытия
 
-      // открыть модалку
-      window.openResponsibilityModal = async (id=null) => {
-        const url = id ? `/responsibility/${id}/form/` : `/responsibility/form/`;
-        const res = await fetch(url);
-        const json = await res.json();
-        body.innerHTML = json.html;
-        modal.show();
-      };
+  function getCsrfToken() {
+    const input = document.querySelector('#responsibilityModal [name=csrfmiddlewaretoken]');
+    if (input) return input.value;
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.getAttribute('content') : '';
+  }
 
-      // сохранение
-      form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const formData = new FormData(form);
-        const id = formData.get("id");
-        const url = id ? `/responsibility/${id}/form/` : `/responsibility/form/`;
+  function htmlError(msg = 'Ошибка') {
+    return `<p class="text-danger">${msg}</p>`;
+  }
 
-        const res = await fetch(url, { method: "POST", body: formData });
-        const json = await res.json();
+  function updateResponsibilityUI(r) {
+    let el = document.querySelector(`#responsibility-${r.id}`);
+    if (!el) {
+      el = document.createElement("div");
+      el.id = `responsibility-${r.id}`;
+      const container = document.querySelector("#phasesRow");
+      if (!container) return;
+      container.appendChild(el);
+    }
+    el.innerHTML = `
+      <div class="phase-card">
+        <h5>Этап</h5>
+        <p>${r.additional ?? ''}</p>
+        <p>Статус: ${r.status ?? ''}</p>
+        <p>Ответственный: ${r.responsible ?? ''}</p>
+        <button class="btn btn-sm btn-outline-primary" onclick="openResponsibilityModal(${r.id})">
+          Редактировать
+        </button>
+      </div>
+    `;
+  }
 
-        if (json.success && json.responsibility) {
-          modal.hide();
-          updateResponsibilityUI(json.responsibility);
-        } else {
-          body.innerHTML = json.html || "<p class='text-danger'>Ошибка</p>";
-        }
-      });
-
-      // обновление DOM
-      function updateResponsibilityUI(r) {
-          let el = document.querySelector(`#responsibility-${r.id}`);
-          if (!el) {
-            el = document.createElement("div");
-            el.id = `responsibility-${r.id}`;
-            document.querySelector("#phasesRow").appendChild(el);
-          }
-          el.innerHTML = `
-            <div class="phase-card">
-              <h5>Этап</h5>
-              <p>${r.additional}</p>
-              <p>Статус: ${r.status}</p>
-              <p>Ответственный: ${r.responsible}</p>
-              <button class="btn btn-sm btn-outline-primary"
-                      onclick="openResponsibilityModal(${r.id})">
-                Редактировать
-              </button>
-            </div>
-          `;
-        }
-    });
-
-// responsibility-modal.js
-class ResponsibilityModalManager {
+  class ResponsibilityModalManager {
     constructor() {
-        this.modal = null;
-        this.currentEditingId = null;
-        this.init();
+      this.modalEl = document.getElementById('responsibilityModal');
+      this.modal = new bootstrap.Modal(this.modalEl);
+      this.formOuter = document.getElementById('responsibilityForm');
+      this.formBody = document.getElementById('responsibilityFormBody');
+      this.currentEditingId = null;
+      this.init();
     }
 
     init() {
-        this.initModal();
-        this.initEventListeners();
-    }
-
-    initModal() {
-        this.modal = new bootstrap.Modal(document.getElementById('responsibilityModal'));
-
-        document.getElementById('responsibilityModal').addEventListener('hidden.bs.modide', () => {
-            this.clearForm();
-        });
-    }
-
-    initEventListeners() {
-        // Делегирование событий для динамически загруженной формы
-        document.addEventListener('change', (e) => {
-            if (e.target.matches('#responsibility-inner-form select, #responsibility-inner-form textarea, #responsibility-inner-form input')) {
-                this.debouncedSave();
-            }
-        });
-
-        document.addEventListener('input', (e) => {
-            if (e.target.matches('#responsibility-inner-form textarea, #responsibility-inner-form input[type="text"]')) {
-                this.debouncedSave();
-            }
-        });
-
-        // Обработчик отправки формы
-        document.getElementById('responsibilityForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.saveResponsibility();
-        });
-    }
-
-    debouncedSave = this.debounce(() => {
-        this.saveResponsibility();
-    }, 1500);
-
-    debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    }
-
-    // Открытие модального окна для редактирования
-    async openEditModal(responsibilityId) {
-        this.currentEditingId = responsibilityId;
-        this.showSaveIndicator('ready');
-
-        try {
-            const response = await fetch(`/responsibility/${responsibilityId}/form/`);
-            const result = await response.json();
-
-            if (result.success) {
-                this.updateFormContent(result.html);
-                this.modal.show();
-            } else {
-                this.showSaveIndicator('error');
-                alert('Ошибка загрузки данных этапа');
-            }
-        } catch (error) {
-            console.error('Error loading responsibility form:', error);
-            this.showSaveIndicator('error');
-            alert('Ошибка загрузки формы');
+      // закрытие + перезагрузка, если надо
+      this.modalEl.addEventListener('hidden.bs.modal', () => {
+        if (shouldReload) {
+          shouldReload = false;
+          location.reload();
+          return;
         }
-    }
+        this.clearForm();
+      });
 
-    // Обновление содержимого формы
-    updateFormContent(html) {
-        const formBody = document.getElementById('responsibilityFormBody');
-        formBody.innerHTML = html;
+      // сабмит внешней формы
+      if (this.formOuter) {
+        this.formOuter.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const formData = new FormData(this.formOuter);
+          const id = formData.get('id');
+          const url = id ? `/responsibility/${id}/form/` : `/responsibility/form/`;
 
-        // Обновляем заголовок модального окна
-        const modalTitle = document.querySelector('#responsibilityModal .modal-title');
-        if (modalTitle) {
-            modalTitle.textContent = this.currentEditingId ? 'Редактировать этап' : 'Добавить новый этап';
-        }
-    }
+          const res = await fetch(url, { method: 'POST', body: formData });
 
-    // Сохранение ответственности
-    async saveResponsibility() {
-        const form = document.getElementById('responsibility-inner-form');
-        if (!form) {
-            console.error('Form not found');
+          if (!res.ok) {
+            this.formBody.innerHTML = htmlError('Ошибка сохранения');
             return;
-        }
+          }
 
-        this.showSaveIndicator('saving');
+          const json = await res.json();
 
-        const formData = new FormData(form);
-        const instanceId = this.currentEditingId;
-        const url = instanceId ? `/responsibility/${instanceId}/form/` : '/responsibility/form/';
-
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRFToken': this.getCsrfToken()
-                }
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                this.showSaveIndicator('success');
-
-                // Обновляем интерфейс
-                if (result.responsibility) {
-                    this.updateResponsibilityCard(result.responsibility);
-                }
-
-                // Обновляем форму новыми данными (для обновления ID и т.д.)
-                if (result.html) {
-                    this.updateFormContent(result.html);
-                }
-
-            } else {
-                this.showSaveIndicator('error');
-                // Показываем ошибки валидации
-                if (result.html) {
-                    this.updateFormContent(result.html);
-                }
-            }
-        } catch (error) {
-            console.error('Save error:', error);
-            this.showSaveIndicator('error');
-        }
-    }
-
-    // Обновление карточки этапа в интерфейсе
-    updateResponsibilityCard(responsibilityData) {
-        // Находим карточку по ID ответственности
-        const phaseCards = document.querySelectorAll('.phase-card');
-        let targetCard = null;
-
-        phaseCards.forEach(card => {
-            const userInfo = card.querySelector('.user-info');
-            if (userInfo) {
-                const userName = userInfo.querySelector('.user-name');
-                if (userName && userName.textContent.includes(responsibilityData.responsible)) {
-                    targetCard = card;
-                }
-            }
+          if (json.success) {
+            if (json.responsibility) updateResponsibilityUI(json.responsibility);
+            // ставим флаг и закрываем → перезагрузка произойдёт на hidden.bs.modal
+            shouldReload = true;
+            this.modal.hide();
+          } else {
+            this.formBody.innerHTML = json.html || htmlError();
+          }
         });
+      }
 
-        if (targetCard) {
-            // Обновляем описание
-            const description = targetCard.querySelector('p');
-            if (description) {
-                description.textContent = responsibilityData.additional || '';
-            }
-
-            // Обновляем статус
-            const statusElement = targetCard.querySelector('.users-container p');
-            if (statusElement) {
-                statusElement.textContent = `статус - ${responsibilityData.status}`;
-            }
-
-            // Добавляем анимацию обновления
-            targetCard.style.animation = 'pulse 0.5s ease-in-out';
-            setTimeout(() => {
-                targetCard.style.animation = '';
-            }, 500);
-        } else {
-            console.warn('Card not found for responsibility:', responsibilityData);
-            // Если карточка не найдена, перезагружаем страницу
-            setTimeout(() => {
-                location.reload();
-            }, 1000);
+      // автосейв (если есть внутренняя форма)
+      document.addEventListener('change', (e) => {
+        if (e.target.closest('#responsibility-inner-form')) this.debouncedSave();
+      });
+      document.addEventListener('input', (e) => {
+        const t = e.target;
+        if (t.closest('#responsibility-inner-form') && (t.matches('textarea, input[type="text"], input:not([type])'))) {
+          this.debouncedSave();
         }
+      });
     }
 
-    // Показать индикатор сохранения
-    showSaveIndicator(type) {
-        let indicator = document.getElementById('save-indicator');
-        if (!indicator) {
-            indicator = document.createElement('div');
-            indicator.id = 'save-indicator';
-            indicator.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                padding: 12px 20px;
-                border-radius: 6px;
-                color: white;
-                font-weight: 600;
-                z-index: 10000;
-                transition: all 0.3s ease;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            `;
-            document.body.appendChild(indicator);
-        }
+    async open(id = null) {
+      this.currentEditingId = id;
 
-        const messages = {
-            'ready': { text: '✎ Редактирование...', bg: '#17a2b8', icon: '✎' },
-            'saving': { text: '⏳ Сохранение...', bg: '#ffc107', icon: '⏳' },
-            'success': { text: '✓ Сохранено', bg: '#28a745', icon: '✓' },
-            'error': { text: '✗ Ошибка', bg: '#dc3545', icon: '✗' }
-        };
+      const url = id ? `/responsibility/${id}/form/` : `/responsibility/form/`;
+      const res = await fetch(url);
+      const json = await res.json();
 
-        const config = messages[type] || messages.ready;
-        indicator.style.backgroundColor = config.bg;
-        indicator.innerHTML = `${config.icon} ${config.text}`;
-        indicator.style.opacity = '1';
-        indicator.style.transform = 'translateY(0)';
+      if (!json.success) {
+        this.formBody.innerHTML = htmlError('Ошибка загрузки формы');
+        this.modal.show();
+        return;
+      }
 
-        if (type === 'success') {
-            setTimeout(() => {
-                indicator.style.opacity = '0';
-                indicator.style.transform = 'translateY(-20px)';
-            }, 2000);
-        }
+      this.updateFormContent(json.html);
+      this.updateTitle();
+      this.modal.show();
     }
 
-    // Получить CSRF токен
-    getCsrfToken() {
-        return document.querySelector('[name=csrfmiddlewaretoken]').value;
+    updateTitle() {
+      const title = this.modalEl.querySelector('.modal-title');
+      if (title) title.textContent = this.currentEditingId ? 'Редактировать этап' : 'Добавить новый этап';
+    }
+
+    updateFormContent(html) {
+      this.formBody.innerHTML = html;
     }
 
     clearForm() {
-        const formBody = document.getElementById('responsibilityFormBody');
-        if (formBody) {
-            formBody.innerHTML = '';
-        }
-        this.currentEditingId = null;
+      this.formBody.innerHTML = '';
+      this.currentEditingId = null;
     }
-}
 
-// Инициализация при загрузке страницы
-document.addEventListener('DOMContentLoaded', function() {
+    debouncedSave = this.debounce(() => this.save(), 1200);
+
+    async save() {
+      const innerForm = document.getElementById('responsibility-inner-form');
+      if (!innerForm) return;
+
+      const formData = new FormData(innerForm);
+      const id = this.currentEditingId || formData.get('id');
+      const url = id ? `/responsibility/${id}/form/` : `/responsibility/form/`;
+
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': getCsrfToken(),
+          },
+        });
+
+        if (!res.ok) return;
+
+        const json = await res.json();
+
+        if (json.success) {
+          if (json.responsibility) updateResponsibilityUI(json.responsibility);
+          // автосейв тоже закрывает и перезагружает (если нужно иначе — убери 2 строки ниже)
+          shouldReload = true;
+          this.modal.hide();
+        } else if (json.html) {
+          this.updateFormContent(json.html);
+        }
+      } catch (e) {
+        console.error('Autosave error:', e);
+      }
+    }
+
+    debounce(fn, wait) {
+      let t;
+      return (...args) => {
+        clearTimeout(t);
+        t = setTimeout(() => fn.apply(this, args), wait);
+      };
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
     window.responsibilityModalManager = new ResponsibilityModalManager();
 
-    // Глобальные функции для вызова из HTML
-    window.openEditResponsibility = function(responsibilityId) {
-        window.responsibilityModalManager.openEditModal(responsibilityId);
+    // совместимость с вызовами
+    window.openResponsibilityModal = (id = null) => {
+      window.responsibilityModalManager.open(id);
     };
-});
+    window.openEditResponsibility = (id) => {
+      window.responsibilityModalManager.open(id);
+    };
+  });
+})();
+</script>
 
-
-    </script>
-<script>
+    <script>
 class WalletManager {
     constructor() {
         this.currentDriverId = null;
