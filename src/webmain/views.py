@@ -192,7 +192,6 @@ class AdvertViewFree(ListView):
             return redirect('moderation:adverts')
         return super().get(request, *args, **kwargs)
 
-
     def get_queryset(self):
         qs = Advert.objects.all().order_by('-created_at')
         g = self.request.GET
@@ -209,6 +208,15 @@ class AdvertViewFree(ListView):
                 Q(model_auto__icontains=q) |
                 Q(color__icontains=q)
             )
+
+        # Тип автомобиля
+        pagetype = g.get('pagetype')
+        if pagetype:
+            try:
+                pagetype_int = int(pagetype)
+                qs = qs.filter(car_model__pagetype=pagetype_int)
+            except (ValueError, TypeError):
+                pass
 
         # Марка/модель
         brand = g.get('brand')
@@ -310,13 +318,41 @@ class AdvertViewFree(ListView):
             # по умолчанию — свежие
             qs = qs.order_by('-created_at')
 
-
         return qs
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         g = self.request.GET
 
+        # Создаем словарь: тип автомобиля -> [марки]
+        carbrands_by_type = {}
+        for choice_value, choice_label in CarModel.PAGE_CHOICE:
+            # Получаем марки для данного типа
+            brands_for_type = CarBrand.objects.filter(
+                models__pagetype=choice_value
+            ).distinct().values_list('name', flat=True).order_by('name')
+            carbrands_by_type[choice_value] = list(brands_for_type)
+
+        ctx['carbrands_by_type'] = carbrands_by_type
+
+        # Создаем словарь марка: [модели] с учетом типа
+        carmodels_dict_by_type = {}
+        carbrands_with_models = CarBrand.objects.prefetch_related(
+            Prefetch('models', queryset=CarModel.objects.order_by('name'))
+        ).order_by('name')
+
+        for brand in carbrands_with_models:
+            # Для каждой марки создаем под-словарь по типам
+            carmodels_dict_by_type[brand.name] = {}
+            for choice_value, choice_label in CarModel.PAGE_CHOICE:
+                models_for_type = brand.models.filter(
+                    pagetype=choice_value
+                ).values_list('name', flat=True)
+                carmodels_dict_by_type[brand.name][choice_value] = list(models_for_type)
+
+        ctx['carmodels_dict_by_type'] = carmodels_dict_by_type
+
+        # Данные для фильтров
         ctx['brands'] = (Advert.objects.values_list('brand', flat=True)
                          .exclude(brand__isnull=True).exclude(brand__exact='')
                          .distinct().order_by('brand'))
@@ -326,30 +362,35 @@ class AdvertViewFree(ListView):
         ctx['currencies'] = (Advert.objects.values_list('currency', flat=True)
                              .exclude(currency__isnull=True).exclude(currency__exact='')
                              .distinct().order_by('currency'))
-        ctx['transmission_choices'] = Advert.TransmissionType.choices
-        ctx['fuel_choices'] = Advert.FuelType.choices
-        ctx['drive_choices'] = Advert.DriveType.choices
+        ctx['colors'] = (Advert.objects.values_list('color', flat=True)
+                         .exclude(color__isnull=True).exclude(color__exact='')
+                         .distinct().order_by('color'))
+        ctx['doors'] = (Advert.objects.values_list('doors', flat=True)
+                        .exclude(doors__isnull=True)
+                        .distinct().order_by('doors'))
 
-        # чтобы в шаблоне не вызывать getlist(...)
-        ctx['selected_transmissions'] = g.getlist('transmission')
-        ctx['selected_fuels'] = g.getlist('fuel')
-        ctx['selected_drives'] = g.getlist('drive')
-        ctx['colors'] = (Advert.objects.values_list('color',flat=True).exclude(currency__isnull=True).exclude(currency__exact='').distinct().order_by('color'))
-        ctx['doors'] = (Advert.objects.values_list('doors',flat=True).exclude(currency__isnull=True).exclude(currency__exact='').distinct().order_by('doors'))
-        ctx['carmodels'] = (CarModel.objects.values_list('name',flat=True).distinct().order_by('name'))
-        ctx['carbrands'] = (CarBrand.objects.values_list('name',flat=True).distinct().order_by('name'))
-        carbrands_with_models = CarBrand.objects.prefetch_related(
-            Prefetch('models', queryset=CarModel.objects.order_by('name'))
-        ).order_by('name')
+        ctx['carmodels'] = (CarModel.objects.values_list('name', flat=True).distinct().order_by('name'))
+        ctx['carbrands'] = (CarBrand.objects.values_list('name', flat=True).distinct().order_by('name'))
 
-        # Создаем словарь марка: [модели]
+        ctx['pagetype_choices'] = CarModel.PAGE_CHOICE
+        ctx['pagetype_values'] = [choice[0] for choice in CarModel.PAGE_CHOICE]
+        ctx['pagetype_labels'] = [choice[1] for choice in CarModel.PAGE_CHOICE]
+        ctx['selected_pagetype'] = g.get('pagetype', '')
+
+        # Старый словарь для обратной совместимости
         ctx['carmodels_dict'] = {
             brand.name: list(brand.models.values_list('name', flat=True))
             for brand in carbrands_with_models
         }
 
+        ctx['transmission_choices'] = Advert.TransmissionType.choices
+        ctx['fuel_choices'] = Advert.FuelType.choices
+        ctx['drive_choices'] = Advert.DriveType.choices
 
-        # для остальных полей оставим доступ к params.*
+        ctx['selected_transmissions'] = g.getlist('transmission')
+        ctx['selected_fuels'] = g.getlist('fuel')
+        ctx['selected_drives'] = g.getlist('drive')
+
         ctx['params'] = g
         return ctx
 

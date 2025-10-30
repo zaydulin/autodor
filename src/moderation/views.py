@@ -617,14 +617,23 @@ class AdvertView(ListView):
                 Q(color__icontains=q)
             )
 
+        # Тип автомобиля
+        pagetype = g.get('pagetype')
+        if pagetype:
+            try:
+                pagetype_int = int(pagetype)
+                qs = qs.filter(car_model__pagetype=pagetype_int)
+            except (ValueError, TypeError):
+                pass
+
         # Марка/модель
         brand = g.get('brand')
         if brand:
-            qs = qs.filter(name__contains=brand)
+            qs = qs.filter(brand__iexact=brand)
 
         model_auto = g.get('model_auto')
         if model_auto:
-            qs = qs.filter(name__contains=model_auto)
+            qs = qs.filter(model_auto__iexact=model_auto)
 
         # Валюта
         currency = g.get('currency')
@@ -717,7 +726,6 @@ class AdvertView(ListView):
             # по умолчанию — свежие
             qs = qs.order_by('-created_at')
 
-
         return qs
 
     def get_context_data(self, **kwargs):
@@ -752,7 +760,7 @@ class AdvertView(ListView):
 
         ctx['carmodels_dict_by_type'] = carmodels_dict_by_type
 
-        # Остальной контекст без изменений...
+        # Данные для фильтров
         ctx['brands'] = (Advert.objects.values_list('brand', flat=True)
                          .exclude(brand__isnull=True).exclude(brand__exact='')
                          .distinct().order_by('brand'))
@@ -762,16 +770,20 @@ class AdvertView(ListView):
         ctx['currencies'] = (Advert.objects.values_list('currency', flat=True)
                              .exclude(currency__isnull=True).exclude(currency__exact='')
                              .distinct().order_by('currency'))
-        ctx['colors'] = (Advert.objects.values_list('color', flat=True).exclude(currency__isnull=True).exclude(
-            currency__exact='').distinct().order_by('color'))
-        ctx['doors'] = (Advert.objects.values_list('doors', flat=True).exclude(currency__isnull=True).exclude(
-            currency__exact='').distinct().order_by('doors'))
+        ctx['colors'] = (Advert.objects.values_list('color', flat=True)
+                         .exclude(color__isnull=True).exclude(color__exact='')
+                         .distinct().order_by('color'))
+        ctx['doors'] = (Advert.objects.values_list('doors', flat=True)
+                        .exclude(doors__isnull=True)
+                        .distinct().order_by('doors'))
+
         ctx['carmodels'] = (CarModel.objects.values_list('name', flat=True).distinct().order_by('name'))
         ctx['carbrands'] = (CarBrand.objects.values_list('name', flat=True).distinct().order_by('name'))
 
         ctx['pagetype_choices'] = CarModel.PAGE_CHOICE
         ctx['pagetype_values'] = [choice[0] for choice in CarModel.PAGE_CHOICE]
         ctx['pagetype_labels'] = [choice[1] for choice in CarModel.PAGE_CHOICE]
+        ctx['selected_pagetype'] = g.get('pagetype', '')
 
         # Старый словарь для обратной совместимости
         ctx['carmodels_dict'] = {
@@ -789,7 +801,6 @@ class AdvertView(ListView):
 
         ctx['params'] = g
         return ctx
-
 
 class AdvertDetailView(DetailView):
     """Страница новости"""
