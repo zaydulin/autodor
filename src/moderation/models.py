@@ -170,6 +170,17 @@ class Advert(models.Model):
         # Очищаем поля от * и / перед сохранением
         self.clean_fields()
 
+        # Автоматическое заполнение brand и model_auto из связанных объектов
+        if self.car_brand:
+            self.brand = self.car_brand.name
+        else:
+            self.brand = None
+
+        if self.car_model:
+            self.model_auto = self.car_model.name
+        else:
+            self.model_auto = None
+
         # Исправленная логика для doors
         if self.doors:
             if self.doors > 5:
