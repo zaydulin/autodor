@@ -16,7 +16,7 @@ restart:
 destroy:
 	docker-compose -f docker-compose.yaml down -v $(c)
 log:
-	docker-compose -f docker-compose.yaml logs --tail=150 -f cb-app
+	docker-compose -f docker-compose.yaml logs --tail=15000 -f cb-app
 shell:
 	docker-compose -f docker-compose.yaml exec cb-app /bin/bash
 manage:
