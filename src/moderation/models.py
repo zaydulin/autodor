@@ -104,7 +104,7 @@ class Advert(models.Model):
     address = models.CharField('Адрес', max_length=100, blank=True, null=True)
     # Характеристики авто
     mileage = models.PositiveIntegerField("Километраж (км)", blank=True, null=True)
-    color = models.CharField("Цвет", max_length=50, blank=True, null=True)
+    color = models.CharField("Цвет", max_length=150, blank=True, null=True)
     doors = models.PositiveSmallIntegerField("Количество дверей", blank=True, null=True)
 
     power = models.PositiveIntegerField("Мощность (л.с.)", blank=True, null=True)
