@@ -11,8 +11,9 @@
         {% if paginator.num_pages >= 1 %}
         {% if page_obj.has_previous %}
         <li class="page-item page-indicator">
-            <a class="page-link" href="?page=1">
-                <i class="la la-angle-left"></i>1</a>
+            <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                <i class="la la-angle-left"></i>1
+            </a>
         </li>
         {% endif %}
         {% for i in paginator.page_range %}
@@ -21,14 +22,17 @@
         </li>
         {% elif i > page_obj.number|add:'-2' and i < page_obj.number|add:'3' %}
         <li class="page-item">
-            <a class="page-link" href="?page={{ i }}">{{ i }}</a>
+            <a class="page-link" href="?page={{ i }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                {{ i }}
+            </a>
         </li>
         {% endif %}
         {% endfor %}
         {% if page_obj.has_next %}
         <li class="page-item page-indicator">
-            <a class="page-link" href="?page={{ paginator.num_pages }}">
-                <i class="la la-angle-right"></i>{{ paginator.num_pages }}</a>
+            <a class="page-link" href="?page={{ paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                <i class="la la-angle-right"></i>{{ paginator.num_pages }}
+            </a>
         </li>
         {% endif %}
         {% endif %}

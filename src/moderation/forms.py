@@ -38,18 +38,20 @@ class TicketCommentForm(forms.ModelForm):
         return files
 
 
-
 class PathForm(forms.ModelForm):
     class Meta:
         model = Path
         fields = ['aplication', 'longitude', 'latitude', 'name', 'description', 'request']
         widgets = {
-            'aplication': forms.HiddenInput(),   # поле спрятано
-            'longitude': forms.NumberInput(attrs={'step': 'any','class': 'form-control','placeholder': 'Введите долготу'}),
-            'latitude':  forms.NumberInput(attrs={'step': 'any','class': 'form-control','placeholder': 'Введите широту'}),
-            'name':      forms.TextInput(attrs={'class': 'form-control','placeholder': 'Введите название этапа'}),
-            'description': forms.Textarea(attrs={'class': 'form-control','rows': 3,'placeholder': 'Введите описание этапа'}),
-            'request':   forms.TextInput(attrs={'class': 'form-control','placeholder': 'Введите номер заявки'}),
+            'aplication': forms.HiddenInput(),  # поле спрятано
+            'longitude': forms.NumberInput(
+                attrs={'step': 'any', 'class': 'form-control', 'placeholder': 'Введите долготу'}),
+            'latitude': forms.NumberInput(
+                attrs={'step': 'any', 'class': 'form-control', 'placeholder': 'Введите широту'}),
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Введите название этапа'}),
+            'description': forms.Textarea(
+                attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Введите описание этапа'}),
+            'request': forms.HiddenInput(),  # ⬅️ Скрываем поле request, так как оно будет заполняться автоматически
         }
         labels = {
             'aplication': 'Заявка',
@@ -62,13 +64,20 @@ class PathForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         application_id = kwargs.pop("application_id", None)
-        print(kwargs,11)
         super().__init__(*args, **kwargs)
+
         if application_id:
             # фиксируем заявку и скрываем выбор
             self.fields["aplication"].initial = application_id
             self.fields["aplication"].queryset = AdvertAplication.objects.filter(id=application_id)
 
+            # ⬅️ АВТОМАТИЧЕСКИ заполняем поле request данными из заявки
+            try:
+                application = AdvertAplication.objects.get(id=application_id)
+                # Используем ID заявки или другой уникальный идентификатор
+                self.fields["request"].initial = f"Заявка #{application.id}"
+            except AdvertAplication.DoesNotExist:
+                pass
 
     def clean_longitude(self):
         longitude = self.cleaned_data.get('longitude')
