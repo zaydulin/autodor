@@ -18,7 +18,7 @@ class Advertpayment(models.Model):
     car_brand = models.ForeignKey('CarBrand', on_delete=models.CASCADE, null=True, blank=True)
     car_model = models.ForeignKey('CarModel', on_delete=models.CASCADE, null=True, blank=True)
 
-    brand = models.CharField("марка", max_length=255)
+    brand = models.CharField("марка", max_length=255, null=True, blank=True)
     model_auto = models.CharField("модель", max_length=255)
     link = models.URLField("Ссылка", max_length=500)
     original_link = models.URLField("Оригинальная ссылка", max_length=500, blank=True, null=True)
@@ -91,7 +91,7 @@ class Advert(models.Model):
     name = models.CharField("Название", max_length=255)
     car_brand = models.ForeignKey('CarBrand', on_delete=models.CASCADE, null=True, blank=True)
     car_model = models.ForeignKey('CarModel', on_delete=models.CASCADE, null=True, blank=True)
-    brand = models.CharField("марка", max_length=255)
+    brand = models.CharField("марка", max_length=255, null=True, blank=True)
     model_auto = models.CharField("модель", max_length=255)
     link = models.URLField("Ссылка", max_length=500)
     original_link = models.URLField("Оригинальная ссылка", max_length=500, blank=True, null=True)
