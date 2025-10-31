@@ -182,43 +182,70 @@ class EditMyProfileView(TemplateView, LoginRequiredMixin):
         return self.render_to_response(context)
 
     def post(self, request, *args, **kwargs):
+        print("=== DEBUG FORM SUBMISSION ===")
+        print("POST data keys:", list(request.POST.keys()))
+        print("FILES data keys:", list(request.FILES.keys()))
+
+        # Детальная информация о файлах
+        for field_name in ['avatar', 'passport_image_1', 'passport_image_2']:
+            if field_name in request.FILES:
+                file = request.FILES[field_name]
+                print(f"File {field_name}: name='{file.name}', size={file.size}, type={file.content_type}")
+
         form = UserProfileForm(
             request.POST,
-            request.FILES,  # Убедитесь, что request.FILES передается
+            request.FILES,
             instance=request.user
         )
         password_form = PasswordChangeForm(data=request.POST, user=request.user)
 
-        # Проверяем, какая форма была отправлена
+        # Разделяем обработку пароля и профиля
         if 'change_password' in request.POST:
-            # Обработка смены пароля
+            print("Processing password change")
             if password_form.is_valid():
                 user = password_form.save()
                 update_session_auth_hash(request, user)
                 messages.success(request, "Пароль изменен успешно.")
+                print("Password changed successfully")
             else:
                 messages.error(request, "Ошибка при смене пароля.")
                 print("Password form errors:", password_form.errors)
         else:
-            # Обработка данных профиля
+            print("Processing profile update")
             if form.is_valid():
                 try:
-                    form.save()
-                    messages.success(request, "Профиль обновлен успешно.")
+                    print("Form is valid, saving...")
+                    user_profile = form.save()
 
-                    # Отладочная информация
-                    if request.FILES:
-                        print("Файлы получены:", list(request.FILES.keys()))
-                        for field_name in ['avatar', 'passport_image_1', 'passport_image_2']:
-                            if field_name in request.FILES:
-                                print(f"{field_name}: {request.FILES[field_name]}")
+                    # Проверяем сохранение файлов
+                    print("=== AFTER SAVE ===")
+                    if hasattr(user_profile, 'avatar') and user_profile.avatar:
+                        print(f"Avatar saved: {user_profile.avatar.name}")
+                    else:
+                        print("Avatar NOT saved")
+
+                    if hasattr(user_profile, 'passport_image_1') and user_profile.passport_image_1:
+                        print(f"Passport 1 saved: {user_profile.passport_image_1.name}")
+                    else:
+                        print("Passport 1 NOT saved")
+
+                    if hasattr(user_profile, 'passport_image_2') and user_profile.passport_image_2:
+                        print(f"Passport 2 saved: {user_profile.passport_image_2.name}")
+                    else:
+                        print("Passport 2 NOT saved")
+
+                    messages.success(request, "Профиль обновлен успешно.")
+                    print("Profile saved successfully")
 
                 except Exception as e:
-                    messages.error(request, f"Ошибка при сохранении: {str(e)}")
-                    print("Save error:", str(e))
+                    print(f"Error saving profile: {str(e)}")
+                    messages.error(request, f"Ошибка при сохранении профиля: {str(e)}")
             else:
-                messages.error(request, "Ошибка при обновлении профиля.")
                 print("Form errors:", form.errors)
+                for field, errors in form.errors.items():
+                    for error in errors:
+                        print(f"Field {field} error: {error}")
+                        messages.error(request, f"{field}: {error}")
 
         context = self.get_context_data(form=form, password_form=password_form, title='Личные данные')
         return self.render_to_response(context)

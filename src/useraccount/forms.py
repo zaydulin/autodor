@@ -85,10 +85,6 @@ class UserProfileForm(forms.ModelForm):
         (1, 'Мужской'),
         (2, 'Женский'),
     ]
-    TYPE_CHOICES = [
-        (1, 'Обычный'),
-        (2, 'Юр лицо'),
-    ]
 
     # Поля профиля
     avatar = forms.ImageField(required=False, widget=forms.FileInput(attrs={'class': 'form-control cursor-pointer'}))
@@ -123,41 +119,18 @@ class UserProfileForm(forms.ModelForm):
     company_data_registration = forms.DateField(required=False, widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}))
     company_type_activity = forms.CharField(required=False, widget=forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Основной вид деятельности'}))
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Убедитесь, что для файловых полей установлен правильный виджет
-        self.fields['avatar'].widget.attrs.update({'class': 'form-control cursor-pointer'})
-        self.fields['passport_image_1'].widget.attrs.update({'class': 'form-control'})
-        self.fields['passport_image_2'].widget.attrs.update({'class': 'form-control'})
-
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-
-        # Обработка загрузки изображений
-        if 'avatar' in self.files:
-            instance.avatar = self.cleaned_data['avatar']
-        if 'passport_image_1' in self.files:
-            instance.passport_image_1 = self.cleaned_data['passport_image_1']
-        if 'passport_image_2' in self.files:
-            instance.passport_image_2 = self.cleaned_data['passport_image_2']
-
-        if commit:
-            instance.save()
-        return instance
-
     class Meta:
         model = Profile
         fields = [
-            # Профиль
-            'avatar', 'username', 'first_name', 'last_name', 'middle_name', 'email', 'phone', 'birthday', 'city', 'gender',
-            # Паспортные данные
+            'avatar', 'username', 'first_name', 'last_name', 'middle_name', 'email', 'phone',
+            'birthday', 'city', 'gender',
             'passport_issued_by_whom', 'passport_date_of_issue', 'passport_the_sub_division_code',
             'passport_series_and_number', 'passport_place_of_birth', 'passport_registration',
             'passport_image_1', 'passport_image_2',
-            # Организация
             'company_name', 'company_director', 'company_address', 'company_nalogovaya', 'company_ogrn',
             'company_inn', 'company_kpp', 'company_data_registration', 'company_type_activity',
         ]
+
 
 class PasswordChangeCustomForm(PasswordChangeForm):
     old_password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control'}))

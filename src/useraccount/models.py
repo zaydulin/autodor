@@ -9,10 +9,34 @@ from uuid import uuid4
 from moderation.tasks import upload_to_drive_and_delete
 
 
+def get_user_dir(instance, filename):
+    """
+    Генерирует путь для сохранения файлов пользователя
+    """
+    print(f"get_user_dir called: instance={instance}, filename={filename}")
 
-def get_user_dir(instance, filename) -> str:
-    extension = filename.split(".")[-1]
-    return f"users/user_{instance.id}.{extension}"
+    # Получаем расширение файла
+    ext = filename.split('.')[-1]
+
+    # Создаем уникальное имя
+    unique_id = uuid.uuid4().hex[:8]
+    new_filename = f"{unique_id}_{filename}"
+
+    # Определяем тип файла
+    if hasattr(instance, 'avatar') and instance.avatar and instance.avatar.name == filename:
+        file_type = 'avatar'
+    elif hasattr(instance,
+                 'passport_image_1') and instance.passport_image_1 and instance.passport_image_1.name == filename:
+        file_type = 'passport_front'
+    elif hasattr(instance,
+                 'passport_image_2') and instance.passport_image_2 and instance.passport_image_2.name == filename:
+        file_type = 'passport_back'
+    else:
+        file_type = 'other'
+
+    path = f"users/user_{instance.id}/{file_type}/{new_filename}"
+    print(f"Generated path: {path}")
+    return path
 
 class Profile(AbstractUser):
     """Персона"""
@@ -83,25 +107,28 @@ class Profile(AbstractUser):
         return dict(self.EMPLOYEE).get(self.employee, 'Не указана')
 
     def save(self, *args, **kwargs):
-        # Если это новый пользователь, сначала сохраняем без файлов
-        if not self.id and (self.avatar or self.passport_image_1 or self.passport_image_2):
-            # Временно сохраняем файлы
-            temp_avatar = self.avatar
-            temp_passport1 = self.passport_image_1
-            temp_passport2 = self.passport_image_2
+        # Убедитесь, что у пользователя есть ID перед сохранением файлов
+        creating = self._state.adding
 
-            # Сохраняем без файлов чтобы получить ID
-            self.avatar = None
-            self.passport_image_1 = None
-            self.passport_image_2 = None
+        if creating:
+            # Сначала сохраняем без файлов, чтобы получить ID
+            temp_files = {}
+            for field_name in ['avatar', 'passport_image_1', 'passport_image_2']:
+                field = getattr(self, field_name)
+                if field and hasattr(field, 'file'):
+                    temp_files[field_name] = field
+                    setattr(self, field_name, None)
+
+            # Сохраняем для получения ID
             super().save(*args, **kwargs)
 
-            # Теперь сохраняем с файлами
-            self.avatar = temp_avatar
-            self.passport_image_1 = temp_passport1
-            self.passport_image_2 = temp_passport2
-
-        super().save(*args, **kwargs)
+            # Теперь сохраняем файлы
+            for field_name, file in temp_files.items():
+                setattr(self, field_name, file)
+            super().save(*args, **kwargs)
+        else:
+            # Обычное сохранение для существующих записей
+            super().save(*args, **kwargs)
 
     class Meta:
         verbose_name = "Пользователь"
