@@ -482,6 +482,13 @@ class AdvertAplication(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     price = models.DecimalField("Стоимость", max_digits=12, decimal_places=2, blank=True, null=True)
     delevery_price = models.DecimalField("Стоимость доставки", max_digits=12, decimal_places=2, blank=True, null=True)
+    order_number = models.CharField(
+        "Номер заказа",
+        max_length=10,
+        unique=True,
+        blank=True,
+        editable=False
+    )
 
     user = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
@@ -518,7 +525,35 @@ class AdvertAplication(models.Model):
 
     created_at = models.DateTimeField("Дата создания", auto_now_add=True)
 
+    def generate_order_number(self):
+        """Генерирует номер заказа в формате 0000001"""
+        # Получаем последний заказ
+        last_order = AdvertAplication.objects.filter(
+            order_number__isnull=False
+        ).exclude(
+            order_number=''
+        ).order_by('order_number').last()
+
+        if last_order and last_order.order_number:
+            try:
+                # Пытаемся преобразовать в число и увеличить
+                last_number = int(last_order.order_number)
+                new_number = last_number + 1
+            except (ValueError, TypeError):
+                # Если что-то пошло не так, начинаем с 1
+                new_number = 1
+        else:
+            # Первый заказ
+            new_number = 1
+
+        # Форматируем с ведущими нулями (7 цифр)
+        return str(new_number).zfill(7)
+
     def save(self, *args, **kwargs):
+        # Генерируем номер заказа только при создании
+        if not self.order_number:
+            self.order_number = self.generate_order_number()
+
         # ✅ Сначала сохраняем объект
         super().save(*args, **kwargs)
 
@@ -540,7 +575,7 @@ class AdvertAplication(models.Model):
     def __str__(self):
         users = self.user.all()
         user_str = users[0].username if users.exists() else "нет пользователя"
-        return f"Заявка #{self.id} от {user_str} на {self.advert.name if self.advert else 'нет объявления'}"
+        return f"Заявка #{self.order_number} от {user_str} на {self.advert.name if self.advert else 'нет объявления'}"
 
 
 class CartVod(models.Model):
