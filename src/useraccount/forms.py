@@ -123,6 +123,28 @@ class UserProfileForm(forms.ModelForm):
     company_data_registration = forms.DateField(required=False, widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}))
     company_type_activity = forms.CharField(required=False, widget=forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Основной вид деятельности'}))
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Убедитесь, что для файловых полей установлен правильный виджет
+        self.fields['avatar'].widget.attrs.update({'class': 'form-control cursor-pointer'})
+        self.fields['passport_image_1'].widget.attrs.update({'class': 'form-control'})
+        self.fields['passport_image_2'].widget.attrs.update({'class': 'form-control'})
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+
+        # Обработка загрузки изображений
+        if 'avatar' in self.files:
+            instance.avatar = self.cleaned_data['avatar']
+        if 'passport_image_1' in self.files:
+            instance.passport_image_1 = self.cleaned_data['passport_image_1']
+        if 'passport_image_2' in self.files:
+            instance.passport_image_2 = self.cleaned_data['passport_image_2']
+
+        if commit:
+            instance.save()
+        return instance
+
     class Meta:
         model = Profile
         fields = [
