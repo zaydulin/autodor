@@ -486,7 +486,7 @@ class AdvertAplication(models.Model):
         "Номер заказа",
         max_length=10,
         blank=True, null=True,
-        editable=False
+
     )
     user = models.ManyToManyField(
         settings.AUTH_USER_MODEL,

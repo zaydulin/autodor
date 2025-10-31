@@ -1156,7 +1156,7 @@
 
                 <!-- Заявка -->
                 <div class="card mb-4"  id="sidebar">
-                    <div class="card-header"><h5 class="mb-0">Заявка {{ application.id }}</h5></div>
+                    <div class="card-header"><h5 class="mb-0">Заявка {{ application.order_number }}</h5></div>
                     <div class="card-body">
                         <div class="mb-2"><strong>Статус:</strong> {{ application.get_status_display }}</div>
                         <div class="mb-2"><strong>Создана: </strong>{{ application.created_at|date:"d.m.Y H:i" }}</div>
