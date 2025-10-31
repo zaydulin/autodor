@@ -166,41 +166,67 @@ class CustomPasswordResetCompleteView(PasswordResetCompleteView):
 
 """Личный кабинет"""
 
+
 @method_decorator(login_required(login_url='useraccount:login'), name='dispatch')
 class EditMyProfileView(TemplateView, LoginRequiredMixin):
     template_name = 'site/useraccount/profile_edit.html'
 
     def get(self, request, *args, **kwargs):
-        initial_data = {'birthday': request.user.birthday.strftime('%Y-%m-%d') if request.user.birthday else None}
+        initial_data = {
+            'birthday': request.user.birthday.strftime('%Y-%m-%d') if request.user.birthday else None
+        }
         form = UserProfileForm(instance=request.user, initial=initial_data)
-        password_form = PasswordChangeForm(user=request.user)  # Форма для смены пароля
+        password_form = PasswordChangeForm(user=request.user)
 
         context = self.get_context_data(form=form, password_form=password_form, title='Личные данные')
         return self.render_to_response(context)
 
     def post(self, request, *args, **kwargs):
-        form = UserProfileForm(request.POST, request.FILES, instance=request.user)
-        password_form = PasswordChangeForm(data=request.POST, user=request.user)  # Форма для смены пароля
+        form = UserProfileForm(
+            request.POST,
+            request.FILES,  # Убедитесь, что request.FILES передается
+            instance=request.user
+        )
+        password_form = PasswordChangeForm(data=request.POST, user=request.user)
 
-        # Обработка данных профиля
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Профиль обновлен успешно.")
+        # Проверяем, какая форма была отправлена
+        if 'change_password' in request.POST:
+            # Обработка смены пароля
+            if password_form.is_valid():
+                user = password_form.save()
+                update_session_auth_hash(request, user)
+                messages.success(request, "Пароль изменен успешно.")
+            else:
+                messages.error(request, "Ошибка при смене пароля.")
+                print("Password form errors:", password_form.errors)
         else:
-            messages.error(request, "Ошибка при обновлении профиля.")
-            print("Form errors:", form.errors)
+            # Обработка данных профиля
+            if form.is_valid():
+                try:
+                    form.save()
+                    messages.success(request, "Профиль обновлен успешно.")
 
-        # Обработка смены пароля
-        if password_form.is_valid():
-            user = password_form.save()
-            update_session_auth_hash(request, user)  # Чтобы пользователь не вышел после смены пароля
-            messages.success(request, "Пароль изменен успешно.")
-        else:
-            messages.error(request, "Ошибка при смене пароля.")
-            print("Password form errors:", password_form.errors)
+                    # Отладочная информация
+                    if request.FILES:
+                        print("Файлы получены:", list(request.FILES.keys()))
+                        for field_name in ['avatar', 'passport_image_1', 'passport_image_2']:
+                            if field_name in request.FILES:
+                                print(f"{field_name}: {request.FILES[field_name]}")
+
+                except Exception as e:
+                    messages.error(request, f"Ошибка при сохранении: {str(e)}")
+                    print("Save error:", str(e))
+            else:
+                messages.error(request, "Ошибка при обновлении профиля.")
+                print("Form errors:", form.errors)
 
         context = self.get_context_data(form=form, password_form=password_form, title='Личные данные')
         return self.render_to_response(context)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # ... ваш SEO код ...
+        return context
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)  # Вызов `super()` сохраняет функциональность
