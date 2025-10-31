@@ -485,11 +485,9 @@ class AdvertAplication(models.Model):
     order_number = models.CharField(
         "Номер заказа",
         max_length=10,
-        unique=True,
-        blank=True,
+        blank=True, null=True,
         editable=False
     )
-
     user = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
         verbose_name="Пользователь",
