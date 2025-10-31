@@ -82,6 +82,26 @@ class Profile(AbstractUser):
         """Метод для отображения должности"""
         return dict(self.EMPLOYEE).get(self.employee, 'Не указана')
 
+    def save(self, *args, **kwargs):
+        # Если это новый пользователь, сначала сохраняем без файлов
+        if not self.id and (self.avatar or self.passport_image_1 or self.passport_image_2):
+            # Временно сохраняем файлы
+            temp_avatar = self.avatar
+            temp_passport1 = self.passport_image_1
+            temp_passport2 = self.passport_image_2
+
+            # Сохраняем без файлов чтобы получить ID
+            self.avatar = None
+            self.passport_image_1 = None
+            self.passport_image_2 = None
+            super().save(*args, **kwargs)
+
+            # Теперь сохраняем с файлами
+            self.avatar = temp_avatar
+            self.passport_image_1 = temp_passport1
+            self.passport_image_2 = temp_passport2
+
+        super().save(*args, **kwargs)
 
     class Meta:
         verbose_name = "Пользователь"
