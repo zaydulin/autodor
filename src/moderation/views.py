@@ -627,11 +627,12 @@ class AdvertView(ListView):
             except (ValueError, TypeError):
                 pass
 
-        # Марка/модель
+        # Марка
         brand = g.get('brand')
         if brand:
             qs = qs.filter(brand__iexact=brand)
 
+        # Модель
         model_auto = g.get('model_auto')
         if model_auto:
             qs = qs.filter(model_auto__iexact=model_auto)
@@ -642,48 +643,48 @@ class AdvertView(ListView):
             qs = qs.filter(currency__iexact=currency)
 
         # Цена
-        price_min = _to_decimal(g.get('price_min'))
-        price_max = _to_decimal(g.get('price_max'))
-        if price_min is not None:
+        price_min = g.get('price_min')
+        price_max = g.get('price_max')
+        if price_min:
             qs = qs.filter(price__gte=price_min)
-        if price_max is not None:
+        if price_max:
             qs = qs.filter(price__lte=price_max)
 
         # Год
-        year_min = _to_int(g.get('year_min'))
-        year_max = _to_int(g.get('year_max'))
-        if year_min is not None:
+        year_min = g.get('year_min')
+        year_max = g.get('year_max')
+        if year_min:
             qs = qs.filter(year__gte=year_min)
-        if year_max is not None:
+        if year_max:
             qs = qs.filter(year__lte=year_max)
 
         # Пробег
-        mileage_min = _to_int(g.get('mileage_min'))
-        mileage_max = _to_int(g.get('mileage_max'))
-        if mileage_min is not None:
+        mileage_min = g.get('mileage_min')
+        mileage_max = g.get('mileage_max')
+        if mileage_min:
             qs = qs.filter(mileage__gte=mileage_min)
-        if mileage_max is not None:
+        if mileage_max:
             qs = qs.filter(mileage__lte=mileage_max)
 
         # Мощность
-        power_min = _to_int(g.get('power_min'))
-        power_max = _to_int(g.get('power_max'))
-        if power_min is not None:
+        power_min = g.get('power_min')
+        power_max = g.get('power_max')
+        if power_min:
             qs = qs.filter(power__gte=power_min)
-        if power_max is not None:
+        if power_max:
             qs = qs.filter(power__lte=power_max)
 
         # Объем двигателя
-        ev_min = _to_decimal(g.get('engine_volume_min'))
-        ev_max = _to_decimal(g.get('engine_volume_max'))
-        if ev_min is not None:
-            qs = qs.filter(engine_volume__gte=ev_min)
-        if ev_max is not None:
-            qs = qs.filter(engine_volume__lte=ev_max)
+        engine_volume_min = g.get('engine_volume_min')
+        engine_volume_max = g.get('engine_volume_max')
+        if engine_volume_min:
+            qs = qs.filter(engine_volume__gte=engine_volume_min)
+        if engine_volume_max:
+            qs = qs.filter(engine_volume__lte=engine_volume_max)
 
         # Двери
-        doors = _to_int(g.get('doors'))
-        if doors is not None:
+        doors = g.get('doors')
+        if doors:
             qs = qs.filter(doors=doors)
 
         # Цвет
@@ -691,15 +692,17 @@ class AdvertView(ListView):
         if color:
             qs = qs.filter(color__icontains=color)
 
-        # Коробка/топливо/привод (множественный выбор)
+        # Коробка передач
         transmissions = g.getlist('transmission')
         if transmissions:
             qs = qs.filter(transmission__in=transmissions)
 
+        # Топливо
         fuels = g.getlist('fuel')
         if fuels:
             qs = qs.filter(fuel__in=fuels)
 
+        # Привод
         drives = g.getlist('drive')
         if drives:
             qs = qs.filter(drive__in=drives)
@@ -724,7 +727,6 @@ class AdvertView(ListView):
         elif order == 'mileage_desc':
             qs = qs.order_by('-mileage', '-created_at')
         else:
-            # по умолчанию — свежие
             qs = qs.order_by('-created_at')
 
         return qs
