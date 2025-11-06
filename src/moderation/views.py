@@ -604,109 +604,96 @@ class AdvertView(ListView):
         qs = Advert.objects.all().order_by('-created_at')
         g = self.request.GET
 
-        # Поиск
+        # Словарь параметров фильтрации
+        filter_params = {}
+
+        # Поиск по текстовому запросу
         q = g.get('q')
         if q:
-            qs = qs.filter(
-                Q(name__icontains=q) |
-                Q(subtitle__icontains=q) |
-                Q(article__icontains=q) |
-                Q(description__icontains=q) |
-                Q(brand__icontains=q) |
-                Q(model_auto__icontains=q) |
-                Q(color__icontains=q)
-            )
+            filter_params['name__icontains'] = q
+            filter_params['subtitle__icontains'] = q
+            filter_params['article__icontains'] = q
+            filter_params['description__icontains'] = q
+            filter_params['brand__icontains'] = q
+            filter_params['model_auto__icontains'] = q
+            filter_params['color__icontains'] = q
 
         # Тип автомобиля
         pagetype = g.get('pagetype')
         if pagetype:
             try:
                 pagetype_int = int(pagetype)
-                qs = qs.filter(car_model__pagetype=pagetype_int)
+                filter_params['car_model__pagetype'] = pagetype_int
             except (ValueError, TypeError):
                 pass
 
-        # Марка/модель
+        # Марка
         brand = g.get('brand')
         if brand:
-            qs = qs.filter(brand__iexact=brand)
+            filter_params['brand__iexact'] = brand
 
+        # Модель автомобиля
         model_auto = g.get('model_auto')
         if model_auto:
-            qs = qs.filter(model_auto__iexact=model_auto)
-
-        # Валюта
-        currency = g.get('currency')
-        if currency:
-            qs = qs.filter(currency__iexact=currency)
+            filter_params['model_auto__iexact'] = model_auto
 
         # Цена
         price_min = _to_decimal(g.get('price_min'))
         price_max = _to_decimal(g.get('price_max'))
         if price_min is not None:
-            qs = qs.filter(price__gte=price_min)
+            filter_params['price__gte'] = price_min
         if price_max is not None:
-            qs = qs.filter(price__lte=price_max)
+            filter_params['price__lte'] = price_max
 
         # Год
         year_min = _to_int(g.get('year_min'))
         year_max = _to_int(g.get('year_max'))
         if year_min is not None:
-            qs = qs.filter(year__gte=year_min)
+            filter_params['year__gte'] = year_min
         if year_max is not None:
-            qs = qs.filter(year__lte=year_max)
+            filter_params['year__lte'] = year_max
 
         # Пробег
         mileage_min = _to_int(g.get('mileage_min'))
         mileage_max = _to_int(g.get('mileage_max'))
         if mileage_min is not None:
-            qs = qs.filter(mileage__gte=mileage_min)
+            filter_params['mileage__gte'] = mileage_min
         if mileage_max is not None:
-            qs = qs.filter(mileage__lte=mileage_max)
+            filter_params['mileage__lte'] = mileage_max
 
         # Мощность
         power_min = _to_int(g.get('power_min'))
         power_max = _to_int(g.get('power_max'))
         if power_min is not None:
-            qs = qs.filter(power__gte=power_min)
+            filter_params['power__gte'] = power_min
         if power_max is not None:
-            qs = qs.filter(power__lte=power_max)
+            filter_params['power__lte'] = power_max
 
         # Объем двигателя
         ev_min = _to_decimal(g.get('engine_volume_min'))
         ev_max = _to_decimal(g.get('engine_volume_max'))
         if ev_min is not None:
-            qs = qs.filter(engine_volume__gte=ev_min)
+            filter_params['engine_volume__gte'] = ev_min
         if ev_max is not None:
-            qs = qs.filter(engine_volume__lte=ev_max)
+            filter_params['engine_volume__lte'] = ev_max
 
         # Двери
         doors = _to_int(g.get('doors'))
         if doors is not None:
-            qs = qs.filter(doors=doors)
+            filter_params['doors'] = doors
 
         # Цвет
         color = g.get('color')
         if color:
-            qs = qs.filter(color__icontains=color)
+            filter_params['color__icontains'] = color
 
-        # Коробка/топливо/привод (множественный выбор)
-        transmissions = g.getlist('transmission')
-        if transmissions:
-            qs = qs.filter(transmission__in=transmissions)
-
-        fuels = g.getlist('fuel')
-        if fuels:
-            qs = qs.filter(fuel__in=fuels)
-
+        # Привод (множественный выбор)
         drives = g.getlist('drive')
         if drives:
-            qs = qs.filter(drive__in=drives)
+            filter_params['drive__in'] = drives
 
-        # Есть изображения
-        has_images = g.get('has_images')
-        if has_images == '1':
-            qs = qs.exclude(images__isnull=True).exclude(images=[])
+        # Применяем фильтрацию по всем переданным параметрам
+        qs = qs.filter(**filter_params)
 
         # Сортировка
         order = g.get('order')
@@ -727,6 +714,7 @@ class AdvertView(ListView):
             qs = qs.order_by('-created_at')
 
         return qs
+
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
