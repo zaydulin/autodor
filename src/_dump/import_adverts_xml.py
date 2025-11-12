@@ -1,23 +1,29 @@
 import os
-import django
 import sys
-import io
 import re
+import io
 import decimal
-import requests
-from xml.etree import ElementTree as ET
-from urllib.parse import urlparse
 import logging
+import requests
+from urllib.parse import urlparse
 
-# Настройка логирования
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+import django
+from django.db import transaction
+from django.utils.timezone import now
+from lxml import etree as ET  # ✅ быстрее xml.etree
 
+# Настройки Django
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "_project.settings")
 django.setup()
 
-# === Список ссылок на XML ===
+from moderation.models import Advert
+
+# === Логирование ===
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logger = logging.getLogger("import_adverts")
+
+# === Источники ===
 URLS = [
     "https://s3.q-parser.ru/automata/63e72f72e46ff8/finn.no.xml",
     "https://s3.q-parser.ru/automata/63e700c07fab20/gratka.pl.xml",
@@ -36,320 +42,235 @@ URLS = [
     "https://s3.q-parser.ru/automata/63e72b3724b54c/cars.cz.xml"
 ]
 
-from moderation.models import Advert
-
-
 # === Утилиты ===
+RE_INT = re.compile(r"\d+")
+RE_FLOAT = re.compile(r"[\d\.,]+")
+
+
 def parse_int(text):
     if not text:
         return None
-    digits = re.sub(r"[^\d]", "", text)
-    return int(digits) if digits else None
+    m = RE_INT.findall(text)
+    return int("".join(m)) if m else None
 
 
 def parse_price(text):
     if not text:
         return None
-    norm = text.replace(" ", "").replace("\xa0", "").replace(",", ".")
-    norm = re.sub(r"[^0-9.]", "", norm)
-    if not norm:
-        return None
+    norm = re.sub(r"[^\d.,]", "", text.replace(" ", "").replace("\xa0", ""))
+    norm = norm.replace(",", ".")
     try:
         return decimal.Decimal(norm)
-    except:
+    except decimal.InvalidOperation:
         return None
-
-
-def extract_fields_dict(good_el):
-    out = {}
-    for f in good_el.findall("./field"):
-        name = (f.attrib.get("name") or "").strip()
-        value = (f.text or "").strip()
-        out[name] = value
-    return out
-
-
-def extract_images(good_el, limit=7):
-    images = []
-    for img in good_el.findall("./image"):
-        url = (img.text or "").strip()
-        if url and is_valid_url(url):
-            images.append(url)
-            if limit and len(images) >= limit:
-                break
-    return images
-
-
-def is_valid_url(url):
-    """Проверяет, является ли строка валидным URL"""
-    try:
-        result = urlparse(url)
-        return all([result.scheme, result.netloc])
-    except:
-        return False
 
 
 def parse_engine_volume(text):
-    """ '2393 ccm' -> 2.4 ; '2,0 L' -> 2.0 """
     if not text:
         return None
-    m = re.search(r"(\d[\d\.,]*)\s*ccm", text, flags=re.I)
-    if m:
-        raw = m.group(1).replace(".", "").replace(",", ".")
-        try:
-            liters = decimal.Decimal(raw) / decimal.Decimal(1000)
+    t = text.lower()
+    if "ccm" in t:
+        val = RE_FLOAT.search(t)
+        if val:
+            liters = decimal.Decimal(val.group(0).replace(",", ".")) / 1000
             return liters.quantize(decimal.Decimal("0.1"))
-        except:
-            pass
-    m2 = re.search(r"(\d+(?:[\.,]\d+)?)\s*[lL]", text)
-    if m2:
-        try:
-            return decimal.Decimal(m2.group(1).replace(",", ".")).quantize(decimal.Decimal("0.1"))
-        except:
-            pass
+    if "l" in t:
+        val = RE_FLOAT.search(t)
+        if val:
+            return decimal.Decimal(val.group(0).replace(",", ".")).quantize(decimal.Decimal("0.1"))
     return None
 
 
 def parse_power_hp(text):
-    # "125kW (170 PS)" -> 170
     if not text:
         return None
-    m = re.search(r"\((\d+)\s*PS\)", text, flags=re.I)
-    if m:
-        return int(m.group(1))
-    m2 = re.search(r"(\d+)\s*kW", text, flags=re.I)
-    if m2:
-        try:
-            kw = int(m2.group(1))
-            return int(round(kw * 1.35962))
-        except:
-            return None
+    text = text.lower()
+    if "ps" in text:
+        m = re.search(r"(\d+)\s*ps", text)
+        if m:
+            return int(m.group(1))
+    if "kw" in text:
+        m = re.search(r"(\d+)\s*kw", text)
+        if m:
+            return int(round(int(m.group(1)) * 1.35962))
     return None
 
 
-def map_transmission(text):
-    if not text:
+def is_valid_url(url):
+    try:
+        u = urlparse(url)
+        return all([u.scheme, u.netloc])
+    except Exception:
+        return False
+
+
+def extract_fields_dict(good_el):
+    return {f.get("name", "").strip(): (f.text or "").strip() for f in good_el.findall("field")}
+
+
+def extract_images(good_el, limit=7):
+    urls = [img.text.strip() for img in good_el.findall("image") if img.text and is_valid_url(img.text)]
+    return urls[:limit]
+
+
+def extract_address_from_description(description: str) -> str:
+    if not description:
+        return ""
+    for pattern in [
+        r"Adresse:\s*([^<]+)",
+        r"Address:\s*([^<]+)",
+        r"Адрес:\s*([^<]+)",
+        r"Asukoht:\s*([^<]+)",
+        r"Lokacija:\s*([^<]+)",
+    ]:
+        m = re.search(pattern, description, flags=re.I)
+        if m:
+            return re.sub(r"\s+", " ", m.group(1).strip())
+    return ""
+
+
+# === Маппинг ===
+def map_transmission(t):
+    if not t:
         return None
-    t = text.strip().lower()
-    if "schalt" in t or "mechan" in t or "manuell" in t or "ręczna" in t:
+    t = t.lower()
+    if any(k in t for k in ["manual", "schalt", "manuell", "ręczna", "mechan"]):
         return Advert.TransmissionType.MANUAL
-    if "automatik" in t or "automatic" in t or "automat" in t or "automatyczna" in t:
+    if any(k in t for k in ["auto", "automatik", "automat", "automatyczna"]):
         return Advert.TransmissionType.AUTOMATIC
     if "cvt" in t:
         return Advert.TransmissionType.CVT
-    if "robot" in t or "dsg" in t:
+    if any(k in t for k in ["robot", "dsg"]):
         return Advert.TransmissionType.ROBOT
     return None
 
 
-def map_fuel(text):
-    if not text:
+def map_fuel(t):
+    if not t:
         return None
-    t = text.strip().lower()
-    if "diesel" in t or "nafta" in t or "дизел" in t:
+    t = t.lower()
+    if any(k in t for k in ["diesel", "nafta", "дизел"]):
         return Advert.FuelType.DIESEL
-    if "benzin" in t or "gasoline" in t or "petrol" in t or "benzyna" in t or "бензин" in t:
+    if any(k in t for k in ["benzin", "gasoline", "petrol", "benzyna", "бензин"]):
         return Advert.FuelType.GASOLINE
-    if "hybrid" in t or "hibrid" in t or "хибрид" in t:
+    if any(k in t for k in ["hybrid", "hibrid", "хибрид"]):
         return Advert.FuelType.HYBRID
-    if "elekt" in t or "electric" in t or "електри" in t:
+    if any(k in t for k in ["elekt", "electric", "електри"]):
         return Advert.FuelType.ELECTRIC
-    if "gaz" in t or "lpg" in t or "cng" in t or "газ" in t:
-        return Advert.FuelType.GAS
+    if any(k in t for k in ["gaz", "lpg", "cng", "газ"]):
+        # безопасно: если нет GAS в модели — считаем бензином
+        return getattr(Advert.FuelType, "GAS", Advert.FuelType.GASOLINE)
     return None
 
 
-def map_drive(text):
-    if not text:
+def map_drive(t):
+    if not t:
         return None
-    t = text.strip().lower()
-    if "allrad" in t or "quattro" in t or "awd" in t or "4x4" in t or "4wd" in t:
+    t = t.lower()
+    if any(k in t for k in ["awd", "4x4", "4wd", "quattro", "allrad"]):
         return Advert.DriveType.AWD
-    if "vorder" in t or "front" in t or "fwd" in t or "przedni" in t or "передний" in t:
+    if any(k in t for k in ["fwd", "front", "vorder", "przedni", "передний"]):
         return Advert.DriveType.FWD
-    if "hinter" in t or "heck" in t or "rwd" in t or "tylny" in t or "задний" in t:
+    if any(k in t for k in ["rwd", "heck", "hinter", "tylny", "задний"]):
         return Advert.DriveType.RWD
     return None
 
 
-def extract_address_from_description(description):
-    """Извлекает адрес из описания"""
-    if not description or not isinstance(description, str):
-        return ''
-
-    # Паттерны для поиска адреса в разных форматах
-    patterns = [
-        r'Anschrift:\s*<\/td>\s*<td>([\s\S]*?)<\/td>',
-        r'Adresse:\s*([^<]+)',
-        r'Address:\s*([^<]+)',
-        r'Адрес:\s*([^<]+)',
-        r'Asukoht:\s*([^<]+)',
-        r'Lokacija:\s*([^<]+)',
-    ]
-
-    for pattern in patterns:
-        match = re.search(pattern, description, re.IGNORECASE)
-        if match:
-            address = match.group(1)
-            # Очистка от HTML тегов
-            address = re.sub(r'<[^>]+>', ' ', address)
-            address = re.sub(r'\s+', ' ', address).strip()
-            return address
-
-    return ''
-
-
-def good_to_payload(good_el, images_limit=7, is_first_url=False):
-    fields = extract_fields_dict(good_el)
-    images = extract_images(good_el, images_limit)
-
-    name = fields.get("Название")
-    link = fields.get("URL")
-    price = parse_price(fields.get("Цена"))
-    currency = fields.get("Валюта")
-
-    if not name or not link or price is None or not currency:
-        logger.warning(f"Пропущено объявление из-за отсутствия обязательных полей: {name}")
+# === Основная логика ===
+def good_to_payload(good_el, is_first_url=False):
+    f = extract_fields_dict(good_el)
+    images = extract_images(good_el)
+    if not images:
         return None
 
-    description = fields.get("Описание") or fields.get("Description") or fields.get("Opis") or ""
+    name = f.get("Название") or f.get("Title")
+    link = f.get("URL")
+    price = parse_price(f.get("Цена"))
+    currency = f.get("Валюта") or "EUR"
+
+    if not all([name, link, price, currency]):
+        return None
+
+    description = f.get("Описание") or f.get("Description") or ""
     address = extract_address_from_description(description)
 
-    # Извлекаем дополнительные поля для разных сайтов
-    mileage = (parse_int(fields.get("Kilometer")) or
-               parse_int(fields.get("Kilometerstand")) or
-               parse_int(fields.get("Priebeg")) or
-               parse_int(fields.get("Przebieg")) or
-               parse_int(fields.get("Tachometr")) or
-               parse_int(fields.get("Km")))
-
-    year = (parse_int(fields.get("Erstzulassung")) or
-            parse_int(fields.get("Modellår")) or
-            parse_int(fields.get("Година на производство")) or
-            parse_int(fields.get("Rok produkcji")) or
-            parse_int(fields.get("Rok výroby")))
-
-    power = (parse_power_hp(fields.get("Leistung")) or
-             parse_power_hp(fields.get("Effekt")) or
-             parse_power_hp(fields.get("Moc")) or
-             parse_power_hp(fields.get("Putere")) or
-             parse_power_hp(fields.get("Мощност")))
-
-    engine_volume = (parse_engine_volume(fields.get("Hubraum")) or
-                     parse_engine_volume(fields.get("Slagvolum")) or
-                     parse_engine_volume(fields.get("Pojemność")) or
-                     parse_engine_volume(fields.get("Capacitate cilindrica")) or
-                     parse_engine_volume(fields.get("Кубатура")))
-
-    transmission = (map_transmission(fields.get("Getriebe")) or
-                    map_transmission(fields.get("Girkasse")) or
-                    map_transmission(fields.get("Skrzynia biegów")) or
-                    map_transmission(fields.get("Cutie de viteze")))
-
-    fuel = (map_fuel(fields.get("Kraftstoff")) or
-            map_fuel(fields.get("Drivstoff")) or
-            map_fuel(fields.get("Rodzaj paliwa")) or
-            map_fuel(fields.get("Combustibil")) or
-            map_fuel(fields.get("Двигател")))
-
-    drive = (map_drive(fields.get("Antrieb")) or
-             map_drive(fields.get("Hjuldrift")) or
-             map_drive(fields.get("Napęd")) or
-             map_drive(fields.get("Transmisie")))
-
-    if not fuel or not images or not mileage:
-        return None
-
-    payload = {
+    return {
         "name": name,
         "link": link,
         "original_link": link,
-        "address": address,
         "price": price,
         "currency": currency,
         "description": description,
+        "address": address,
         "images": images,
-        "subtitle": fields.get("Подзаголовок"),
-        "article": fields.get("Артикул"),
-        "mileage": mileage,
-        "color": fields.get("Farbe") or fields.get("Kolor") or fields.get("Farge") or fields.get("Culoare"),
-        "doors": parse_int(fields.get("Türen")) or parse_int(fields.get("Dører")) or parse_int(
-            fields.get("Liczba drzwi")),
-        "power": power,
-        "engine_volume": engine_volume,
-        "year": year,
-        "transmission": transmission,
-        "fuel": fuel,
-        "drive": drive,
+        "mileage": parse_int(f.get("Km") or f.get("Przebieg") or f.get("Kilometer")),
+        "year": parse_int(f.get("Rok produkcji") or f.get("Rok výroby") or f.get("Год")),
+        "power": parse_power_hp(f.get("Leistung") or f.get("Moc")),
+        "engine_volume": parse_engine_volume(f.get("Hubraum") or f.get("Pojemność")),
+        "transmission": map_transmission(f.get("Getriebe") or f.get("Skrzynia biegów")),
+        "fuel": map_fuel(f.get("Kraftstoff") or f.get("Rodzaj paliwa")),
+        "drive": map_drive(f.get("Antrieb") or f.get("Napęd")),
+        "doors": parse_int(f.get("Türen") or f.get("Liczba drzwi")),
+        "color": f.get("Farbe") or f.get("Kolor"),
+        "updated_at": now(),
     }
 
-    # Если это первая ссылка — парсим brand и model_auto
-    if is_first_url and name:
-        parts = name.split(maxsplit=1)
-        payload["brand"] = parts[0]
-        payload["model_auto"] = parts[1] if len(parts) > 1 else ""
 
-    return payload
-
-
-def import_from_url(url, update_by="article", is_first_url=False):
-    logger.info(f"\nСкачиваю: {url}")
+def import_from_url(url, batch_size=500):
+    logger.info(f"Скачиваю: {url}")
     try:
         resp = requests.get(url, timeout=60)
         resp.raise_for_status()
     except Exception as e:
-        logger.error(f"Ошибка скачивания: {e}")
+        logger.error(f"Ошибка скачивания {url}: {e}")
         return
 
     try:
         root = ET.parse(io.BytesIO(resp.content)).getroot()
     except Exception as e:
-        logger.error(f"Ошибка парсинга XML: {e}")
+        logger.error(f"Ошибка XML: {e}")
         return
 
-    goods = root.findall("./good")
+    goods = root.findall(".//good")
     logger.info(f"Найдено {len(goods)} объявлений")
 
-    created = updated = skipped = 0
-    for idx, good in enumerate(goods, start=1):
+    to_create = []
+    updated = skipped = 0
+
+    for idx, good in enumerate(goods, 1):
         try:
-            payload = good_to_payload(good, is_first_url=is_first_url)
+            payload = good_to_payload(good)
             if not payload:
                 skipped += 1
                 continue
 
-            # Проверяем наличие изображений
-            if not payload.get("images"):
-                skipped += 1
-                continue
-
-            if update_by == "article" and payload.get("article"):
-                obj, is_created = Advert.objects.update_or_create(
-                    article=payload["article"], defaults=payload
-                )
-            elif update_by == "link" and payload.get("link"):
-                obj, is_created = Advert.objects.update_or_create(
-                    link=payload["link"], defaults=payload
-                )
-            else:
-                obj = Advert.objects.create(**payload)
-                is_created = True
-
-            if is_created:
-                created += 1
-            else:
+            # Проверяем по link (уникальное поле)
+            if Advert.objects.filter(link=payload["link"]).exists():
+                Advert.objects.filter(link=payload["link"]).update(**payload)
                 updated += 1
+            else:
+                to_create.append(Advert(**payload))
+
+            if len(to_create) >= batch_size:
+                with transaction.atomic():
+                    Advert.objects.bulk_create(to_create, ignore_conflicts=True)
+                logger.info(f"✅ Сохранено {len(to_create)} новых записей (пакет)")
+                to_create.clear()
 
         except Exception as e:
-            logger.error(f"[{idx}] Ошибка сохранения: {e}")
+            logger.error(f"[{idx}] Ошибка: {e}")
             skipped += 1
-            continue
 
-    logger.info(f"Готово. Создано: {created}, обновлено: {updated}, пропущено: {skipped}")
+    # Финальный пакет
+    if to_create:
+        with transaction.atomic():
+            Advert.objects.bulk_create(to_create, ignore_conflicts=True)
+
+    logger.info(f"Готово. Обновлено: {updated}, Пропущено: {skipped}")
 
 
-# === Запуск для всех ссылок ===
+# === Запуск ===
 if __name__ == "__main__":
-    for i, url in enumerate(URLS):
-        logger.info(f"Обработка URL {i + 1}/{len(URLS)}: {url}")
-        import_from_url(url, is_first_url=(i == 0))
+    for i, url in enumerate(URLS, 1):
+        logger.info(f"--- [{i}/{len(URLS)}] {url}")
+        import_from_url(url)

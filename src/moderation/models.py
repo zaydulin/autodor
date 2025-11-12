@@ -60,6 +60,7 @@ class Advertpayment(models.Model):
         DIESEL = "diesel", "Дизель"
         ELECTRIC = "electric", "Электро"
         HYBRID = "hybrid", "Гибрид"
+        GAS = "gas", "Газ / LPG / CNG"
 
     fuel = models.CharField(
         "Топливо", max_length=20, choices=FuelType.choices, blank=True, null=True
@@ -133,6 +134,7 @@ class Advert(models.Model):
         DIESEL = "diesel", "Дизель"
         ELECTRIC = "electric", "Электро"
         HYBRID = "hybrid", "Гибрид"
+        GAS = "gas", "Газ / LPG / CNG"
 
     fuel = models.CharField(
         "Топливо", max_length=20, choices=FuelType.choices, blank=True, null=True
