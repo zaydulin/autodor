@@ -4,6 +4,7 @@ from .models import *
 import nested_admin
 from django.utils.html import format_html
 
+
 @admin.register(Advert)
 class AdvertAdmin(admin.ModelAdmin):
     list_display = (
@@ -11,7 +12,10 @@ class AdvertAdmin(admin.ModelAdmin):
         "transmission", "fuel", "drive", "created_at", "preview_image"
     )
     list_display_links = ("id", "name")
+
+    # Поиск по этим полям (уже работает!)
     search_fields = ("name", "article", "description")
+
     list_filter = ("currency", "year", "transmission", "fuel", "drive", "color")
     readonly_fields = ("created_at",)
     ordering = ("-created_at",)
@@ -21,6 +25,7 @@ class AdvertAdmin(admin.ModelAdmin):
         if obj.images and isinstance(obj.images, list) and len(obj.images) > 0:
             return format_html('<img src="{}" width="60" style="object-fit:cover;border-radius:4px;" />', obj.images[0])
         return "-"
+
     preview_image.short_description = "Фото"
 
 
