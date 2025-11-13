@@ -56,11 +56,12 @@ services:
       context: .
       dockerfile: _config/app/Dockerfile
     container_name: cb-celery
-    command: celery --app _project worker --beat -l info --concurrency=$(nproc)
+    command: celery --app _project worker --beat -l info --concurrency=${CELERY_CONCURRENCY:-4}
     env_file:
       - .env
     environment:
       WAIT_HOSTS: cb-db:5432,cb-redis:6379
+      CELERY_CONCURRENCY: 4
     volumes:
       - ./src:/app/marketplace
     restart: always
