@@ -56,7 +56,7 @@ services:
       context: .
       dockerfile: _config/app/Dockerfile
     container_name: cb-celery
-    command: celery --app _project worker --beat -l info --concurrency=1
+    command: celery --app _project worker --beat -l info --concurrency=10
     env_file:
       - .env
     environment:
