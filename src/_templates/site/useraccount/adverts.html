@@ -155,27 +155,26 @@
 
                             <div class="mt-3">
                                 <div class="form-label">Коробка передач</div>
-                                {% for val,label in transmission_choices %}
+                                {% for val, label in transmission_choices %}
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" id="tr-{{ val }}" name="transmission" value="{{ val }}"
                                            {% if val in selected_transmissions %}checked{% endif %}>
                                     <label class="form-check-label" for="tr-{{ val }}">{{ label }}</label>
                                 </div>
                                 {% endfor %}
-
                             </div>
 
                             <div class="mt-3">
                                 <div class="form-label">Топливо</div>
-                                {% for val,label in fuel_choices %}
+                                {% for val, label in fuel_choices %}
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" id="fu-{{ val }}" name="fuel" value="{{ val }}"
                                            {% if val in selected_fuels %}checked{% endif %}>
                                     <label class="form-check-label" for="fu-{{ val }}">{{ label }}</label>
                                 </div>
                                 {% endfor %}
-
                             </div>
+
 
                             <div class="mt-3">
                                 <div class="form-label">Привод</div>
