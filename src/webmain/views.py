@@ -193,112 +193,62 @@ class AdvertViewFree(ListView):
         return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
-        qs = Advert.objects.all().order_by('-created_at')
         g = self.request.GET
 
-        # Поиск
+        # Базовый queryset
+        qs = (
+            Advert.objects
+            .filter(published=True)
+            .defer('images', 'description')  # если не нужно — это ускорит
+        )
+
+        # Фильтрация
+        filter_kwargs = {}
+
+        # Поиск по текстовому запросу
         q = g.get('q')
         if q:
-            qs = qs.filter(
-                Q(name__icontains=q) |
-                Q(subtitle__icontains=q) |
-                Q(article__icontains=q) |
-                Q(description__icontains=q) |
-                Q(brand__icontains=q) |
-                Q(model_auto__icontains=q) |
-                Q(color__icontains=q)
+            text_q = (
+                    Q(name__icontains=q) |
+                    Q(subtitle__icontains=q) |
+                    Q(article__icontains=q) |
+                    Q(description__icontains=q) |
+                    Q(brand__icontains=q) |
+                    Q(model_auto__icontains=q) |
+                    Q(color__icontains=q)
             )
+            qs = qs.filter(text_q)
 
-        # Тип автомобиля
-        pagetype = g.get('pagetype')
-        if pagetype:
-            try:
-                pagetype_int = int(pagetype)
-                qs = qs.filter(car_model__pagetype=pagetype_int)
-            except (ValueError, TypeError):
-                pass
+        # Фильтрация по Топливу
+        fuel = g.getlist('fuel')
+        if fuel:
+            filter_kwargs['fuel__in'] = fuel
 
-        # Марка/модель
+        # Фильтрация по Коробке передач
+        transmission = g.getlist('transmission')
+        if transmission:
+            filter_kwargs['transmission__in'] = transmission
+
+        # Фильтрация по другим параметрам (например, бренд, модель, цена и т.д.)
         brand = g.get('brand')
         if brand:
-            qs = qs.filter(brand__iexact=brand)
+            filter_kwargs['brand__iexact'] = brand
 
         model_auto = g.get('model_auto')
         if model_auto:
-            qs = qs.filter(model_auto__iexact=model_auto)
-
-        # Валюта
-        currency = g.get('currency')
-        if currency:
-            qs = qs.filter(currency__iexact=currency)
+            filter_kwargs['model_auto__iexact'] = model_auto
 
         # Цена
         price_min = _to_decimal(g.get('price_min'))
         price_max = _to_decimal(g.get('price_max'))
         if price_min is not None:
-            qs = qs.filter(price__gte=price_min)
+            filter_kwargs['price__gte'] = price_min
         if price_max is not None:
-            qs = qs.filter(price__lte=price_max)
+            filter_kwargs['price__lte'] = price_max
 
-        # Год
-        year_min = _to_int(g.get('year_min'))
-        year_max = _to_int(g.get('year_max'))
-        if year_min is not None:
-            qs = qs.filter(year__gte=year_min)
-        if year_max is not None:
-            qs = qs.filter(year__lte=year_max)
-
-        # Пробег
-        mileage_min = _to_int(g.get('mileage_min'))
-        mileage_max = _to_int(g.get('mileage_max'))
-        if mileage_min is not None:
-            qs = qs.filter(mileage__gte=mileage_min)
-        if mileage_max is not None:
-            qs = qs.filter(mileage__lte=mileage_max)
-
-        # Мощность
-        power_min = _to_int(g.get('power_min'))
-        power_max = _to_int(g.get('power_max'))
-        if power_min is not None:
-            qs = qs.filter(power__gte=power_min)
-        if power_max is not None:
-            qs = qs.filter(power__lte=power_max)
-
-        # Объем двигателя
-        ev_min = _to_decimal(g.get('engine_volume_min'))
-        ev_max = _to_decimal(g.get('engine_volume_max'))
-        if ev_min is not None:
-            qs = qs.filter(engine_volume__gte=ev_min)
-        if ev_max is not None:
-            qs = qs.filter(engine_volume__lte=ev_max)
-
-        # Двери
-        doors = _to_int(g.get('doors'))
-        if doors is not None:
-            qs = qs.filter(doors=doors)
-
-        # Цвет
-        color = g.get('color')
-        if color:
-            qs = qs.filter(color__icontains=color)
-
-        # Коробка/топливо/привод (множественный выбор)
-        transmissions = g.getlist('transmission')
-        if transmissions:
-            qs = qs.filter(transmission__in=transmissions)
-
-        fuels = g.getlist('fuel')
-        if fuels:
-            qs = qs.filter(fuel__in=fuels)
-
-        drives = g.getlist('drive')
-        if drives:
-            qs = qs.filter(drive__in=drives)
-
-        # Есть изображения
-        has_images = g.get('has_images')
-        if has_images == '1':
-            qs = qs.exclude(images__isnull=True).exclude(images=[])
+        # Применяем фильтры
+        if filter_kwargs:
+            qs = qs.filter(**filter_kwargs)
 
         # Сортировка
         order = g.get('order')
@@ -315,84 +265,44 @@ class AdvertViewFree(ListView):
         elif order == 'mileage_desc':
             qs = qs.order_by('-mileage', '-created_at')
         else:
-            # по умолчанию — свежие
             qs = qs.order_by('-created_at')
 
         return qs
 
     def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         g = self.request.GET
 
-        # Создаем словарь: тип автомобиля -> [марки]
-        carbrands_by_type = {}
-        for choice_value, choice_label in CarModel.PAGE_CHOICE:
-            # Получаем марки для данного типа
-            brands_for_type = CarBrand.objects.filter(
-                models__pagetype=choice_value
-            ).distinct().values_list('name', flat=True).order_by('name')
-            carbrands_by_type[choice_value] = list(brands_for_type)
+        # Данные для фильтров из Advert
+        filter_adverts_qs = Advert.objects.filter(published=True)
 
-        ctx['carbrands_by_type'] = carbrands_by_type
+        # Категории, модели, марки и другие справочные данные
+        context['brands'] = filter_adverts_qs.exclude(brand__isnull=True).values_list('brand',
+                                                                                      flat=True).distinct().order_by(
+            'brand')
+        context['models'] = filter_adverts_qs.exclude(model_auto__isnull=True).values_list('model_auto',
+                                                                                           flat=True).distinct().order_by(
+            'model_auto')
+        context['currencies'] = filter_adverts_qs.exclude(currency__isnull=True).values_list('currency',
+                                                                                             flat=True).distinct().order_by(
+            'currency')
+        context['colors'] = filter_adverts_qs.exclude(color__isnull=True).values_list('color',
+                                                                                      flat=True).distinct().order_by(
+            'color')
+        context['doors'] = filter_adverts_qs.exclude(doors__isnull=True).values_list('doors',
+                                                                                     flat=True).distinct().order_by(
+            'doors')
 
-        # Создаем словарь марка: [модели] с учетом типа
-        carmodels_dict_by_type = {}
-        carbrands_with_models = CarBrand.objects.prefetch_related(
-            Prefetch('models', queryset=CarModel.objects.order_by('name'))
-        ).order_by('name')
+        # Фильтры для Топлива и Коробки передач
+        context['transmission_choices'] = Advert.TransmissionType.choices
+        context['fuel_choices'] = Advert.FuelType.choices
+        context['drive_choices'] = Advert.DriveType.choices
 
-        for brand in carbrands_with_models:
-            # Для каждой марки создаем под-словарь по типам
-            carmodels_dict_by_type[brand.name] = {}
-            for choice_value, choice_label in CarModel.PAGE_CHOICE:
-                models_for_type = brand.models.filter(
-                    pagetype=choice_value
-                ).values_list('name', flat=True)
-                carmodels_dict_by_type[brand.name][choice_value] = list(models_for_type)
+        context['selected_transmissions'] = g.getlist('transmission')
+        context['selected_fuels'] = g.getlist('fuel')
 
-        ctx['carmodels_dict_by_type'] = carmodels_dict_by_type
-
-        # Данные для фильтров
-        ctx['brands'] = (Advert.objects.values_list('brand', flat=True)
-                         .exclude(brand__isnull=True).exclude(brand__exact='')
-                         .distinct().order_by('brand'))
-        ctx['models'] = (Advert.objects.values_list('model_auto', flat=True)
-                         .exclude(model_auto__isnull=True).exclude(model_auto__exact='')
-                         .distinct().order_by('model_auto'))
-        ctx['currencies'] = (Advert.objects.values_list('currency', flat=True)
-                             .exclude(currency__isnull=True).exclude(currency__exact='')
-                             .distinct().order_by('currency'))
-        ctx['colors'] = (Advert.objects.values_list('color', flat=True)
-                         .exclude(color__isnull=True).exclude(color__exact='')
-                         .distinct().order_by('color'))
-        ctx['doors'] = (Advert.objects.values_list('doors', flat=True)
-                        .exclude(doors__isnull=True)
-                        .distinct().order_by('doors'))
-
-        ctx['carmodels'] = (CarModel.objects.values_list('name', flat=True).distinct().order_by('name'))
-        ctx['carbrands'] = (CarBrand.objects.values_list('name', flat=True).distinct().order_by('name'))
-
-        ctx['pagetype_choices'] = CarModel.PAGE_CHOICE
-        ctx['pagetype_values'] = [choice[0] for choice in CarModel.PAGE_CHOICE]
-        ctx['pagetype_labels'] = [choice[1] for choice in CarModel.PAGE_CHOICE]
-        ctx['selected_pagetype'] = g.get('pagetype', '')
-
-        # Старый словарь для обратной совместимости
-        ctx['carmodels_dict'] = {
-            brand.name: list(brand.models.values_list('name', flat=True))
-            for brand in carbrands_with_models
-        }
-
-        ctx['transmission_choices'] = Advert.TransmissionType.choices
-        ctx['fuel_choices'] = Advert.FuelType.choices
-        ctx['drive_choices'] = Advert.DriveType.choices
-
-        ctx['selected_transmissions'] = g.getlist('transmission')
-        ctx['selected_fuels'] = g.getlist('fuel')
-        ctx['selected_drives'] = g.getlist('drive')
-
-        ctx['params'] = g
-        return ctx
+        context['params'] = g
+        return context
 
 
 class AdvertDetailViewFree(DetailView):
