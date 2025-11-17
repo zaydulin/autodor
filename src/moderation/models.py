@@ -86,38 +86,58 @@ class Advertpayment(models.Model):
     def __str__(self):
         return self.name
 
-
 class Advert(models.Model):
     # Основные
-    name = models.CharField("Название", max_length=255)
-    car_brand = models.ForeignKey('CarBrand', on_delete=models.CASCADE, null=True, blank=True)
-    car_model = models.ForeignKey('CarModel', on_delete=models.CASCADE, null=True, blank=True)
-    brand = models.CharField("марка", max_length=255, null=True, blank=True)
-    model_auto = models.CharField("модель", max_length=255, null=True, blank=True)
+    name = models.CharField("Название", max_length=255, db_index=True)
+    car_brand = models.ForeignKey(
+        'CarBrand',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='adverts'
+    )
+    car_model = models.ForeignKey(
+        'CarModel',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='adverts'
+    )
+    brand = models.CharField("марка", max_length=255, null=True, blank=True, db_index=True)
+    model_auto = models.CharField("модель", max_length=255, null=True, blank=True, db_index=True)
     link = models.URLField("Ссылка", max_length=500)
     original_link = models.URLField("Оригинальная ссылка", max_length=500, blank=True, null=True)
-    price = models.IntegerField("Стоимость")
-    currency = models.CharField("Валюта", max_length=10)  # например, 'USD', 'EUR', 'KZT'
+    price = models.IntegerField("Стоимость", db_index=True)
+    currency = models.CharField("Валюта", max_length=10, db_index=True)  # например, 'USD', 'EUR', 'KZT'
     description = models.TextField("Описание", blank=True, null=True)
-    images = models.JSONField("Список ссылок на изображения", blank=True, null=True)  # храним list[str]
+    images = models.JSONField("Список ссылок на изображения", blank=True, null=True)  # list[str]
     subtitle = models.CharField("Подзаголовок", max_length=255, blank=True, null=True)
     article = models.CharField("Артикул", max_length=100, blank=True, null=True)
     address = models.CharField('Адрес', max_length=100, blank=True, null=True)
-    # Характеристики авто
-    mileage = models.PositiveIntegerField("Километраж (км)", blank=True, null=True)
-    color = models.CharField("Цвет", max_length=150, blank=True, null=True)
-    doors = models.PositiveSmallIntegerField("Количество дверей", blank=True, null=True)
 
-    power = models.PositiveIntegerField("Мощность (л.с.)", blank=True, null=True)
-    engine_volume = models.DecimalField("Объём двигателя (л)", max_digits=4, decimal_places=1, blank=True, null=True)
+    # Характеристики авто
+    mileage = models.PositiveIntegerField("Километраж (км)", blank=True, null=True, db_index=True)
+    color = models.CharField("Цвет", max_length=150, blank=True, null=True, db_index=True)
+    doors = models.PositiveSmallIntegerField("Количество дверей", blank=True, null=True, db_index=True)
+
+    power = models.PositiveIntegerField("Мощность (л.с.)", blank=True, null=True, db_index=True)
+    engine_volume = models.DecimalField(
+        "Объём двигателя (л)",
+        max_digits=4,
+        decimal_places=1,
+        blank=True,
+        null=True,
+        db_index=True,
+    )
     year = models.PositiveSmallIntegerField(
         "Год выпуска",
         blank=True,
         null=True,
-
+        db_index=True,
     )
-    published = models.BooleanField("Опубликовано", default=True)
+    published = models.BooleanField("Опубликовано", default=True, db_index=True)
     updated_at = models.DateTimeField("Обновлено", auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
     class TransmissionType(models.TextChoices):
         MANUAL = "manual", "Механика"
@@ -126,7 +146,12 @@ class Advert(models.Model):
         ROBOT = "robot", "Робот"
 
     transmission = models.CharField(
-        "Коробка передач", max_length=20, choices=TransmissionType.choices, blank=True, null=True
+        "Коробка передач",
+        max_length=20,
+        choices=TransmissionType.choices,
+        blank=True,
+        null=True,
+        db_index=True,
     )
 
     class FuelType(models.TextChoices):
@@ -137,7 +162,12 @@ class Advert(models.Model):
         GAS = "gas", "Газ / LPG / CNG"
 
     fuel = models.CharField(
-        "Топливо", max_length=20, choices=FuelType.choices, blank=True, null=True
+        "Топливо",
+        max_length=20,
+        choices=FuelType.choices,
+        blank=True,
+        null=True,
+        db_index=True,
     )
 
     class DriveType(models.TextChoices):
@@ -146,14 +176,23 @@ class Advert(models.Model):
         AWD = "awd", "Полный"
 
     drive = models.CharField(
-        "Привод", max_length=10, choices=DriveType.choices, blank=True, null=True
+        "Привод",
+        max_length=10,
+        choices=DriveType.choices,
+        blank=True,
+        null=True,
+        db_index=True,
     )
-
-    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         verbose_name = "Объявление"
         verbose_name_plural = "Объявления"
+        indexes = [
+            models.Index(fields=['brand', 'model_auto']),
+            models.Index(fields=['price', 'created_at']),
+            models.Index(fields=['year', 'created_at']),
+            models.Index(fields=['mileage', 'created_at']),
+        ]
 
     def clean_fields(self, exclude=None):
         """Очистка полей перед валидацией"""
@@ -172,10 +211,9 @@ class Advert(models.Model):
         # Очищаем поля от * и / перед сохранением
         self.clean_fields()
 
-        print(f"=== СОХРАНЕНИЕ ОБЪЯВЛЕНИЯ ===")
-        print(f"Название: {self.name}")
-        print(f"Текущая марка: {self.car_brand}")
-        print(f"Текущая модель: {self.car_model}")
+        # ⚠️ Печать убрал бы в проде — сильно тормозит при массовых сохранениях
+        # print(f"=== СОХРАНЕНИЕ ОБЪЯВЛЕНИЯ ===")
+        # ...
 
         # Автоматический поиск марки и модели из названия
         self.find_brand_and_model_from_first_words()
@@ -190,8 +228,6 @@ class Advert(models.Model):
             self.model_auto = self.car_model.name
         else:
             self.model_auto = None
-
-        print(f"После поиска - марка: {self.car_brand}, модель: {self.car_model}")
 
         # Исправленная логика для doors
         if self.doors:
@@ -208,37 +244,27 @@ class Advert(models.Model):
         Первое слово - марка, второе слово - модель
         """
         if not self.name:
-            print("❌ Нет названия для поиска")
             return
 
+        # ⚠️ импорт локально, чтобы избежать циклических импортов
         from .models import CarBrand, CarModel
 
         words = self.name.strip().split()
-        print(f"🔍 Анализ названия: '{self.name}'")
-        print(f"Все слова: {words}")
-
         if len(words) < 2:
-            print("❌ Недостаточно слов в названии для поиска")
             return
 
         first_word = words[0].strip().lower()
         second_word = words[1].strip().lower()
 
-        print(f"Первое слово (марка): '{first_word}'")
-        print(f"Второе слово (модель): '{second_word}'")
-
         found_brand = None
         found_model = None
 
         # Ищем марку по первому слову
-        print("🔎 Поиск марки...")
         brand = CarBrand.objects.filter(name__iexact=first_word).first()
         if brand:
             found_brand = brand
-            print(f"✅ Найдена марка: {brand.name}")
 
             # Ищем модель по второму слову для найденной марки
-            print(f"🔎 Поиск модели '{second_word}' для марки {brand.name}...")
             model = CarModel.objects.filter(
                 brand=brand,
                 name__iexact=second_word
@@ -246,53 +272,34 @@ class Advert(models.Model):
 
             if model:
                 found_model = model
-                print(f"✅ Найдена модель: {model.name}")
             else:
-                print(f"❌ Модель '{second_word}' не найдена для марки {brand.name}")
-
                 # Попробуем найти модель по частичному совпадению
-                models = CarModel.objects.filter(brand=brand)
-                for model in models:
-                    if second_word in model.name.lower():
-                        found_model = model
-                        print(f"✅ Найдена модель по частичному совпадению: {model.name}")
+                models_qs = CarModel.objects.filter(brand=brand)
+                second_lower = second_word.lower()
+                for m in models_qs:
+                    if second_lower in m.name.lower():
+                        found_model = m
                         break
-
         else:
-            print(f"❌ Марка '{first_word}' не найдена в базе")
-
             # Попробуем найти марку по частичному совпадению
             brands = CarBrand.objects.all()
-            for brand in brands:
-                if first_word in brand.name.lower():
-                    found_brand = brand
-                    print(f"✅ Найдена марка по частичному совпадению: {brand.name}")
-
+            for b in brands:
+                if first_word in b.name.lower():
+                    found_brand = b
                     # Ищем модель для найденной марки
                     model = CarModel.objects.filter(
-                        brand=brand,
+                        brand=b,
                         name__iexact=second_word
                     ).first()
-
                     if model:
                         found_model = model
-                        print(f"✅ Найдена модель: {model.name}")
                     break
 
         # Устанавливаем найденные значения
         if found_brand:
             self.car_brand = found_brand
-            print(f"✅ Установлена марка: {found_brand.name}")
-        else:
-            print("❌ Марка не найдена")
-
         if found_model:
             self.car_model = found_model
-            print(f"✅ Установлена модель: {found_model.name}")
-        else:
-            print("❌ Модель не найдена")
-
-        print("=== ПОИСК ЗАВЕРШЕН ===\n")
 
     def delete_if_old(self, hours_threshold=5):
         """
