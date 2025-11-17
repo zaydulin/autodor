@@ -595,6 +595,8 @@ def _to_decimal(v):
     except (TypeError, ValueError):
         return None
 
+
+
 class AdvertView(ListView):
     template_name = 'site/useraccount/adverts.html'
     context_object_name = 'adverts'
