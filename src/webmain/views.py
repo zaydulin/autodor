@@ -186,87 +186,112 @@ class AdvertViewFree(ListView):
     model = Advert
     paginate_by = 15
 
-    def get(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
-            # Переадресовываем на страницу с объявлениями, если пользователь уже авторизован
-            return redirect('moderation:adverts')
-        return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
         g = self.request.GET
 
-        # Базовый queryset
-        qs = (
-            Advert.objects
-            .filter(published=True)
-            .defer('images', 'description')  # если не нужно — это ускорит
-        )
+        # Базовый queryset:
+        qs = Advert.objects.filter(published=True)
 
-        # Фильтрация
-        filter_kwargs = {}
-
-        # Поиск по текстовому запросу
+        # Фильтрация по текстовому запросу
         q = g.get('q')
         if q:
             text_q = (
-                    Q(name__icontains=q) |
-                    Q(subtitle__icontains=q) |
-                    Q(article__icontains=q) |
-                    Q(description__icontains=q) |
-                    Q(brand__icontains=q) |
-                    Q(model_auto__icontains=q) |
-                    Q(color__icontains=q)
+                Q(name__icontains=q) |
+                Q(subtitle__icontains=q) |
+                Q(article__icontains=q) |
+                Q(description__icontains=q) |
+                Q(brand__icontains=q) |
+                Q(model_auto__icontains=q) |
+                Q(color__icontains=q)
             )
             qs = qs.filter(text_q)
 
-        # Фильтрация по Топливу
-        fuel = g.getlist('fuel')
-        if fuel:
-            filter_kwargs['fuel__in'] = fuel
-
-        # Фильтрация по Коробке передач
-        transmission = g.getlist('transmission')
-        if transmission:
-            filter_kwargs['transmission__in'] = transmission
-
-        # Фильтрация по другим параметрам (например, бренд, модель, цена и т.д.)
+        # Фильтрация по марке
         brand = g.get('brand')
         if brand:
-            filter_kwargs['brand__iexact'] = brand
+            qs = qs.filter(brand__iexact=brand)
 
+        # Фильтрация по типу автомобиля (pagetype)
+        pagetype = g.get('pagetype')
+        if pagetype:
+            qs = qs.filter(car_model__pagetype=pagetype)
+
+        # Фильтрация по модели
         model_auto = g.get('model_auto')
         if model_auto:
-            filter_kwargs['model_auto__iexact'] = model_auto
+            qs = qs.filter(model_auto__iexact=model_auto)
 
-        # Цена
-        price_min = _to_decimal(g.get('price_min'))
-        price_max = _to_decimal(g.get('price_max'))
-        if price_min is not None:
-            filter_kwargs['price__gte'] = price_min
-        if price_max is not None:
-            filter_kwargs['price__lte'] = price_max
+        # Фильтрация по топливу
+        fuel = g.getlist('fuel')
+        if fuel:
+            qs = qs.filter(fuel__in=fuel)
+
+        # Фильтрация по году выпуска
+        year_min = g.get('year_min')
+        year_max = g.get('year_max')
+        if year_min:
+            qs = qs.filter(year__gte=year_min)
+        if year_max:
+            qs = qs.filter(year__lte=year_max)
+
+        # Фильтрация по пробегу
+        mileage_min = g.get('mileage_min')
+        mileage_max = g.get('mileage_max')
+        if mileage_min:
+            qs = qs.filter(mileage__gte=mileage_min)
+        if mileage_max:
+            qs = qs.filter(mileage__lte=mileage_max)
+
+        # Фильтрация по мощности
+        power_min = g.get('power_min')
+        power_max = g.get('power_max')
+        if power_min:
+            qs = qs.filter(power__gte=power_min)
+        if power_max:
+            qs = qs.filter(power__lte=power_max)
+
+        # Фильтрация по объему
+        engine_volume_min = g.get('engine_volume_min')
+        engine_volume_max = g.get('engine_volume_max')
+        if engine_volume_min:
+            qs = qs.filter(engine_volume__gte=engine_volume_min)
+        if engine_volume_max:
+            qs = qs.filter(engine_volume__lte=engine_volume_max)
+
+        # Фильтрация по дверям
+        doors = g.get('doors')
+        if doors:
+            qs = qs.filter(doors=doors)
+
+        # Фильтрация по цвету
+        color = g.get('color')
+        if color:
+            qs = qs.filter(color__iexact=color)
+
+        # Фильтрация по наличию изображений
+        has_images = g.get('has_images')
+        if has_images:
+            qs = qs.filter(images__isnull=False)
+
+        # Фильтрация по коробке передач
+        transmission = g.getlist('transmission')
+        if transmission:
+            qs = qs.filter(transmission__in=transmission)
+            # Фильтрация по типу привода
+
+        drive = g.getlist('drive')  # Получаем выбранные значения для привода
+        if drive:
+            qs = qs.filter(drive__in=drive)
+        # Фильтрация по цене
+        price_min = g.get('price_min')
+        price_max = g.get('price_max')
+        if price_min:
+            qs = qs.filter(price__gte=price_min)
+        if price_max:
+            qs = qs.filter(price__lte=price_max)
 
         # Применяем фильтры
-        if filter_kwargs:
-            qs = qs.filter(**filter_kwargs)
-
-        # Сортировка
-        order = g.get('order')
-        if order == 'price_asc':
-            qs = qs.order_by('price', '-created_at')
-        elif order == 'price_desc':
-            qs = qs.order_by('-price', '-created_at')
-        elif order == 'year_desc':
-            qs = qs.order_by('-year', '-created_at')
-        elif order == 'year_asc':
-            qs = qs.order_by('year', '-created_at')
-        elif order == 'mileage_asc':
-            qs = qs.order_by('mileage', '-created_at')
-        elif order == 'mileage_desc':
-            qs = qs.order_by('-mileage', '-created_at')
-        else:
-            qs = qs.order_by('-created_at')
-
         return qs
 
     def get_context_data(self, **kwargs):
@@ -276,28 +301,29 @@ class AdvertViewFree(ListView):
         # Данные для фильтров из Advert
         filter_adverts_qs = Advert.objects.filter(published=True)
 
-        # Категории, модели, марки и другие справочные данные
-        context['brands'] = filter_adverts_qs.exclude(brand__isnull=True).values_list('brand',
-                                                                                      flat=True).distinct().order_by(
-            'brand')
-        context['models'] = filter_adverts_qs.exclude(model_auto__isnull=True).values_list('model_auto',
-                                                                                           flat=True).distinct().order_by(
-            'model_auto')
-        context['currencies'] = filter_adverts_qs.exclude(currency__isnull=True).values_list('currency',
-                                                                                             flat=True).distinct().order_by(
-            'currency')
-        context['colors'] = filter_adverts_qs.exclude(color__isnull=True).values_list('color',
-                                                                                      flat=True).distinct().order_by(
-            'color')
-        context['doors'] = filter_adverts_qs.exclude(doors__isnull=True).values_list('doors',
-                                                                                     flat=True).distinct().order_by(
-            'doors')
+        # Справочные данные для фильтров
+        context['brands'] = filter_adverts_qs.exclude(brand__isnull=True).values_list('brand', flat=True).distinct().order_by('brand')
+
+        # Выбираем модели для выбранной марки
+        selected_brand = g.get('brand')
+        if selected_brand:
+            context['models'] = CarModel.objects.filter(brand__name=selected_brand).order_by('name')
+        else:
+            context['models'] = CarModel.objects.all().order_by('name')
+
+        # Фильтры для других параметров
+        context['currencies'] = filter_adverts_qs.exclude(currency__isnull=True).values_list('currency', flat=True).distinct().order_by('currency')
+        context['colors'] = filter_adverts_qs.exclude(color__isnull=True).values_list('color', flat=True).distinct().order_by('color')
+        context['doors'] = filter_adverts_qs.exclude(doors__isnull=True).values_list('doors', flat=True).distinct().order_by('doors')
+
+        # Список типов автомобилей
+        context['pagetype_choices'] = CarModel.PAGE_CHOICE
+        context['selected_pagetype'] = g.get('pagetype', '')
 
         # Фильтры для Топлива и Коробки передач
         context['transmission_choices'] = Advert.TransmissionType.choices
         context['fuel_choices'] = Advert.FuelType.choices
         context['drive_choices'] = Advert.DriveType.choices
-
         context['selected_transmissions'] = g.getlist('transmission')
         context['selected_fuels'] = g.getlist('fuel')
 

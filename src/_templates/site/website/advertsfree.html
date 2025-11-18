@@ -37,12 +37,27 @@
                                 <input type="text" name="q" class="form-control" value="{{ params.q }}">
                             </div>
 
+                            <div class="row g-2 mt-2">
+                                <div class="col-12">
+                                    <label class="form-label">Тип автомобиля</label>
+                                    <select name="pagetype" id="pagetype-select" class="form-select">
+                                        <option value="">Все типы</option>
+                                        {% for val, label in pagetype_choices %}
+                                        <option value="{{ val }}" {% if params.pagetype == val|stringformat:"s" %}selected{% endif %}>
+                                        {{ label }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+
                             <div class="row g-2">
                                 <div class="col-12 col-lg-6">
                                     <label class="form-label">Марка</label>
-                                    <select name="brand" class="form-select">
+                                    <select name="brand" id="brand-select" class="form-select">
                                         <option value="">Любая</option>
-                                        {% for b in carbrands %}
+                                        {% for b in brands %}
                                         <option value="{{ b }}" {% if params.brand == b %}selected{% endif %}>{{ b }}</option>
                                         {% endfor %}
                                     </select>
@@ -50,15 +65,64 @@
 
                                 <div class="col-12 col-lg-6">
                                     <label class="form-label">Модель</label>
-                                    <select name="model_auto" id="model-select" class="form-select">
+                                    <select name="model_auto" id="model-select" class="form-select" {% if not params.brand %}disabled{% endif %}>
                                         <option value="">Любая</option>
-                                        {% if params.brand and params.model_auto %}
-                                            <option value="{{ params.model_auto }}" selected>{{ params.model_auto }}</option>
-                                        {% endif %}
+                                        {% for model in models %}
+                                        <option data-brand="{{ model.brand.name }}" value="{{ model.name }}" {% if params.model_auto == model.name %}selected{% endif %}>
+                                            {{ model.name }}
+                                        </option>
+                                        {% endfor %}
                                     </select>
                                 </div>
-
                             </div>
+
+                            <script>
+                                document.addEventListener("DOMContentLoaded", function () {
+                                    const brandSelect = document.getElementById('brand-select');
+                                    const modelSelect = document.getElementById('model-select');
+
+                                    // Сохраняем все оригинальные option моделей
+                                    const allModelOptions = Array.from(modelSelect.querySelectorAll('option[data-brand]'));
+
+                                    function updateModelOptions() {
+                                        const selectedBrand = brandSelect.value;
+                                        const currentModel = '{{ params.model_auto }}';
+
+                                        // Очищаем select, но оставляем опцию "Любая"
+                                        modelSelect.innerHTML = '<option value="">Любая</option>';
+
+                                        // Если марка не выбрана - отключаем select моделей и показываем только "Любая"
+                                        if (!selectedBrand) {
+                                            modelSelect.disabled = true;
+                                            return;
+                                        }
+
+                                        // Включаем select моделей
+                                        modelSelect.disabled = false;
+
+                                        // Фильтруем модели по выбранной марке
+                                        const filteredModels = allModelOptions.filter(option => {
+                                            return option.getAttribute('data-brand').trim() === selectedBrand;
+                                        });
+
+                                        // Добавляем отфильтрованные модели в select
+                                        filteredModels.forEach(option => {
+                                            const newOption = option.cloneNode(true);
+                                            newOption.selected = (newOption.value === currentModel);
+                                            modelSelect.appendChild(newOption);
+                                        });
+                                    }
+
+                                    // Назначаем обработчик события на выбор марки
+                                    if (brandSelect && modelSelect) {
+                                        brandSelect.addEventListener('change', updateModelOptions);
+
+                                        // Инициализируем при загрузке страницы
+                                        updateModelOptions();
+                                    }
+                                });
+                            </script>
+
 
                             <div class="row g-2 mt-2">
                                 <div class="col-6">
@@ -82,6 +146,7 @@
                                 </div>
                             </div>
 
+                            <!-- Фильтры по пробегу -->
                             <div class="row g-2 mt-2">
                                 <div class="col-6">
                                     <label class="form-label">Пробег от, км</label>
@@ -93,6 +158,7 @@
                                 </div>
                             </div>
 
+                            <!-- Фильтры по мощности (л.с.) -->
                             <div class="row g-2 mt-2">
                                 <div class="col-6">
                                     <label class="form-label">Мощность от, л.с.</label>
@@ -104,6 +170,7 @@
                                 </div>
                             </div>
 
+                            <!-- Фильтры по объему -->
                             <div class="row g-2 mt-2">
                                 <div class="col-6">
                                     <label class="form-label">Объём от, л</label>
@@ -114,26 +181,33 @@
                                     <input type="text" name="engine_volume_max" class="form-control" value="{{ params.engine_volume_max }}">
                                 </div>
                             </div>
-                            <div class="row g-2">
-                            <div class="col-12 col-lg-6">
-                                <label class="form-label">Двери</label>
-                                <select name="doors" class="form-select">
-                                    <option value="">Любая</option>
-                                    {% for d in doors %}
-                                    <option value="{{ d }}" {% if params.doors == bc %}selected{% endif %}>{{ d }}</option>
-                                    {% endfor %}
-                                </select>
+
+                            <!-- Фильтры по дверям -->
+                            <div class="row g-2 mt-2">
+                                <div class="col-6">
+                                    <label class="form-label">Двери</label>
+                                    <select name="doors" class="form-select">
+                                        <option value="">Любая</option>
+                                        {% for d in doors %}
+                                        <option value="{{ d }}" {% if params.doors == d %}selected{% endif %}>{{ d }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
                             </div>
-                            <div class="col-12 col-lg-6">
-                                <label class="form-label">Цвет</label>
-                                <select name="color" class="form-select">
-                                    <option value="">Любая</option>
-                                    {% for c in colors %}
-                                    <option value="{{ c }}" {% if params.color == bc %}selected{% endif %}>{{ c }}</option>
-                                    {% endfor %}
-                                </select>
+
+                            <!-- Фильтры по цвету -->
+                            <div class="row g-2 mt-2">
+                                <div class="col-6">
+                                    <label class="form-label">Цвет</label>
+                                    <select name="color" class="form-select">
+                                        <option value="">Любой</option>
+                                        {% for c in colors %}
+                                        <option value="{{ c }}" {% if params.color == c %}selected{% endif %}>{{ c }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
                             </div>
-                            </div>
+
 
 
                             <div class="mt-3 d-none" >
@@ -148,27 +222,26 @@
 
                             <div class="mt-3">
                                 <div class="form-label">Коробка передач</div>
-                                {% for val,label in transmission_choices %}
+                                {% for val, label in transmission_choices %}
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" id="tr-{{ val }}" name="transmission" value="{{ val }}"
                                            {% if val in selected_transmissions %}checked{% endif %}>
                                     <label class="form-check-label" for="tr-{{ val }}">{{ label }}</label>
                                 </div>
                                 {% endfor %}
-
                             </div>
 
                             <div class="mt-3">
                                 <div class="form-label">Топливо</div>
-                                {% for val,label in fuel_choices %}
+                                {% for val, label in fuel_choices %}
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" id="fu-{{ val }}" name="fuel" value="{{ val }}"
                                            {% if val in selected_fuels %}checked{% endif %}>
                                     <label class="form-check-label" for="fu-{{ val }}">{{ label }}</label>
                                 </div>
                                 {% endfor %}
-
                             </div>
+
 
                             <div class="mt-3">
                                 <div class="form-label">Привод</div>
@@ -182,6 +255,8 @@
 
                             </div>
 
+
+                            <!-- Фильтр по наличию изображений -->
                             <div class="form-check mt-3">
                                 <input class="form-check-input" type="checkbox" id="has_images" name="has_images" value="1"
                                        {% if params.has_images == '1' %}checked{% endif %}>

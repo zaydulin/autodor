@@ -641,6 +641,53 @@ class AdvertView(ListView):
         if fuel:
             qs = qs.filter(fuel__in=fuel)
 
+        # Фильтрация по году выпуска
+        year_min = g.get('year_min')
+        year_max = g.get('year_max')
+        if year_min:
+            qs = qs.filter(year__gte=year_min)
+        if year_max:
+            qs = qs.filter(year__lte=year_max)
+
+        # Фильтрация по пробегу
+        mileage_min = g.get('mileage_min')
+        mileage_max = g.get('mileage_max')
+        if mileage_min:
+            qs = qs.filter(mileage__gte=mileage_min)
+        if mileage_max:
+            qs = qs.filter(mileage__lte=mileage_max)
+
+        # Фильтрация по мощности
+        power_min = g.get('power_min')
+        power_max = g.get('power_max')
+        if power_min:
+            qs = qs.filter(power__gte=power_min)
+        if power_max:
+            qs = qs.filter(power__lte=power_max)
+
+        # Фильтрация по объему
+        engine_volume_min = g.get('engine_volume_min')
+        engine_volume_max = g.get('engine_volume_max')
+        if engine_volume_min:
+            qs = qs.filter(engine_volume__gte=engine_volume_min)
+        if engine_volume_max:
+            qs = qs.filter(engine_volume__lte=engine_volume_max)
+
+        # Фильтрация по дверям
+        doors = g.get('doors')
+        if doors:
+            qs = qs.filter(doors=doors)
+
+        # Фильтрация по цвету
+        color = g.get('color')
+        if color:
+            qs = qs.filter(color__iexact=color)
+
+        # Фильтрация по наличию изображений
+        has_images = g.get('has_images')
+        if has_images:
+            qs = qs.filter(images__isnull=False)
+
         # Фильтрация по коробке передач
         transmission = g.getlist('transmission')
         if transmission:

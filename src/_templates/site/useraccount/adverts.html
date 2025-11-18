@@ -30,18 +30,18 @@
                             </div>
 
                             <div class="row g-2 mt-2">
-        <div class="col-12">
-            <label class="form-label">Тип автомобиля</label>
-            <select name="pagetype" id="pagetype-select" class="form-select">
-                <option value="">Все типы</option>
-                {% for val, label in pagetype_choices %}
-                    <option value="{{ val }}" {% if params.pagetype == val|stringformat:"s" %}selected{% endif %}>
-                        {{ label }}
-                    </option>
-                {% endfor %}
-            </select>
-        </div>
-    </div>
+                                <div class="col-12">
+                                    <label class="form-label">Тип автомобиля</label>
+                                    <select name="pagetype" id="pagetype-select" class="form-select">
+                                        <option value="">Все типы</option>
+                                        {% for val, label in pagetype_choices %}
+                                        <option value="{{ val }}" {% if params.pagetype == val|stringformat:"s" %}selected{% endif %}>
+                                        {{ label }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
 
 
                             <div class="row g-2">
@@ -138,6 +138,7 @@
                                 </div>
                             </div>
 
+                            <!-- Фильтры по пробегу -->
                             <div class="row g-2 mt-2">
                                 <div class="col-6">
                                     <label class="form-label">Пробег от, км</label>
@@ -149,6 +150,7 @@
                                 </div>
                             </div>
 
+                            <!-- Фильтры по мощности (л.с.) -->
                             <div class="row g-2 mt-2">
                                 <div class="col-6">
                                     <label class="form-label">Мощность от, л.с.</label>
@@ -160,6 +162,7 @@
                                 </div>
                             </div>
 
+                            <!-- Фильтры по объему -->
                             <div class="row g-2 mt-2">
                                 <div class="col-6">
                                     <label class="form-label">Объём от, л</label>
@@ -170,8 +173,10 @@
                                     <input type="text" name="engine_volume_max" class="form-control" value="{{ params.engine_volume_max }}">
                                 </div>
                             </div>
-                            <div class="row g-2">
-                                <div class="col-12 col-lg-6">
+
+                            <!-- Фильтры по дверям -->
+                            <div class="row g-2 mt-2">
+                                <div class="col-6">
                                     <label class="form-label">Двери</label>
                                     <select name="doors" class="form-select">
                                         <option value="">Любая</option>
@@ -180,16 +185,21 @@
                                         {% endfor %}
                                     </select>
                                 </div>
-                                <div class="col-12 col-lg-6">
+                            </div>
+
+                            <!-- Фильтры по цвету -->
+                            <div class="row g-2 mt-2">
+                                <div class="col-6">
                                     <label class="form-label">Цвет</label>
                                     <select name="color" class="form-select">
-                                        <option value="">Любая</option>
+                                        <option value="">Любой</option>
                                         {% for c in colors %}
                                         <option value="{{ c }}" {% if params.color == c %}selected{% endif %}>{{ c }}</option>
                                         {% endfor %}
                                     </select>
                                 </div>
                             </div>
+
 
 
                             <div class="mt-3 d-none" >
@@ -237,6 +247,8 @@
 
                             </div>
 
+
+                            <!-- Фильтр по наличию изображений -->
                             <div class="form-check mt-3">
                                 <input class="form-check-input" type="checkbox" id="has_images" name="has_images" value="1"
                                        {% if params.has_images == '1' %}checked{% endif %}>

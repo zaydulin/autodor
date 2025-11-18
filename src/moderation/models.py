@@ -136,6 +136,7 @@ class Advert(models.Model):
         db_index=True,
     )
     published = models.BooleanField("Опубликовано", default=True, db_index=True)
+    image_no = models.BooleanField("Не имеет изображения", default=True, db_index=True)
     updated_at = models.DateTimeField("Обновлено", auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
