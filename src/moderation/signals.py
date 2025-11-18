@@ -1,3 +1,4 @@
+import json
 import os
 from urllib.parse import urlparse
 
@@ -5,8 +6,38 @@ import requests
 from django.core.files.base import ContentFile
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
-from .models import AdvertDocument, AdvertAplication, AdvertApplicationImage
+from .models import AdvertDocument, AdvertAplication, AdvertApplicationImage, Advert
 from webmain.models import SettingsGlobale
+import logging
+
+# Логирование
+logger = logging.getLogger(__name__)
+
+
+# В сигнале
+@receiver(pre_save, sender=Advert)
+def check_images_before_save(sender, instance, **kwargs):
+    """
+    Сигнал для проверки ссылок на изображения.
+    Если нет валидных изображений, не сохраняем поле вообще.
+    """
+    if hasattr(instance, 'images') and instance.images:
+        valid_images = []
+        for image_url in instance.images:
+            try:
+                response = requests.head(image_url, allow_redirects=True, timeout=5)
+                if response.status_code == 200:
+                    content_type = response.headers.get('content-type', '')
+                    if content_type and content_type.startswith('image/'):
+                        valid_images.append(image_url)
+            except requests.RequestException:
+                continue
+
+        if valid_images:
+            instance.images = valid_images
+        else:
+            # Удаляем атрибут (поле не будет сохранено в БД)
+            instance.images = None
 
 
 def default_settings_file():
