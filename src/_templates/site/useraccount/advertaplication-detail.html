@@ -1773,29 +1773,18 @@ window.addEventListener('click', function(event) {
                                 </select>
                             </div>
 
-                            <div class="mb-3">
-    <label for="edit-on-hands" class="form-label">Стоимость доставки {{ application.delevery_price }}</label>
+                            <<div class="mb-3">
+    <label for="edit-on-hands" class="form-label">Стоимость доставки</label>
     <input type="number"
            class="form-control"
            id="edit-on-hands"
            name="delevery_price"
-           value="{{ application.delevery_price }}"
-           step="1"
+           value="{{ application.delevery_price|stringformat:'f'|default:0 }}"
+           step="0.01"
            min="0"
-           title="Введите целое число"
+           title="Введите число (например: 10.50)"
            placeholder="0">
 </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const deliveryInput = document.getElementById('edit-on-hands');
-
-    // Если поле пустое, устанавливаем значение 0
-    if (!deliveryInput.value || deliveryInput.value === 'None') {
-        deliveryInput.value = '0';
-    }
-});
-</script>
 
                         </form>
                     </div>
