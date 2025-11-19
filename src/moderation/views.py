@@ -705,6 +705,25 @@ class AdvertView(ListView):
         if price_max:
             qs = qs.filter(price__lte=price_max)
 
+            # --- СОРТИРОВКА ---
+        order = g.get('order')
+
+        if order == 'price_asc':
+            qs = qs.order_by('price')
+        elif order == 'price_desc':
+            qs = qs.order_by('-price')
+        elif order == 'year_asc':
+            qs = qs.order_by('year')
+        elif order == 'year_desc':
+            qs = qs.order_by('-year')
+        elif order == 'mileage_asc':
+            qs = qs.order_by('mileage')
+        elif order == 'mileage_desc':
+            qs = qs.order_by('-mileage')
+        else:
+                # "Сначала новые" — по дате создания
+            qs = qs.order_by('-created_at')
+
         # Применяем фильтры
         return qs
 
