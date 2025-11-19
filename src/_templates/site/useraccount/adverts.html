@@ -164,15 +164,21 @@
 
                             <!-- Фильтры по объему -->
                             <div class="row g-2 mt-2">
-                                <div class="col-6">
-                                    <label class="form-label">Объём от, л</label>
-                                    <input type="text" name="engine_volume_min" class="form-control" value="{{ params.engine_volume_min }}">
-                                </div>
-                                <div class="col-6">
-                                    <label class="form-label">Объём до, л</label>
-                                    <input type="text" name="engine_volume_max" class="form-control" value="{{ params.engine_volume_max }}">
-                                </div>
-                            </div>
+    <div class="col-6">
+        <label class="form-label">Объём от, л</label>
+        <input type="text" name="engine_volume_min" class="form-control volume-input"
+               value="{{ params.engine_volume_min }}"
+               pattern="[0-9.,]*"
+               title="Только цифры, точка или запятая">
+    </div>
+    <div class="col-6">
+        <label class="form-label">Объём до, л</label>
+        <input type="text" name="engine_volume_max" class="form-control volume-input"
+               value="{{ params.engine_volume_max }}"
+               pattern="[0-9.,]*"
+               title="Только цифры, точка или запятая">
+    </div>
+</div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
