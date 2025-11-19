@@ -1775,26 +1775,15 @@ window.addEventListener('click', function(event) {
 
                             <div class="mb-3">
     <label for="edit-on-hands" class="form-label">Стоимость доставки</label>
-    <input type="text"
+    <input type="number"
            class="form-control"
            id="edit-on-hands"
            name="delevery_price"
-           value="{{ application.delevery_price|default:0 }}"
-           pattern="[0-9]+([\.,][0-9]{1,2})?"
-           title="Введите число (например: 10 или 10.50)"
+           value="{{ application.delevery_price|floatformat:0|default:0 }}"
+           step="1"
+           min="0"
            placeholder="0">
 </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const deliveryInput = document.getElementById('edit-on-hands');
-
-    // При отправке формы заменяем запятые на точки
-    deliveryInput.form.addEventListener('submit', function() {
-        deliveryInput.value = deliveryInput.value.replace(',', '.');
-    });
-});
-</script>
 
                         </form>
                     </div>
