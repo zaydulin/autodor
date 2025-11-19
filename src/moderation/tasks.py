@@ -35,50 +35,83 @@ from celery import shared_task
 from django.conf import settings
 import subprocess
 import logging
+from django.core.cache import cache  # ← нужно подключить cache
 
 logger = logging.getLogger(__name__)
 
+CHECK_MODEL_LOCK_KEY = "check_model_changes_lock"
+CHECK_MODEL_LOCK_EXPIRE = 60 * 60 + 60  # 1 час + запас 1 минута
 
-@shared_task
-def check_model_changes():
+
+@shared_task(bind=True, max_retries=3)
+def check_model_changes(self):
     """
-    Запускает импорт объявлений из XML файла
+    Запускает импорт объявлений из XML файла.
+    - Не даёт запустить вторую копию, если первая ещё работает (cache-lock).
+    - При таймауте / ошибке — кидаем исключение (Celery помечает как failed / retry).
     """
+    # ---- БЛОКИРОВКА ----
+    has_lock = cache.add(CHECK_MODEL_LOCK_KEY, "1", CHECK_MODEL_LOCK_EXPIRE)
+    if not has_lock:
+        msg = "Импорт уже запущен, новая задача пропущена"
+        logger.warning(msg)
+        return msg
+
     try:
-        # Правильный путь к файлу
-        script_path = os.path.join(settings.BASE_DIR, '_dump', 'import_adverts_xml.py')
+        script_path = os.path.join(settings.BASE_DIR, "_dump", "import_adverts_xml.py")
 
-        # Проверяем существует ли файл
         if not os.path.exists(script_path):
-            logger.error(f"Файл не найден: {script_path}")
-            return f"Ошибка: Файл {script_path} не существует"
+            msg = f"Файл не найден: {script_path}"
+            logger.error(msg)
+            # тут лучше бросить ошибку, чтобы увидить в мониторинге
+            raise FileNotFoundError(msg)
 
-        # Меняем рабочую директорию на корень проекта
         project_root = settings.BASE_DIR
         os.chdir(project_root)
 
-        # Запускаем скрипт
+        logger.info("Запуск импорта объявлений из XML")
         result = subprocess.run(
-            ['python3', '_dump/import_adverts_xml.py'],
+            ["python3", "_dump/import_adverts_xml.py"],
             capture_output=True,
             text=True,
-            timeout=3600  # 1 час таймаут
+            timeout=3600,  # 1 час таймаут
         )
 
         if result.returncode == 0:
             logger.info("Импорт выполнен успешно")
-            logger.info(f"Вывод: {result.stdout}")
-            return f"Успешно: {result.stdout}"
-        else:
-            logger.error(f"Ошибка импорта: {result.stderr}")
-            return f"Ошибка: {result.stderr}"
+            if result.stdout:
+                logger.info("Импорт stdout: %s", result.stdout[:2000])
+            return "Импорт выполнен успешно"
 
-    except subprocess.TimeoutExpired:
-        logger.error("Импорт превысил лимит времени (1 час)")
-        return "Ошибка: Таймаут импорта"
+        else:
+            # Скрипт вернул ненулевой код — считаем это ошибкой
+            msg = f"Ошибка импорта (code={result.returncode}): {result.stderr}"
+            logger.error(msg)
+            # Можно попробовать ретрай
+            raise RuntimeError(msg)
+
+    except subprocess.TimeoutExpired as e:
+        msg = "Импорт превысил лимит времени (1 час)"
+        logger.error(msg)
+        # Можно захотеть ретрай через n секунд
+        try:
+            raise self.retry(exc=e, countdown=600)  # повтор через 10 минут
+        except self.MaxRetriesExceededError:
+            # если ретраев больше нельзя — явно падаем
+            raise RuntimeError(msg)
+
     except Exception as e:
-        logger.error(f"Ошибка при запуске импорта: {e}")
-        return f"Ошибка: {str(e)}"
+        msg = f"Ошибка при запуске импорта: {e}"
+        logger.error(msg)
+        # тоже ретрай
+        try:
+            raise self.retry(exc=e, countdown=600)
+        except self.MaxRetriesExceededError:
+            raise
+
+    finally:
+        # снимаем lock в любом случае
+        cache.delete(CHECK_MODEL_LOCK_KEY)
 
 
 @shared_task
