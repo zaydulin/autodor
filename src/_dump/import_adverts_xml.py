@@ -1,4 +1,5 @@
-#python3 _dump/import_adverts_xml.py --url "https://s3.q-parser.ru/automata/63e72f72e46ff8/finn.no.xml"
+# запускается так
+# python3 _dump/import_adverts_xml.py --url "https://s3.q-parser.ru/automata/63e72f72e46ff8/finn.no.xml"
 import os
 import sys
 import re
