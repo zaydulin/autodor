@@ -3,6 +3,10 @@ import requests
 from celery import shared_task
 from django.core.cache import cache
 from _dump.import_adverts_xml import import_from_url
+import logging
+from celery import shared_task
+from django.core.cache import cache
+from _dump.import_adverts_xml import import_from_url  # Переносим импорт сюда
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +53,7 @@ def import_from_url_task(self, url):
     except Exception as e:
         logger.error(f"Ошибка импорта для {url}: {str(e)}")
         raise self.retry(exc=e, countdown=60)  # Повтор через 60 секунд в случае ошибки
+
 
 
 
