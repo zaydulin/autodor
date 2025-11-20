@@ -8,24 +8,22 @@ import subprocess
 import logging
 from django.core.cache import cache
 from celery import shared_task
-import time
-from useraccount.yandex_disk_utils import upload_to_yandex_disk
-import os
-from django.conf import settings
-import subprocess
 import logging
+import subprocess
+import os
 from django.core.cache import cache
+from django.conf import settings
 
+# Логирование
 logger = logging.getLogger(__name__)
 
 CHECK_MODEL_LOCK_KEY = "check_model_changes_lock"
 CHECK_MODEL_LOCK_EXPIRE = 60 * 60 + 60  # 1 час + запас 1 минута
 
-
 @shared_task(bind=True, max_retries=3)
-def check_model_changes(self, url):
+def check_model_changes(self):
     """
-    Запускает импорт объявлений из XML файла для указанного URL.
+    Запускает импорт объявлений из XML файла для каждого URL из списка URLS.
     - Не даёт запустить вторую копию, если первая ещё работает (cache-lock).
     - При таймауте / ошибке — кидаем исключение (Celery помечает как failed / retry).
     """
@@ -37,6 +35,25 @@ def check_model_changes(self, url):
         return msg
 
     try:
+        # Источник данных
+        URLS = [
+            "https://s3.q-parser.ru/automata/63e72f72e46ff8/finn.no.xml",
+            "https://s3.q-parser.ru/automata/63e700c07fab20/gratka.pl.xml",
+            "https://s3.q-parser.ru/automata/63e72c68f795dc/sauto.cz.xml",
+            "https://s3.q-parser.ru/automata/63e72a4694fc7c/mobile.bg.xml",
+            "https://s3.q-parser.ru/automata/63e72bf469855c/tipcars.com.xml",
+            "https://s3.q-parser.ru/automata/63e72af857b188/bestauto.ro.xml",
+            "https://s3.q-parser.ru/automata/63e72a09b6ef48/webauto.de.xml",
+            "https://s3.q-parser.ru/automata/63e72d2b212094/auto24.ee.xml",
+            "https://s3.q-parser.ru/automata/63e70467af7a58/autotrader.pl.xml",
+            "https://s3.q-parser.ru/automata/63e72b7a4ff0a0/car24.bg.xml",
+            "https://s3.q-parser.ru/automata/63e72acaa3f4f0/auto.ro.xml",
+            "https://s3.q-parser.ru/automata/63e72a6be8bfa8/yauto.cz.xml",
+            "https://s3.q-parser.ru/automata/63e704d25ef57c/autovit.ro.xml",
+            "https://s3.q-parser.ru/automata/63e72d86e3a604/otomoto.pl.xml",
+            "https://s3.q-parser.ru/automata/63e72b3724b54c/cars.cz.xml"
+        ]
+
         script_path = os.path.join(settings.BASE_DIR, "_dump", "import_adverts_xml.py")
 
         if not os.path.exists(script_path):
@@ -47,24 +64,28 @@ def check_model_changes(self, url):
         project_root = settings.BASE_DIR
         os.chdir(project_root)
 
-        logger.info(f"Запуск импорта объявлений из XML: {url}")
-        result = subprocess.run(
-            ["python3", "_dump/import_adverts_xml.py", url],
-            capture_output=True,
-            text=True,
-            timeout=3600,  # 1 час таймаут
-        )
+        logger.info("Запуск импорта объявлений из XML")
 
-        if result.returncode == 0:
-            logger.info("Импорт выполнен успешно")
-            if result.stdout:
-                logger.info("Импорт stdout: %s", result.stdout[:2000])
-            return "Импорт выполнен успешно"
+        # Запускаем для каждого URL в списке
+        for url in URLS:
+            logger.info(f"Обработка URL: {url}")
+            result = subprocess.run(
+                ["python3", "_dump/import_adverts_xml.py", "--url", url],
+                capture_output=True,
+                text=True,
+                timeout=3600,  # 1 час таймаут
+            )
 
-        else:
-            msg = f"Ошибка импорта (code={result.returncode}): {result.stderr}"
-            logger.error(msg)
-            raise RuntimeError(msg)
+            if result.returncode == 0:
+                logger.info(f"Импорт для {url} выполнен успешно")
+                if result.stdout:
+                    logger.info("Импорт stdout: %s", result.stdout[:2000])
+            else:
+                msg = f"Ошибка импорта для {url} (code={result.returncode}): {result.stderr}"
+                logger.error(msg)
+                raise RuntimeError(msg)
+
+        return "Импорт для всех URL выполнен успешно"
 
     except subprocess.TimeoutExpired as e:
         msg = "Импорт превысил лимит времени (1 час)"
@@ -83,34 +104,9 @@ def check_model_changes(self, url):
             raise
 
     finally:
+        # снимаем lock в любом случае
         cache.delete(CHECK_MODEL_LOCK_KEY)
 
-
-@shared_task
-def start_import_for_all_urls():
-    """
-    Запускает обработку каждого URL как отдельную задачу.
-    """
-    URLS = [
-        "https://s3.q-parser.ru/automata/63e72f72e46ff8/finn.no.xml",
-        "https://s3.q-parser.ru/automata/63e700c07fab20/gratka.pl.xml",
-        "https://s3.q-parser.ru/automata/63e72c68f795dc/sauto.cz.xml",
-        "https://s3.q-parser.ru/automata/63e72a4694fc7c/mobile.bg.xml",
-        "https://s3.q-parser.ru/automata/63e72bf469855c/tipcars.com.xml",
-        "https://s3.q-parser.ru/automata/63e72af857b188/bestauto.ro.xml",
-        "https://s3.q-parser.ru/automata/63e72a09b6ef48/webauto.de.xml",
-        "https://s3.q-parser.ru/automata/63e72d2b212094/auto24.ee.xml",
-        "https://s3.q-parser.ru/automata/63e70467af7a58/autotrader.pl.xml",
-        "https://s3.q-parser.ru/automata/63e72b7a4ff0a0/car24.bg.xml",
-        "https://s3.q-parser.ru/automata/63e72acaa3f4f0/auto.ro.xml",
-        "https://s3.q-parser.ru/automata/63e72a6be8bfa8/yauto.cz.xml",
-        "https://s3.q-parser.ru/automata/63e704d25ef57c/autovit.ro.xml",
-        "https://s3.q-parser.ru/automata/63e72d86e3a604/otomoto.pl.xml",
-        "https://s3.q-parser.ru/automata/63e72b3724b54c/cars.cz.xml"
-    ]
-
-    for url in URLS:
-        check_model_changes.apply_async(args=[url])  # Запускаем задачу для каждого URL
 
 
 
