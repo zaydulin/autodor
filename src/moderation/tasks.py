@@ -7,6 +7,14 @@ from django.conf import settings
 import subprocess
 import logging
 from django.core.cache import cache
+from celery import shared_task
+import time
+from useraccount.yandex_disk_utils import upload_to_yandex_disk
+import os
+from django.conf import settings
+import subprocess
+import logging
+from django.core.cache import cache
 
 logger = logging.getLogger(__name__)
 
@@ -15,9 +23,9 @@ CHECK_MODEL_LOCK_EXPIRE = 60 * 60 + 60  # 1 час + запас 1 минута
 
 
 @shared_task(bind=True, max_retries=3)
-def check_model_changes(self):
+def check_model_changes(self, url):
     """
-    Запускает импорт объявлений из XML файла.
+    Запускает импорт объявлений из XML файла для указанного URL.
     - Не даёт запустить вторую копию, если первая ещё работает (cache-lock).
     - При таймауте / ошибке — кидаем исключение (Celery помечает как failed / retry).
     """
@@ -34,15 +42,14 @@ def check_model_changes(self):
         if not os.path.exists(script_path):
             msg = f"Файл не найден: {script_path}"
             logger.error(msg)
-            # тут лучше бросить ошибку, чтобы увидить в мониторинге
             raise FileNotFoundError(msg)
 
         project_root = settings.BASE_DIR
         os.chdir(project_root)
 
-        logger.info("Запуск импорта объявлений из XML")
+        logger.info(f"Запуск импорта объявлений из XML: {url}")
         result = subprocess.run(
-            ["python3", "_dump/import_adverts_xml.py"],
+            ["python3", "_dump/import_adverts_xml.py", url],
             capture_output=True,
             text=True,
             timeout=3600,  # 1 час таймаут
@@ -55,34 +62,55 @@ def check_model_changes(self):
             return "Импорт выполнен успешно"
 
         else:
-            # Скрипт вернул ненулевой код — считаем это ошибкой
             msg = f"Ошибка импорта (code={result.returncode}): {result.stderr}"
             logger.error(msg)
-            # Можно попробовать ретрай
             raise RuntimeError(msg)
 
     except subprocess.TimeoutExpired as e:
         msg = "Импорт превысил лимит времени (1 час)"
         logger.error(msg)
-        # Можно захотеть ретрай через n секунд
         try:
             raise self.retry(exc=e, countdown=600)  # повтор через 10 минут
         except self.MaxRetriesExceededError:
-            # если ретраев больше нельзя — явно падаем
             raise RuntimeError(msg)
 
     except Exception as e:
         msg = f"Ошибка при запуске импорта: {e}"
         logger.error(msg)
-        # тоже ретрай
         try:
             raise self.retry(exc=e, countdown=600)
         except self.MaxRetriesExceededError:
             raise
 
     finally:
-        # снимаем lock в любом случае
         cache.delete(CHECK_MODEL_LOCK_KEY)
+
+
+@shared_task
+def start_import_for_all_urls():
+    """
+    Запускает обработку каждого URL как отдельную задачу.
+    """
+    URLS = [
+        "https://s3.q-parser.ru/automata/63e72f72e46ff8/finn.no.xml",
+        "https://s3.q-parser.ru/automata/63e700c07fab20/gratka.pl.xml",
+        "https://s3.q-parser.ru/automata/63e72c68f795dc/sauto.cz.xml",
+        "https://s3.q-parser.ru/automata/63e72a4694fc7c/mobile.bg.xml",
+        "https://s3.q-parser.ru/automata/63e72bf469855c/tipcars.com.xml",
+        "https://s3.q-parser.ru/automata/63e72af857b188/bestauto.ro.xml",
+        "https://s3.q-parser.ru/automata/63e72a09b6ef48/webauto.de.xml",
+        "https://s3.q-parser.ru/automata/63e72d2b212094/auto24.ee.xml",
+        "https://s3.q-parser.ru/automata/63e70467af7a58/autotrader.pl.xml",
+        "https://s3.q-parser.ru/automata/63e72b7a4ff0a0/car24.bg.xml",
+        "https://s3.q-parser.ru/automata/63e72acaa3f4f0/auto.ro.xml",
+        "https://s3.q-parser.ru/automata/63e72a6be8bfa8/yauto.cz.xml",
+        "https://s3.q-parser.ru/automata/63e704d25ef57c/autovit.ro.xml",
+        "https://s3.q-parser.ru/automata/63e72d86e3a604/otomoto.pl.xml",
+        "https://s3.q-parser.ru/automata/63e72b3724b54c/cars.cz.xml"
+    ]
+
+    for url in URLS:
+        check_model_changes.apply_async(args=[url])  # Запускаем задачу для каждого URL
 
 
 
