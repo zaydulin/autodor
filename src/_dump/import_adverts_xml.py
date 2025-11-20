@@ -1,3 +1,4 @@
+#_dump/import_adverts_xml.py
 import os
 import sys
 import re
