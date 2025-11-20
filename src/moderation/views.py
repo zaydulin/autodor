@@ -535,41 +535,47 @@ def save_document(request, pk):
 
 @csrf_exempt
 def update_application(request, application_id):
+    """
+    Обработчик для обновления заявки по UUID.
+    """
     if request.method == 'POST':
         try:
+            # Загружаем данные из запроса
             data = json.loads(request.body)
+            # Находим заявку по UUID
             application = AdvertAplication.objects.get(id=application_id)
 
-
+            # Обновляем статус
             if 'status' in data:
                 application.status = data['status']
 
-            # Обработка ManyToMany полей
+            # Обработка ManyToMany полей (Менеджеры)
             if 'user_menager' in data:
                 menager_ids = data['user_menager']
                 menagers = Profile.objects.filter(id__in=menager_ids)
-                # Очищаем текущие связи и добавляем новых
                 application.user_menager.set(menagers)
 
+            # Обработка ManyToMany полей (Водители)
             if 'user_drivers' in data:
                 driver_ids = data['user_drivers']
                 drivers = Profile.objects.filter(id__in=driver_ids)
-                # Очищаем текущие связи и добавляем новых
                 application.user_drivers.set(drivers)
 
-            # Обновляем связанные пользователи, если есть
+            # Обновление пользователей
             if 'user' in data:
                 user_ids = data['user']
                 users = Profile.objects.filter(id__in=user_ids)
                 application.user.set(users)
 
+            # Обновление стоимости доставки
             if 'delevery_price' in data:
-                delevery_price = data['delevery_price']
-                delevery_price = int(delevery_price)
+                delevery_price = int(data['delevery_price'])
                 application.delevery_price = delevery_price
 
+            # Сохраняем изменения
             application.save()
 
+            # Успешный ответ
             return JsonResponse({'success': True})
 
         except AdvertAplication.DoesNotExist:
@@ -577,8 +583,7 @@ def update_application(request, application_id):
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
-    return JsonResponse({'success': False})
-
+    return JsonResponse({'success': False, 'error': 'Неподдерживаемый метод'}, status=405)
 
 # Create your views here.
 
