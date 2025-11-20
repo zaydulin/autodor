@@ -1,4 +1,6 @@
 import logging
+from datetime import time
+
 import requests
 from celery import shared_task
 from django.core.cache import cache
@@ -7,6 +9,10 @@ import logging
 from celery import shared_task
 from django.core.cache import cache
 from _dump.import_adverts_xml import import_from_url  # Переносим импорт сюда
+import logging
+from celery import shared_task
+from django.core.cache import cache
+from django.apps import apps  # Для динамического импорта моделей
 
 logger = logging.getLogger(__name__)
 
@@ -48,11 +54,13 @@ def import_from_url_task(self, url):
     """
     logger.info(f"Запуск импорта для: {url}")
     try:
+        from _dump.import_adverts_xml import import_from_url  # Переместили импорт сюда
         import_from_url(url)
         logger.info(f"Импорт завершен для: {url}")
     except Exception as e:
         logger.error(f"Ошибка импорта для {url}: {str(e)}")
         raise self.retry(exc=e, countdown=60)  # Повтор через 60 секунд в случае ошибки
+
 
 
 
