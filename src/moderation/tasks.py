@@ -1,18 +1,12 @@
-import logging
-from datetime import time
-
-import requests
 from celery import shared_task
-from django.core.cache import cache
-from _dump.import_adverts_xml import import_from_url
-import logging
+import time
+from useraccount.yandex_disk_utils import upload_to_yandex_disk
+import os
 from celery import shared_task
-from django.core.cache import cache
-from _dump.import_adverts_xml import import_from_url  # Переносим импорт сюда
+from django.conf import settings
+import subprocess
 import logging
-from celery import shared_task
 from django.core.cache import cache
-from django.apps import apps  # Для динамического импорта моделей
 
 logger = logging.getLogger(__name__)
 
@@ -35,33 +29,60 @@ def check_model_changes(self):
         return msg
 
     try:
-        # Запуск импорта для каждой ссылки как отдельная задача
-        for url in URLS:
-            logger.info(f"Запуск задачи для {url}")
-            import_from_url_task.apply_async(args=[url])  # Запускаем задачу для каждой ссылки в очередь
-        return "Все задачи успешно запущены"
+        script_path = os.path.join(settings.BASE_DIR, "_dump", "import_adverts_xml.py")
+
+        if not os.path.exists(script_path):
+            msg = f"Файл не найден: {script_path}"
+            logger.error(msg)
+            # тут лучше бросить ошибку, чтобы увидить в мониторинге
+            raise FileNotFoundError(msg)
+
+        project_root = settings.BASE_DIR
+        os.chdir(project_root)
+
+        logger.info("Запуск импорта объявлений из XML")
+        result = subprocess.run(
+            ["python3", "_dump/import_adverts_xml.py"],
+            capture_output=True,
+            text=True,
+            timeout=3600,  # 1 час таймаут
+        )
+
+        if result.returncode == 0:
+            logger.info("Импорт выполнен успешно")
+            if result.stdout:
+                logger.info("Импорт stdout: %s", result.stdout[:2000])
+            return "Импорт выполнен успешно"
+
+        else:
+            # Скрипт вернул ненулевой код — считаем это ошибкой
+            msg = f"Ошибка импорта (code={result.returncode}): {result.stderr}"
+            logger.error(msg)
+            # Можно попробовать ретрай
+            raise RuntimeError(msg)
+
+    except subprocess.TimeoutExpired as e:
+        msg = "Импорт превысил лимит времени (1 час)"
+        logger.error(msg)
+        # Можно захотеть ретрай через n секунд
+        try:
+            raise self.retry(exc=e, countdown=600)  # повтор через 10 минут
+        except self.MaxRetriesExceededError:
+            # если ретраев больше нельзя — явно падаем
+            raise RuntimeError(msg)
 
     except Exception as e:
         msg = f"Ошибка при запуске импорта: {e}"
         logger.error(msg)
-        raise
+        # тоже ретрай
+        try:
+            raise self.retry(exc=e, countdown=600)
+        except self.MaxRetriesExceededError:
+            raise
 
-
-@shared_task(bind=True, max_retries=3)
-def import_from_url_task(self, url):
-    """
-    Эта задача выполняет импорт объявлений из URL
-    """
-    logger.info(f"Запуск импорта для: {url}")
-    try:
-        from _dump.import_adverts_xml import import_from_url  # Переместили импорт сюда
-        import_from_url(url)
-        logger.info(f"Импорт завершен для: {url}")
-    except Exception as e:
-        logger.error(f"Ошибка импорта для {url}: {str(e)}")
-        raise self.retry(exc=e, countdown=60)  # Повтор через 60 секунд в случае ошибки
-
-
+    finally:
+        # снимаем lock в любом случае
+        cache.delete(CHECK_MODEL_LOCK_KEY)
 
 
 
