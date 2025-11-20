@@ -328,11 +328,16 @@ class AdvertAplicationDetailView(LoginRequiredMixin, DetailView):
     context_object_name = "application"
 
     def get_queryset(self):
+        # Фильтруем по всем трем полям как в ListView
         return (
-            super().get_queryset()
-            .filter(user=self.request.user)
+            AdvertAplication.objects.filter(
+                models.Q(user=self.request.user) |
+                models.Q(user_menager=self.request.user) |
+                models.Q(user_drivers=self.request.user)
+            )
             .select_related("advert")
-            .prefetch_related("user")
+            .prefetch_related("user", "user_menager", "user_drivers")
+            .distinct()
         )
 
     def get_context_data(self, **kwargs):
@@ -340,25 +345,29 @@ class AdvertAplicationDetailView(LoginRequiredMixin, DetailView):
         application = self.object
         advert = application.advert
 
-        # добавляем объявление
+        # Добавляем объявление
         context["application"] = application
         context["advert"] = advert
         expenses = application.expenses.all()
         context['expenses'] = expenses
         total_expenses = sum(expense.amount for expense in expenses)
-        users_list = (
-                list(application.user.all()) +
-                list(application.user_menager.all()) +
-                list(application.user_drivers.all())
-        )
-        context['users'] = [user for user in users_list if user != self.request.user]
-        context['total_price'] =  advert.price
-        context['total_expenses'] =  total_expenses
-        context['total_ost'] = advert.price  - total_expenses
+
+        # Исправляем получение пользователей - используем first() для user и all() для ManyToMany
+        users_list = []
+        if application.user.first():  # user - это OneToOneField или ForeignKey?
+            users_list.append(application.user.first())
+        users_list.extend(application.user_menager.all())
+        users_list.extend(application.user_drivers.all())
+
+        context['users'] = [user for user in users_list if user != self.request.user and user is not None]
+        context['total_price'] = advert.price
+        context['total_expenses'] = total_expenses
+        context['total_ost'] = advert.price - total_expenses
 
         application.price = context['total_ost']
         application.save()
 
+        # Получаем пользователя для фильтрации сообщений
         user = application.user.first()
         messages = ChatMessage.objects.filter(
             applications=application
@@ -366,7 +375,7 @@ class AdvertAplicationDetailView(LoginRequiredMixin, DetailView):
             Q(author=user) |
             Q(author__in=application.user_menager.all()) |
             Q(author__in=application.user_drivers.all())
-        ).order_by('date')  # сортируем по времени
+        ).order_by('date')
         context['messages'] = messages
 
         calls = CallSession.objects.filter(application=application)
@@ -374,13 +383,14 @@ class AdvertAplicationDetailView(LoginRequiredMixin, DetailView):
         context['calls'] = calls
         context['expense_masks'] = ExpenseMask.objects.all()
 
-        context['all_managers'] = Profile.objects.filter(type=0,employee=2)
-        context['all_drivers'] = Profile.objects.filter(type=0,employee=1)
-        paths =  Path.objects.filter(aplication=application)
+        context['all_managers'] = Profile.objects.filter(type=0, employee=2)
+        context['all_drivers'] = Profile.objects.filter(type=0, employee=1)
+
+        paths = Path.objects.filter(aplication=application)
         context['paths'] = paths
         context['path_responsibilitys'] = PathResponsibility.objects.filter(path_choice__in=paths)
 
-        # ✅ создаём экземпляры форм и передаём application_id
+        # Создаём экземпляры форм и передаём application_id
         context['path_form'] = PathForm(application_id=application.id)
         context['path_responsibilitys_form'] = PathResponsibilityForm(application_id=application.id)
 
