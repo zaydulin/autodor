@@ -15,7 +15,7 @@ from lxml import etree as ET  # ✅ быстрее xml.etree
 # Настройки Django
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "_project.settings")
-# django.setup()
+django.setup()
 
 from moderation.models import Advert
 
