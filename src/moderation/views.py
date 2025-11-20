@@ -300,11 +300,16 @@ class AdvertAplicationListView(LoginRequiredMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        # фильтруем M2M по текущему пользователю
+        # Фильтруем по всем трем полям: user, user_menager и user_drivers
         return (
-            AdvertAplication.objects.filter(user=self.request.user)
+            AdvertAplication.objects.filter(
+                models.Q(user=self.request.user) |
+                models.Q(user_menager=self.request.user) |
+                models.Q(user_drivers=self.request.user)
+            )
             .select_related("advert")
-            .prefetch_related("user")
+            .prefetch_related("user", "user_menager", "user_drivers")
+            .distinct()  # Убираем дубликаты если пользователь есть в нескольких полях
             .order_by("-created_at")
         )
 
@@ -533,6 +538,7 @@ def save_document(request, pk):
     document.save()
     return JsonResponse({'status': 'success'})
 
+
 class UpdateApplicationView(View):
     """
     Обработчик для обновления заявки по UUID с использованием класса.
@@ -549,41 +555,39 @@ class UpdateApplicationView(View):
             print(f"Заявка найдена: {application.id}, {application.status}")
 
             # Обновляем статус заявки, если передан в данных
-            if 'status' in data:
+            if 'status' in data and data['status'] != application.status:
                 print(f"Обновление статуса: {application.status} -> {data['status']}")
                 application.status = data['status']
 
-            # Обработка поля ManyToMany для менеджеров (проверка на пустой список)
-            if 'user_menager' in data and data['user_menager']:
-                menager_ids = data['user_menager']
-                menagers = Profile.objects.filter(id__in=menager_ids)
-                print(f"Менеджеры для обновления: {menagers}")
-                application.user_menager.set(menagers)
-            else:
-                print("Менеджеры для обновления не переданы или пустые.")
+            # Обработка поля ManyToMany для менеджеров
+            if 'user_menager' in data:
+                if data['user_menager']:
+                    menager_ids = data['user_menager']
+                    menagers = Profile.objects.filter(id__in=menager_ids)
+                    print(f"Менеджеры для обновления: {menagers}")
+                    application.user_menager.set(menagers)
+                else:
+                    # Если пустой список - очищаем
+                    application.user_menager.clear()
 
-            # Обработка поля ManyToMany для водителей (проверка на пустой список)
-            if 'user_drivers' in data and data['user_drivers']:
-                driver_ids = data['user_drivers']
-                drivers = Profile.objects.filter(id__in=driver_ids)
-                print(f"Водители для обновления: {drivers}")
-                application.user_drivers.set(drivers)
-            else:
-                print("Водители для обновления не переданы или пустые.")
-
-            # Обновление пользователей, если переданы новые
-            if 'user' in data:
-                user_ids = data['user']
-                users = Profile.objects.filter(id__in=user_ids)
-                print(f"Пользователи для обновления: {users}")
-                application.user.set(users)
+            # Обработка поля ManyToMany для водителей
+            if 'user_drivers' in data:
+                if data['user_drivers']:
+                    driver_ids = data['user_drivers']
+                    drivers = Profile.objects.filter(id__in=driver_ids)
+                    print(f"Водители для обновления: {drivers}")
+                    application.user_drivers.set(drivers)
+                else:
+                    # Если пустой список - очищаем
+                    application.user_drivers.clear()
 
             # Обновление стоимости доставки
-            if 'delevery_price' in data:
+            if 'delevery_price' in data and data['delevery_price']:
                 try:
                     delevery_price = int(data['delevery_price'])
-                    print(f"Обновление стоимости доставки: {application.delevery_price} -> {delevery_price}")
-                    application.delevery_price = delevery_price
+                    if delevery_price != application.delevery_price:
+                        print(f"Обновление стоимости доставки: {application.delevery_price} -> {delevery_price}")
+                        application.delevery_price = delevery_price
                 except ValueError:
                     print(f"Ошибка при преобразовании стоимости доставки: {data['delevery_price']}")
 
@@ -591,8 +595,12 @@ class UpdateApplicationView(View):
             application.save()
             print(f"Заявка сохранена: {application.id}")
 
-            # Успешный ответ
-            return JsonResponse({'success': True})
+            # Возвращаем JSON ответ как ожидает фронтенд
+            return JsonResponse({
+                'success': True,
+                'message': 'Заявка успешно обновлена',
+                'application_id': str(application.id)
+            })
 
         except AdvertAplication.DoesNotExist:
             print("Заявка не найдена")

@@ -13,60 +13,60 @@ import logging
 
 # Логирование
 logger = logging.getLogger(__name__)
+#
+# @receiver(m2m_changed, sender=AdvertAplication.user_menager.through)
+# def update_user_from_menager(sender, instance, action, pk_set, **kwargs):
+#     """
+#     Обновляет поле user при изменении user_menager
+#     Добавляет менеджеров в user, но не удаляет других пользователей
+#     """
+#     if action == "post_add":
+#         # Добавляем новых менеджеров в поле user
+#         new_managers = instance.user_menager.all()
+#         current_users = set(instance.user.all())
+#
+#         # Добавляем только тех, кого еще нет в user
+#         for manager in new_managers:
+#             if manager not in current_users:
+#                 instance.user.add(manager)
+#
+#     elif action == "post_remove":
+#         # Удаляем менеджеров из user только если их нет в user_drivers
+#         removed_manager_ids = pk_set
+#         current_drivers = set(instance.user_drivers.values_list('id', flat=True))
+#
+#         # Удаляем только тех менеджеров, которые не являются водителями
+#         for manager_id in removed_manager_ids:
+#             if manager_id not in current_drivers:
+#                 instance.user.remove(manager_id)
+#
+#
+# @receiver(m2m_changed, sender=AdvertAplication.user_drivers.through)
+# def update_user_from_drivers(sender, instance, action, pk_set, **kwargs):
+#     """
+#     Обновляет поле user при изменении user_drivers
+#     Добавляет водителей в user, но не удаляет других пользователей
+#     """
+#     if action == "post_add":
+#         # Добавляем новых водителей в поле user
+#         new_drivers = instance.user_drivers.all()
+#         current_users = set(instance.user.all())
+#
+#         # Добавляем только тех, кого еще нет в user
+#         for driver in new_drivers:
+#             if driver not in current_users:
+#                 instance.user.add(driver)
+#
+#     elif action == "post_remove":
+#         # Удаляем водителей из user только если их нет в user_menager
+#         removed_driver_ids = pk_set
+#         current_managers = set(instance.user_menager.values_list('id', flat=True))
+#
+#         # Удаляем только тех водителей, которые не являются менеджерами
+#         for driver_id in removed_driver_ids:
+#             if driver_id not in current_managers:
+#                 instance.user.remove(driver_id)
 
-
-@receiver(m2m_changed, sender=AdvertAplication.user_menager.through)
-def update_user_from_menager(sender, instance, action, pk_set, **kwargs):
-    """
-    Обновляет поле user при изменении user_menager
-    Добавляет менеджеров в user, но не удаляет других пользователей
-    """
-    if action == "post_add":
-        # Добавляем новых менеджеров в поле user
-        new_managers = instance.user_menager.all()
-        current_users = set(instance.user.all())
-
-        # Добавляем только тех, кого еще нет в user
-        for manager in new_managers:
-            if manager not in current_users:
-                instance.user.add(manager)
-
-    elif action == "post_remove":
-        # Удаляем менеджеров из user только если их нет в user_drivers
-        removed_manager_ids = pk_set
-        current_drivers = set(instance.user_drivers.values_list('id', flat=True))
-
-        # Удаляем только тех менеджеров, которые не являются водителями
-        for manager_id in removed_manager_ids:
-            if manager_id not in current_drivers:
-                instance.user.remove(manager_id)
-
-
-@receiver(m2m_changed, sender=AdvertAplication.user_drivers.through)
-def update_user_from_drivers(sender, instance, action, pk_set, **kwargs):
-    """
-    Обновляет поле user при изменении user_drivers
-    Добавляет водителей в user, но не удаляет других пользователей
-    """
-    if action == "post_add":
-        # Добавляем новых водителей в поле user
-        new_drivers = instance.user_drivers.all()
-        current_users = set(instance.user.all())
-
-        # Добавляем только тех, кого еще нет в user
-        for driver in new_drivers:
-            if driver not in current_users:
-                instance.user.add(driver)
-
-    elif action == "post_remove":
-        # Удаляем водителей из user только если их нет в user_menager
-        removed_driver_ids = pk_set
-        current_managers = set(instance.user_menager.values_list('id', flat=True))
-
-        # Удаляем только тех водителей, которые не являются менеджерами
-        for driver_id in removed_driver_ids:
-            if driver_id not in current_managers:
-                instance.user.remove(driver_id)
 
 # В сигнале
 @receiver(pre_save, sender=Advert)
