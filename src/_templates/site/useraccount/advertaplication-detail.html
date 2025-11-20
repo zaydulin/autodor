@@ -1774,16 +1774,19 @@ window.addEventListener('click', function(event) {
                             </div>
 
                             <div class="mb-3">
-    <label for="edit-on-hands" class="form-label">Стоимость доставки</label>
-    <input type="number"
-           class="form-control"
-           id="edit-on-hands"
-           name="delevery_price"
-           value="{{ application.delevery_price|floatformat:0|default:0 }}"
-           step="1"
-           min="0"
-           placeholder="0">
-</div>
+        <label for="edit-on-hands" class="form-label">Стоимость доставки</label>
+        <input type="number"
+               class="form-control"
+               id="edit-on-hands"
+               name="delevery_price"
+               value="{{ application.delevery_price|floatformat:0|default:0 }}"
+               step="1"
+               min="0"
+               placeholder="0">
+        <div id="delevery_price_error" class="text-danger" style="display: none;">
+            Это поле не может быть пустым и должно быть больше 0.
+        </div>
+    </div>
 
                         </form>
                     </div>
@@ -2222,79 +2225,78 @@ window.addEventListener('click', function(event) {
         });
 
     </script>
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-          const modal = new bootstrap.Modal(document.getElementById('editApplicationModal'));
-          const form = document.getElementById('edit-application-form');
-          const saveBtn = document.getElementById('save-changes-btn');
 
-          // Переменная для хранения ID заявки
-          let currentApplicationId = "{{ application.id }}";
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const modal = new bootstrap.Modal(document.getElementById('editApplicationModal'));
+        const form = document.getElementById('edit-application-form');
+        const saveBtn = document.getElementById('save-changes-btn');
 
-          // Обработчик кнопки "Внести изменения"
-          document.getElementById('edit-sidebar-btn')?.addEventListener('click', () => {
-            // Заполняем форму текущими данными
-            // Предполагаем, что есть текущие значения, можно их вставить сюда
+        let currentApplicationId = "{{ application.id }}";
 
-            // Заполняем выбранный статус
+        // Заполнение формы при открытии
+        document.getElementById('edit-sidebar-btn')?.addEventListener('click', () => {
             document.getElementById('edit-status').value = "{{ application.status }}";
 
-            // Заполняем менеджеров (выбираем только тех, что есть у заявки)
             const managerIds = [{% for m in application.user_menager.all %}'{{ m.id }}',{% endfor %}];
             const managerSelect = document.getElementById('edit-managers');
             Array.from(managerSelect.options).forEach(option => {
-              option.selected = managerIds.includes(option.value);
+                option.selected = managerIds.includes(option.value);
             });
 
-            // Заполняем водителей
             const driverIds = [{% for d in application.user_drivers.all %}'{{ d.id }}',{% endfor %}];
             const driverSelect = document.getElementById('edit-drivers');
             Array.from(driverSelect.options).forEach(option => {
-              option.selected = driverIds.includes(option.value);
+                option.selected = driverIds.includes(option.value);
             });
 
-            // Открываем модальное окно
             modal.show();
-          });
+        });
 
-          // Обработчик кнопки "Сохранить"
-          saveBtn?.addEventListener('click', () => {
-            // Собираем данные
-              const data = {
+        // Сохранение изменений
+        saveBtn?.addEventListener('click', () => {
+            const deliveryPrice = document.getElementById('edit-on-hands').value;
+
+            // Проверяем, что поле не пустое и больше 0
+            if (deliveryPrice === "" || parseFloat(deliveryPrice) <= 0) {
+                document.getElementById('delevery_price_error').style.display = 'block';
+                return;
+            }
+
+            // Скрываем ошибку, если проверка прошла успешно
+            document.getElementById('delevery_price_error').style.display = 'none';
+
+            // Собираем данные формы
+            const data = {
                 status: document.getElementById('edit-status').value,
                 user_menager: Array.from(document.getElementById('edit-managers').selectedOptions).map(opt => opt.value),
                 user_drivers: Array.from(document.getElementById('edit-drivers').selectedOptions).map(opt => opt.value),
-                delevery_price: document.getElementById('edit-on-hands').value   // 👈 добавлено
-              };
-
+                delevery_price: deliveryPrice  // добавлено
+            };
 
             fetch("{% url 'moderation:update_application' application.id %}", {
-              method: 'POST',
-              headers: {
-                'X-CSRFToken': '{{ csrf_token }}',
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify(data)
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
             })
             .then(res => res.json())
             .then(result => {
-              if (result.success) {
-                // Обновляем отображение (например, стоимость)
-                // Можно добавить обновление других полей при необходимости
-                location.reload();
-
-
-                modal.hide();
-              } else {
-                alert('Ошибка при сохранении: ' + result.error);
-              }
+                if (result.success) {
+                    location.reload();
+                    modal.hide();
+                } else {
+                    alert('Ошибка при сохранении: ' + result.error);
+                }
             })
             .catch(() => {
-              alert('Ошибка сервера');
+                alert('Ошибка сервера');
             });
-          });
         });
-    </script>
+    });
+</script>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
           const address = "{{ advert.address|escapejs }}"; // Получаем адрес из контекста
