@@ -1,6 +1,7 @@
 import json
 import os
 from urllib.parse import urlparse
+from django.db.models.signals import m2m_changed
 
 import requests
 from django.core.files.base import ContentFile
@@ -13,6 +14,43 @@ import logging
 # Логирование
 logger = logging.getLogger(__name__)
 
+
+@receiver(m2m_changed, sender=AdvertAplication.user_menager.through)
+def update_user_from_menager(sender, instance, action, pk_set, **kwargs):
+    """
+    Обновляет поле user при изменении user_menager
+    """
+    if action in ["post_add", "post_remove", "post_clear"]:
+        # Получаем всех пользователей из менеджеров и водителей
+        all_users = set()
+
+        # Добавляем менеджеров
+        all_users.update(instance.user_menager.all())
+
+        # Добавляем водителей
+        all_users.update(instance.user_drivers.all())
+
+        # Обновляем поле user
+        instance.user.set(all_users)
+
+
+@receiver(m2m_changed, sender=AdvertAplication.user_drivers.through)
+def update_user_from_drivers(sender, instance, action, pk_set, **kwargs):
+    """
+    Обновляет поле user при изменении user_drivers
+    """
+    if action in ["post_add", "post_remove", "post_clear"]:
+        # Получаем всех пользователей из менеджеров и водителей
+        all_users = set()
+
+        # Добавляем менеджеров
+        all_users.update(instance.user_menager.all())
+
+        # Добавляем водителей
+        all_users.update(instance.user_drivers.all())
+
+        # Обновляем поле user
+        instance.user.set(all_users)
 
 # В сигнале
 @receiver(pre_save, sender=Advert)

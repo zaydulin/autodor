@@ -8,8 +8,10 @@ from django.utils.html import format_html
 @admin.register(Advert)
 class AdvertAdmin(admin.ModelAdmin):
     list_display = (
-        "id", "name", "price", "currency", "year",
-        "transmission", "fuel", "drive", "created_at", "preview_image"
+        "id", "name", "car_brand", "car_model",
+        "price", "currency",
+        "mileage", "color", "doors", "power", "engine_volume", "year",
+        "updated_at", "created_at", "transmission", "fuel", "drive", "preview_image"
     )
     list_display_links = ("id", "name")
 
