@@ -22,13 +22,14 @@ from moderation.models import Advert
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("import_adverts")
 
-# Получаем URL из аргументов
+# Получаем URL из аргументов командной строки или используем дефолтное значение
 if len(sys.argv) < 2:
-    logger.error("Не указан URL для импорта.")
-    sys.exit(1)
-
-url = sys.argv[1]
-logger.info(f"Запуск импорта из URL: {url}")
+    # Установите здесь вашу ссылку для локальной проверки
+    url = "https://s3.q-parser.ru/automata/63e72f72e46ff8/finn.no.xml"
+    logger.info(f"Используем URL по умолчанию: {url}")
+else:
+    url = sys.argv[1]
+    logger.info(f"Запуск импорта из URL: {url}")
 
 # Основная логика импорта
 def import_from_url(url, batch_size=500):
