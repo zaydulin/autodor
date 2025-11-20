@@ -13,8 +13,9 @@ from lxml import etree as ET  # ✅ быстрее xml.etree
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "_project.settings")
 
-# Функции импорта без вызова django.setup() здесь
-from moderation.models import Advert  # Важно! Импортировать Django модели после настройки Django
+# Получаем модель через apps.get_model для предотвращения циклического импорта
+from django.apps import apps
+Advert = apps.get_model('moderation', 'Advert')
 
 # === Логирование ===
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -25,7 +26,18 @@ URLS = [
     "https://s3.q-parser.ru/automata/63e72f72e46ff8/finn.no.xml",
     "https://s3.q-parser.ru/automata/63e700c07fab20/gratka.pl.xml",
     "https://s3.q-parser.ru/automata/63e72c68f795dc/sauto.cz.xml",
-    # Добавьте сюда остальные URL
+    "https://s3.q-parser.ru/automata/63e72a4694fc7c/mobile.bg.xml",
+    "https://s3.q-parser.ru/automata/63e72bf469855c/tipcars.com.xml",
+    "https://s3.q-parser.ru/automata/63e72af857b188/bestauto.ro.xml",
+    "https://s3.q-parser.ru/automata/63e72a09b6ef48/webauto.de.xml",
+    "https://s3.q-parser.ru/automata/63e72d2b212094/auto24.ee.xml",
+    "https://s3.q-parser.ru/automata/63e70467af7a58/autotrader.pl.xml",
+    "https://s3.q-parser.ru/automata/63e72b7a4ff0a0/car24.bg.xml",
+    "https://s3.q-parser.ru/automata/63e72acaa3f4f0/auto.ro.xml",
+    "https://s3.q-parser.ru/automata/63e72a6be8bfa8/yauto.cz.xml",
+    "https://s3.q-parser.ru/automata/63e704d25ef57c/autovit.ro.xml",
+    "https://s3.q-parser.ru/automata/63e72d86e3a604/otomoto.pl.xml",
+    "https://s3.q-parser.ru/automata/63e72b3724b54c/cars.cz.xml"
 ]
 
 # === Утилиты ===
