@@ -533,57 +533,73 @@ def save_document(request, pk):
     document.save()
     return JsonResponse({'status': 'success'})
 
-@csrf_exempt
-def update_application(request, application_id):
+class UpdateApplicationView(View):
     """
-    Обработчик для обновления заявки по UUID.
+    Обработчик для обновления заявки по UUID с использованием класса.
     """
-    if request.method == 'POST':
+
+    def post(self, request, application_id):
         try:
             # Загружаем данные из запроса
             data = json.loads(request.body)
-            # Находим заявку по UUID
-            application = AdvertAplication.objects.get(id=application_id)
+            print(f"Полученные данные для обновления заявки: {data}")
 
-            # Обновляем статус
+            # Находим заявку по ID
+            application = get_object_or_404(AdvertAplication, id=application_id)
+            print(f"Заявка найдена: {application.id}, {application.status}")
+
+            # Обновляем статус заявки, если передан в данных
             if 'status' in data:
+                print(f"Обновление статуса: {application.status} -> {data['status']}")
                 application.status = data['status']
 
-            # Обработка ManyToMany полей (Менеджеры)
-            if 'user_menager' in data:
+            # Обработка поля ManyToMany для менеджеров (проверка на пустой список)
+            if 'user_menager' in data and data['user_menager']:
                 menager_ids = data['user_menager']
                 menagers = Profile.objects.filter(id__in=menager_ids)
+                print(f"Менеджеры для обновления: {menagers}")
                 application.user_menager.set(menagers)
+            else:
+                print("Менеджеры для обновления не переданы или пустые.")
 
-            # Обработка ManyToMany полей (Водители)
-            if 'user_drivers' in data:
+            # Обработка поля ManyToMany для водителей (проверка на пустой список)
+            if 'user_drivers' in data and data['user_drivers']:
                 driver_ids = data['user_drivers']
                 drivers = Profile.objects.filter(id__in=driver_ids)
+                print(f"Водители для обновления: {drivers}")
                 application.user_drivers.set(drivers)
+            else:
+                print("Водители для обновления не переданы или пустые.")
 
-            # Обновление пользователей
+            # Обновление пользователей, если переданы новые
             if 'user' in data:
                 user_ids = data['user']
                 users = Profile.objects.filter(id__in=user_ids)
+                print(f"Пользователи для обновления: {users}")
                 application.user.set(users)
 
             # Обновление стоимости доставки
             if 'delevery_price' in data:
-                delevery_price = int(data['delevery_price'])
-                application.delevery_price = delevery_price
+                try:
+                    delevery_price = int(data['delevery_price'])
+                    print(f"Обновление стоимости доставки: {application.delevery_price} -> {delevery_price}")
+                    application.delevery_price = delevery_price
+                except ValueError:
+                    print(f"Ошибка при преобразовании стоимости доставки: {data['delevery_price']}")
 
             # Сохраняем изменения
             application.save()
+            print(f"Заявка сохранена: {application.id}")
 
             # Успешный ответ
             return JsonResponse({'success': True})
 
         except AdvertAplication.DoesNotExist:
+            print("Заявка не найдена")
             return JsonResponse({'success': False, 'error': 'Заявка не найдена'}, status=404)
         except Exception as e:
+            print(f"Ошибка при обновлении заявки: {e}")
             return JsonResponse({'success': False, 'error': str(e)}, status=500)
-
-    return JsonResponse({'success': False, 'error': 'Неподдерживаемый метод'}, status=405)
 
 # Create your views here.
 

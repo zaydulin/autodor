@@ -268,7 +268,7 @@ def good_to_payload(good_el):
     transmission = map_transmission(f.get("Getriebe") or f.get("Skrzynia biegów") or f.get("КПП"))
 
     # Тип топлива - используется для поля 'fuel'
-    fuel = map_fuel(f.get("Kraftstoff") or f.get("Rodzaj paliwa")) or Advert.FuelType.GASOLINE
+    fuel = map_fuel(f.get("Kraftstoff") or f.get("Rodzaj paliwa") or f.get("Топливо")) or Advert.FuelType.GASOLINE
 
     # Тип привода - используется для поля 'drive'
     drive = map_drive(f.get("Antrieb") or f.get("Napęd") or f.get("Тип привода"))
