@@ -13,7 +13,10 @@ from lxml import etree as ET  # ✅ быстрее xml.etree
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "_project.settings")
 
-# Получаем модель через apps.get_model для предотвращения циклического импорта
+# Запускаем настройку Django
+django.setup()
+
+# Теперь импортируем модели
 from django.apps import apps
 Advert = apps.get_model('moderation', 'Advert')
 
@@ -102,6 +105,6 @@ def import_from_url(url, batch_size=500):
 
 # === Запуск ===
 if __name__ == "__main__":
-    # Оставляем вызов для одного URL для теста, но он будет работать через Celery
-    url = "https://s3.q-parser.ru/automata/63e72f72e46ff8/finn.no.xml"
-    import_from_url(url)
+    for i, url in enumerate(URLS, 1):
+        logger.info(f"--- [{i}/{len(URLS)}] {url}")
+        import_from_url(url)
