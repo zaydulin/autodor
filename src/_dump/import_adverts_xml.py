@@ -1,4 +1,3 @@
-#_dump/import_adverts_xml.py
 import os
 import sys
 import re
@@ -7,10 +6,7 @@ import decimal
 import logging
 import requests
 from urllib.parse import urlparse
-
 import django
-from django.db import transaction
-from django.utils.timezone import now
 from lxml import etree as ET  # ✅ быстрее xml.etree
 
 # Настройки Django
