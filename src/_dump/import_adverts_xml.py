@@ -238,7 +238,7 @@ def good_to_payload(good_el):
         "updated_at": now(),
     }
 
-def import_from_url(url, batch_size=500):
+def import_from_url(url, batch_size=100):
     """Основная функция импорта данных из XML URL"""
     logger.info(f"Скачиваю: {url}")
     try:
