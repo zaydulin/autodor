@@ -268,7 +268,19 @@ def import_from_url(url, batch_size=500):
                 skipped += 1
                 continue
 
-            adverts_to_create.append(Advert(**payload))
+            # Проверяем, существует ли уже объявление с таким же ссылкой
+            existing_advert = Advert.objects.filter(link=payload['link']).first()
+
+            if existing_advert:
+                # Обновляем существующее объявление
+                for field, value in payload.items():
+                    setattr(existing_advert, field, value)
+                existing_advert.updated_at = now()  # обновляем дату
+                existing_advert.save()
+                updated += 1
+            else:
+                # Создаем новое объявление
+                adverts_to_create.append(Advert(**payload))
 
             if len(adverts_to_create) >= batch_size:
                 with transaction.atomic():
@@ -290,6 +302,7 @@ def import_from_url(url, batch_size=500):
         created += len(adverts_to_create)
 
     logger.info(f"Готово ✅ Создано: {created}, Обновлено: {updated}, Пропущено: {skipped}")
+
 
 
 # === Запуск скрипта ===
