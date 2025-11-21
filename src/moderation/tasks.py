@@ -2,11 +2,12 @@ from celery import shared_task
 import time
 from useraccount.yandex_disk_utils import upload_to_yandex_disk
 import os
+from celery import shared_task
 from django.conf import settings
 import subprocess
 import logging
 from django.core.cache import cache
-from celery import shared_task, group
+from celery import shared_task
 import logging
 import subprocess
 import os
