@@ -1,3 +1,5 @@
+# Запускать каждую ссылку по отдельности
+# python3 _dump/import_adverts_xml.py --url  "https://s3.q-parser.ru/automata/63e72bf469855c/tipcars.com.xml"
 import os
 import sys
 import re

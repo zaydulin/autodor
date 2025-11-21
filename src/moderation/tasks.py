@@ -45,6 +45,11 @@ def check_model_changes(self):
             "https://s3.q-parser.ru/automata/63e704d25ef57c/autovit.ro.xml",
             "https://s3.q-parser.ru/automata/63e72d86e3a604/otomoto.pl.xml",
             "https://s3.q-parser.ru/automata/63e72b3724b54c/cars.cz.xml"
+            "https://s3.q-parser.ru/automata/63e8002bbdc38c/autogidas.lt.xml"
+            "https://s3.q-parser.ru/automata/63e72a198ee398/reklama.lv.xml"
+            "https://s3.q-parser.ru/automata/63e7e571d4046c/autotrader.nl.xml"
+            "https://s3.q-parser.ru/automata/63e7e7a4d2a9e8/ss.com.xml"
+            "https://s3.q-parser.ru/automata/63e8416ac77384/autoplius.lt.xml"
         ]
 
         script_path = os.path.join(settings.BASE_DIR, "_dump", "import_adverts_xml.py")
