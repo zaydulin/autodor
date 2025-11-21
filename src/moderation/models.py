@@ -106,7 +106,7 @@ class Advert(models.Model):
     brand = models.CharField("марка", max_length=255, null=True, blank=True, db_index=True)
     model_auto = models.CharField("модель", max_length=255, null=True, blank=True, db_index=True)
     link = models.URLField("Ссылка", max_length=500)
-    original_link = models.URLField("Оригинальная ссылка", max_length=500, blank=True, null=True)
+    original_link = models.URLField("Оригинальная ссылка", max_length=500, blank=True, null=True, unique=True)
     price = models.IntegerField("Стоимость", db_index=True)
     currency = models.CharField("Валюта", max_length=10, db_index=True)  # например, 'USD', 'EUR', 'KZT'
     description = models.TextField("Описание", blank=True, null=True)
