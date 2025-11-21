@@ -1,6 +1,3 @@
-# запускается так
-# python3 _dump/import_adverts_xml.py --url "https://s3.q-parser.ru/automata/63e72f72e46ff8/finn.no.xml"
-import concurrent
 import os
 import sys
 import re
@@ -9,7 +6,6 @@ import decimal
 import logging
 import requests
 from urllib.parse import urlparse
-
 import django
 from django.db import transaction
 from django.utils.timezone import now
@@ -28,31 +24,28 @@ logger = logging.getLogger("import_adverts")
 
 # === Источники XML-фидов ===
 URLS = [
-    "https://s3.q-parser.ru/automata/63e72f72e46ff8/finn.no.xml",  # Норвегия
-    "https://s3.q-parser.ru/automata/63e700c07fab20/gratka.pl.xml",  # Польша
-    "https://s3.q-parser.ru/automata/63e72c68f795dc/sauto.cz.xml",  # Чехия
-    "https://s3.q-parser.ru/automata/63e72a4694fc7c/mobile.bg.xml",  # Болгария
-    "https://s3.q-parser.ru/automata/63e72bf469855c/tipcars.com.xml",  # Международный
-    "https://s3.q-parser.ru/automata/63e72af857b188/bestauto.ro.xml",  # Румыния
-    "https://s3.q-parser.ru/automata/63e72a09b6ef48/webauto.de.xml",  # Германия
-    "https://s3.q-parser.ru/automata/63e72d2b212094/auto24.ee.xml",  # Эстония
-    "https://s3.q-parser.ru/automata/63e70467af7a58/autotrader.pl.xml",  # Польша
-    "https://s3.q-parser.ru/automata/63e72b7a4ff0a0/car24.bg.xml",  # Болгария
-    "https://s3.q-parser.ru/automata/63e72acaa3f4f0/auto.ro.xml",  # Румыния
-    "https://s3.q-parser.ru/automata/63e72a6be8bfa8/yauto.cz.xml",  # Чехия
-    "https://s3.q-parser.ru/automata/63e704d25ef57c/autovit.ro.xml",  # Румыния
-    "https://s3.q-parser.ru/automata/63e72d86e3a604/otomoto.pl.xml",  # Польша
-    "https://s3.q-parser.ru/automata/63e72b3724b54c/cars.cz.xml"  # Чехия
+    "https://s3.q-parser.ru/automata/63e72f72e46ff8/finn.no.xml",
+    "https://s3.q-parser.ru/automata/63e700c07fab20/gratka.pl.xml",
+    "https://s3.q-parser.ru/automata/63e72c68f795dc/sauto.cz.xml",
+    "https://s3.q-parser.ru/automata/63e72a4694fc7c/mobile.bg.xml",
+    "https://s3.q-parser.ru/automata/63e72bf469855c/tipcars.com.xml",
+    "https://s3.q-parser.ru/automata/63e72af857b188/bestauto.ro.xml",
+    "https://s3.q-parser.ru/automata/63e72a09b6ef48/webauto.de.xml",
+    "https://s3.q-parser.ru/automata/63e72d2b212094/auto24.ee.xml",
+    "https://s3.q-parser.ru/automata/63e70467af7a58/autotrader.pl.xml",
+    "https://s3.q-parser.ru/automata/63e72b7a4ff0a0/car24.bg.xml",
+    "https://s3.q-parser.ru/automata/63e72acaa3f4f0/auto.ro.xml",
+    "https://s3.q-parser.ru/automata/63e72a6be8bfa8/yauto.cz.xml",
+    "https://s3.q-parser.ru/automata/63e704d25ef57c/autovit.ro.xml",
+    "https://s3.q-parser.ru/automata/63e72d86e3a604/otomoto.pl.xml",
+    "https://s3.q-parser.ru/automata/63e72b3724b54c/cars.cz.xml"
 ]
 
 # === Утилиты для парсинга и преобразования данных ===
-
 def safe_str(x):
-    """Безопасное преобразование в строку с удалением пробелов"""
     return str(x).strip() if x else ""
 
 def parse_int(text):
-    """Парсит целое число, удаляя все нецифровые символы"""
     if not text:
         return None
     try:
@@ -62,7 +55,6 @@ def parse_int(text):
         return None
 
 def parse_price(text):
-    """Парсит цену, удаляя пробелы и преобразуя запятые в точки"""
     if not text:
         return None
     norm = str(text).replace(" ", "").replace("\xa0", "").replace(",", ".")
@@ -73,7 +65,6 @@ def parse_price(text):
         return None
 
 def parse_engine_volume(text):
-    """Парсит объем двигателя: '2393 ccm' -> 2.4 ; '2,0 L' -> 2.0"""
     if not text:
         return None
     t = str(text).lower()
@@ -90,7 +81,6 @@ def parse_engine_volume(text):
     return None
 
 def parse_power_hp(text):
-    """Парсит мощность в л.с.: '150 PS' -> 150, '110 kW' -> 150 (конвертация)"""
     if not text:
         return None
     t = str(text).lower()
@@ -105,7 +95,6 @@ def parse_power_hp(text):
     return None
 
 def extract_fields_dict(good_el):
-    """Извлекает все поля из XML элемента <good> в словарь"""
     out = {}
     for f in good_el.findall("./field"):
         name = (f.attrib.get("name") or "").strip()
@@ -114,7 +103,6 @@ def extract_fields_dict(good_el):
     return out
 
 def extract_images(good_el, limit=7):
-    """Извлекает URL изображений из элемента <good> (максимум limit штук)"""
     images = []
     for img in good_el.findall("./image"):
         url = (img.text or "").strip()
@@ -125,7 +113,6 @@ def extract_images(good_el, limit=7):
     return images
 
 def is_valid_url(url):
-    """Проверяет валидность URL"""
     try:
         result = urlparse(url)
         return all([result.scheme, result.netloc])
@@ -133,7 +120,6 @@ def is_valid_url(url):
         return False
 
 def map_transmission(text):
-    """Маппит текст типа КПП на enum значения Advert.TransmissionType"""
     if not text:
         return None
     t = text.lower()
@@ -148,7 +134,6 @@ def map_transmission(text):
     return None
 
 def map_fuel(text):
-    """Маппит текст типа топлива на enum значения Advert.FuelType"""
     if not text:
         return None
     t = text.lower()
@@ -165,7 +150,6 @@ def map_fuel(text):
     return None
 
 def map_drive(text):
-    """Маппит текст типа привода на enum значения Advert.DriveType"""
     if not text:
         return None
     t = text.lower()
@@ -178,7 +162,6 @@ def map_drive(text):
     return None
 
 def extract_address_from_description(desc):
-    """Извлекает адрес из описания по ключевым словам"""
     if not desc:
         return ""
     desc = re.sub(r"<[^>]+>", " ", str(desc))
@@ -186,14 +169,9 @@ def extract_address_from_description(desc):
     return m.group(2).strip() if m else ""
 
 # === Основная логика парсинга ===
-
 def good_to_payload(good_el):
-    """
-    Преобразует XML элемент <good> в словарь для сохранения в модель Advert
-    """
     f = extract_fields_dict(good_el)
 
-    # === ОБЯЗАТЕЛЬНЫЕ ПОЛЯ ===
     name = safe_str(f.get("Название") or f.get("Title") or "Без названия")
     link = safe_str(f.get("URL"))
     if not link or not is_valid_url(link):
@@ -239,7 +217,6 @@ def good_to_payload(good_el):
     }
 
 def import_from_url(url, batch_size=100):
-    """Основная функция импорта данных из XML URL"""
     logger.info(f"Скачиваю: {url}")
     try:
         resp = requests.get(url, timeout=180)
@@ -260,7 +237,6 @@ def import_from_url(url, batch_size=100):
     created = updated = skipped = 0
     adverts_to_create = []
 
-    # Обрабатываем каждое объявление
     for idx, good in enumerate(goods, start=1):
         try:
             payload = good_to_payload(good)
@@ -268,18 +244,14 @@ def import_from_url(url, batch_size=100):
                 skipped += 1
                 continue
 
-            # Проверяем, существует ли уже объявление с таким же ссылкой
             existing_advert = Advert.objects.filter(link=payload['link']).first()
-
             if existing_advert:
-                # Обновляем существующее объявление
                 for field, value in payload.items():
                     setattr(existing_advert, field, value)
-                existing_advert.updated_at = now()  # обновляем дату
+                existing_advert.updated_at = now()
                 existing_advert.save()
                 updated += 1
             else:
-                # Создаем новое объявление
                 adverts_to_create.append(Advert(**payload))
 
             if len(adverts_to_create) >= batch_size:
@@ -295,7 +267,6 @@ def import_from_url(url, batch_size=100):
             logger.warning(f"[{idx}] Ошибка сохранения ({e.__class__.__name__}): {e}")
             skipped += 1
 
-    # Добавляем оставшиеся объявления в базу данных
     if adverts_to_create:
         with transaction.atomic():
             Advert.objects.bulk_create(adverts_to_create)
@@ -304,8 +275,6 @@ def import_from_url(url, batch_size=100):
     logger.info(f"Готово ✅ Создано: {created}, Обновлено: {updated}, Пропущено: {skipped}")
 
 
-
-# === Запуск скрипта ===
 if __name__ == "__main__":
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        executor.map(import_from_url, URLS)
+    for url in URLS:
+        import_from_url(url)  # Обрабатываем каждый файл по очереди
