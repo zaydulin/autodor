@@ -17,6 +17,8 @@ destroy:
 	docker-compose -f docker-compose.yaml down -v $(c)
 log:
 	docker-compose -f docker-compose.yaml logs --tail=200 -f cb-app
+logcelery:
+	docker-compose -f docker-compose.yaml logs --tail=200 -f cb-celery
 shell:
 	docker-compose -f docker-compose.yaml exec cb-app /bin/bash
 manage:
