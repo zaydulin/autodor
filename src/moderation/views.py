@@ -633,6 +633,9 @@ def _to_decimal(v):
         return float(str(v).replace(',', '.'))
     except (TypeError, ValueError):
         return None
+from django.db.models import Q
+from django.views.generic import ListView
+from .models import Advert, CarModel
 
 class AdvertView(ListView):
     template_name = 'site/useraccount/adverts.html'
@@ -643,10 +646,12 @@ class AdvertView(ListView):
     def get_queryset(self):
         g = self.request.GET
 
-        # Базовый queryset:
+        # Базовый queryset с использованием select_related и prefetch_related для оптимизации
         qs = Advert.objects.filter(published=True)
 
-        # Фильтрация по текстовому запросу
+        # Применение фильтров
+
+        # Поиск по текстовому запросу
         q = g.get('q')
         if q:
             text_q = (
@@ -665,7 +670,7 @@ class AdvertView(ListView):
         if brand:
             qs = qs.filter(brand__iexact=brand)
 
-        # Фильтрация по типу автомобиля (pagetype)
+        # Фильтрация по типу автомобиля
         pagetype = g.get('pagetype')
         if pagetype:
             qs = qs.filter(car_model__pagetype=pagetype)
@@ -704,7 +709,7 @@ class AdvertView(ListView):
         if power_max:
             qs = qs.filter(power__lte=power_max)
 
-        # Фильтрация по объему
+        # Фильтрация по объему двигателя
         engine_volume_min = g.get('engine_volume_min')
         engine_volume_max = g.get('engine_volume_max')
         if engine_volume_min:
@@ -731,11 +736,12 @@ class AdvertView(ListView):
         transmission = g.getlist('transmission')
         if transmission:
             qs = qs.filter(transmission__in=transmission)
-            # Фильтрация по типу привода
 
-        drive = g.getlist('drive')  # Получаем выбранные значения для привода
+        # Фильтрация по типу привода
+        drive = g.getlist('drive')
         if drive:
             qs = qs.filter(drive__in=drive)
+
         # Фильтрация по цене
         price_min = g.get('price_min')
         price_max = g.get('price_max')
@@ -744,9 +750,8 @@ class AdvertView(ListView):
         if price_max:
             qs = qs.filter(price__lte=price_max)
 
-            # --- СОРТИРОВКА ---
+        # Сортировка
         order = g.get('order')
-
         if order == 'price_asc':
             qs = qs.order_by('price')
         elif order == 'price_desc':
@@ -760,39 +765,37 @@ class AdvertView(ListView):
         elif order == 'mileage_desc':
             qs = qs.order_by('-mileage')
         else:
-                # "Сначала новые" — по дате создания
             qs = qs.order_by('-created_at')
 
-        # Применяем фильтры
+        # Оптимизация запросов с помощью select_related и prefetch_related
+        qs = qs.select_related('car_model', 'car_brand')  # Ожидаемые связи
         return qs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         g = self.request.GET
 
-        # Данные для фильтров из Advert
+        # Получаем список брендов, моделей и других фильтров
         filter_adverts_qs = Advert.objects.filter(published=True)
 
-        # Справочные данные для фильтров
         context['brands'] = filter_adverts_qs.exclude(brand__isnull=True).values_list('brand', flat=True).distinct().order_by('brand')
 
-        # Выбираем модели для выбранной марки
+        # Фильтры для моделей в зависимости от выбранного бренда
         selected_brand = g.get('brand')
         if selected_brand:
             context['models'] = CarModel.objects.filter(brand__name=selected_brand).order_by('name')
         else:
             context['models'] = CarModel.objects.all().order_by('name')
 
-        # Фильтры для других параметров
+        # Дополнительные фильтры
         context['currencies'] = filter_adverts_qs.exclude(currency__isnull=True).values_list('currency', flat=True).distinct().order_by('currency')
         context['colors'] = filter_adverts_qs.exclude(color__isnull=True).values_list('color', flat=True).distinct().order_by('color')
         context['doors'] = filter_adverts_qs.exclude(doors__isnull=True).values_list('doors', flat=True).distinct().order_by('doors')
 
-        # Список типов автомобилей
+        # Справочные данные
         context['pagetype_choices'] = CarModel.PAGE_CHOICE
         context['selected_pagetype'] = g.get('pagetype', '')
 
-        # Фильтры для Топлива и Коробки передач
         context['transmission_choices'] = Advert.TransmissionType.choices
         context['fuel_choices'] = Advert.FuelType.choices
         context['drive_choices'] = Advert.DriveType.choices
