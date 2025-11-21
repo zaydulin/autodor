@@ -17,15 +17,17 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "_project.settings")
 django.setup()
 
-from moderation.models import Advert
+from moderation.models import Advert, CarBrand, CarModel
 
 # === Логирование ===
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("import_adverts")
 
+
 # === Утилиты для парсинга и преобразования данных ===
 def safe_str(x):
     return str(x).strip() if x else ""
+
 
 def parse_int(text):
     if not text:
@@ -35,6 +37,7 @@ def parse_int(text):
         return int(digits) if digits else None
     except Exception:
         return None
+
 
 def parse_price(text):
     if not text:
@@ -49,32 +52,61 @@ def parse_price(text):
 def parse_engine_volume(text):
     if not text:
         return None
-    t = str(text).lower()
-    try:
-        if "ccm" in t:
-            raw = re.findall(r"[\d.,]+", t)[0].replace(",", ".")
-            liters = decimal.Decimal(raw) / 1000
-            return liters.quantize(decimal.Decimal("0.1"))
-        if "l" in t:
-            raw = re.findall(r"[\d.,]+", t)[0].replace(",", ".")
-            return decimal.Decimal(raw).quantize(decimal.Decimal("0.1"))
-    except Exception:
+    t = str(text).lower().strip()  # Преобразуем в строку и убираем пробелы
+
+    # Удаляем все символы, кроме цифр, запятой и точки
+    t = re.sub(r"[^\d.,]", "", t)
+
+    # Выводим промежуточное значение после фильтрации
+
+    # Проверяем, если строка пуста после очистки
+    if not t:
         return None
-    return None
+
+    # Заменяем запятую на точку, если разделитель десятичной части — запятая
+    t = t.replace(",", ".")
+
+    # Выводим окончательную строку перед преобразованием
+
+    try:
+        # Преобразуем строку в Decimal
+        engine_volume = decimal.Decimal(t)
+
+        # Проверка, что значение укладывается в пределы для max_digits=4, decimal_places=1
+        if abs(engine_volume) >= 1000:
+            return None
+
+        # Если значение корректно, то округляем до 1 знака после запятой
+        return engine_volume.quantize(decimal.Decimal("0.1"))
+    except decimal.InvalidOperation as e:
+        return None
+
+
+
 
 def parse_power_hp(text):
     if not text:
         return None
-    t = str(text).lower()
-    try:
-        if "ps" in t:
-            return int(re.findall(r"(\d+)\s*ps", t)[0])
-        if "kw" in t:
-            kw = int(re.findall(r"(\d+)\s*kw", t)[0])
-            return int(round(kw * 1.35962))  # Конвертация kW в HP
-    except Exception:
+    # Оставляем только цифры, удаляя все символы (например, "hk")
+    t = re.sub(r"[^\d]", "", str(text))
+
+    # Выводим промежуточное значение после фильтрации
+
+    # Проверяем, если строка пуста после очистки
+    if not t:
         return None
-    return None
+
+    try:
+        # Преобразуем строку в целое число
+        power = int(t)
+
+        # Проверяем, что мощность больше нуля
+        if power <= 0:
+            return None
+
+        return power
+    except ValueError as e:
+        return None
 
 def extract_fields_dict(good_el):
     out = {}
@@ -83,6 +115,7 @@ def extract_fields_dict(good_el):
         value = (f.text or "").strip() if f.text else ""
         out[name] = value
     return out
+
 
 def extract_images(good_el, limit=7):
     images = []
@@ -94,12 +127,14 @@ def extract_images(good_el, limit=7):
                 break
     return images
 
+
 def is_valid_url(url):
     try:
         result = urlparse(url)
         return all([result.scheme, result.netloc])
     except Exception:
         return False
+
 
 def map_transmission(text):
     if not text:
@@ -114,6 +149,7 @@ def map_transmission(text):
     if any(x in t for x in ["robot", "dsg"]):
         return Advert.TransmissionType.ROBOT
     return None
+
 
 def map_fuel(text):
     if not text:
@@ -131,6 +167,7 @@ def map_fuel(text):
         return getattr(Advert.FuelType, "GAS", Advert.FuelType.GASOLINE)
     return None
 
+
 def map_drive(text):
     if not text:
         return None
@@ -143,12 +180,14 @@ def map_drive(text):
         return Advert.DriveType.RWD
     return None
 
+
 def extract_address_from_description(desc):
     if not desc:
         return ""
     desc = re.sub(r"<[^>]+>", " ", str(desc))
     m = re.search(r"(Adresse|Address|Адрес|Asukoht|Lokacija):\s*([A-Za-z0-9\s,.-]+)", desc)
     return m.group(2).strip() if m else ""
+
 
 # === Основная логика парсинга ===
 def good_to_payload(good_el):
@@ -167,15 +206,22 @@ def good_to_payload(good_el):
     if not images:
         return None
 
-    mileage = parse_int(f.get("Km") or f.get("Przebieg") or f.get("Kilometer") or f.get("Пробег")) or 0
-    year = parse_int(f.get("Rok produkcji") or f.get("Rok výroby") or f.get("Год выпуска") or f.get("Год")) or 2000
-    power = parse_power_hp(f.get("Leistung") or f.get("Moc") or f.get("Мощность"))
-    engine_volume = parse_engine_volume(f.get("Hubraum") or f.get("Pojemność") or f.get("Объем"))
-    transmission = map_transmission(f.get("Getriebe") or f.get("Skrzynia biegów") or f.get("КПП"))
+    mileage = parse_int(f.get("Km") or f.get("Przebieg") or f.get("Kilometer") or f.get("Пробег") or f.get("Пробег [км]") or f.get("Najeto")) or 0
+    year = parse_int(f.get("Rok produkcji") or f.get("Rok výroby") or f.get("Год выпуска") or f.get("Vyrobeno") or f.get("Год")) or 2000
+    power = parse_power_hp(f.get("Leistung") or f.get("Moc")  or f.get("Moc silnika") or f.get("Мощность")  or f.get("Мощност") or f.get("Výkon"))
+    engine_volume = parse_engine_volume(f.get("Hubraum") or f.get("Pojemność") or f.get("Pojemność silnika [cm3]") or f.get("Объем") or f.get("Objem"))
+    transmission = map_transmission(f.get("Getriebe") or f.get("Skrzynia biegów") or f.get("КПП")  or f.get("Převodovka") or f.get("Převodovka"))
     fuel = map_fuel(f.get("Kraftstoff") or f.get("Rodzaj paliwa") or f.get("Топливо")) or Advert.FuelType.GASOLINE
     drive = map_drive(f.get("Antrieb") or f.get("Napęd") or f.get("Тип привода"))
-    doors = parse_int(f.get("Türen") or f.get("Liczba drzwi")or f.get("Дверей")) or 5
-    color = safe_str(f.get("Farbe") or f.get("Kolor") or f.get("Цвет"))
+    doors = parse_int(f.get("Türen") or f.get("Liczba drzwi") or f.get("Дверей") or f.get("Počet dveří")) or 5
+    color = safe_str(f.get("Farbe") or f.get("Kolor") or f.get("Цвет") or f.get("Barva"))
+
+    # Создание или поиск марки и модели автомобиля
+    car_brand_name = safe_str(f.get("Merke") or f.get("Марка"))
+    car_model_name = safe_str(f.get("Modell") or f.get("Модель"))
+
+    car_brand = CarBrand.objects.get_or_create(name=car_brand_name)[0]
+    car_model = CarModel.objects.get_or_create(name=car_model_name, brand=car_brand)[0]
 
     return {
         "name": name[:255],
@@ -195,8 +241,11 @@ def good_to_payload(good_el):
         "drive": drive,
         "doors": doors,
         "color": color,
+        "car_brand": car_brand,
+        "car_model": car_model,
         "updated_at": now(),
     }
+
 
 def import_from_url(url, batch_size=100):
     logger.info(f"Скачиваю: {url}")
