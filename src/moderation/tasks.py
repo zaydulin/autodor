@@ -2,12 +2,11 @@ from celery import shared_task
 import time
 from useraccount.yandex_disk_utils import upload_to_yandex_disk
 import os
-from celery import shared_task
 from django.conf import settings
 import subprocess
 import logging
 from django.core.cache import cache
-from celery import shared_task
+from celery import shared_task, group
 import logging
 import subprocess
 import os
@@ -15,17 +14,6 @@ from django.core.cache import cache
 from django.conf import settings
 
 # Логирование
-logger = logging.getLogger(__name__)
-
-CHECK_MODEL_LOCK_KEY = "check_model_changes_lock"
-CHECK_MODEL_LOCK_EXPIRE = 60 * 60 + 60  # 1 час + запас 1 минута
-from celery import shared_task, group
-import subprocess
-import os
-import logging
-from django.core.cache import cache
-from django.conf import settings
-
 logger = logging.getLogger(__name__)
 
 CHECK_MODEL_LOCK_KEY = "check_model_changes_lock"
@@ -77,16 +65,34 @@ def check_model_changes(self):
 
         logger.info("Запуск импорта объявлений из XML")
 
-        # Запуск для каждого URL в параллельных задачах
-        tasks = []
+        # Запускаем для каждого URL в списке
         for url in URLS:
             logger.info(f"Обработка URL: {url}")
-            tasks.append(import_adverts_from_url.s(url))  # Отправляем URL как аргумент
+            result = subprocess.run(
+                ["python3", "_dump/import_adverts_xml.py", "--url", url],
+                capture_output=True,
+                text=True,
+                timeout=3600,  # 1 час таймаут
+            )
 
-        # Группируем все задачи и запускаем
-        group(tasks)()
+            if result.returncode == 0:
+                logger.info(f"Импорт для {url} выполнен успешно")
+                if result.stdout:
+                    logger.info("Импорт stdout: %s", result.stdout[:2000])
+            else:
+                msg = f"Ошибка импорта для {url} (code={result.returncode}): {result.stderr}"
+                logger.error(msg)
+                raise RuntimeError(msg)
 
-        return "Импорт для всех URL начат успешно"
+        return "Импорт для всех URL выполнен успешно"
+
+    except subprocess.TimeoutExpired as e:
+        msg = "Импорт превысил лимит времени (1 час)"
+        logger.error(msg)
+        try:
+            raise self.retry(exc=e, countdown=600)  # повтор через 10 минут
+        except self.MaxRetriesExceededError:
+            raise RuntimeError(msg)
 
     except Exception as e:
         msg = f"Ошибка при запуске импорта: {e}"
@@ -99,52 +105,6 @@ def check_model_changes(self):
     finally:
         # снимаем lock в любом случае
         cache.delete(CHECK_MODEL_LOCK_KEY)
-
-
-@shared_task
-def import_adverts_from_url(url):
-    """
-    Импортирует данные с одного URL.
-    """
-    script_path = os.path.join(settings.BASE_DIR, "_dump", "import_adverts_xml.py")
-
-    if not os.path.exists(script_path):
-        msg = f"Файл не найден: {script_path}"
-        logger.error(msg)
-        raise FileNotFoundError(msg)
-
-    project_root = settings.BASE_DIR
-    os.chdir(project_root)
-
-    logger.info(f"Запуск импорта для URL: {url}")
-
-    try:
-        result = subprocess.run(
-            ["python3", "_dump/import_adverts_xml.py", "--url", url],
-            capture_output=True,
-            text=True,
-            timeout=3600,  # 1 час таймаут
-        )
-
-        if result.returncode == 0:
-            logger.info(f"Импорт для {url} выполнен успешно")
-            if result.stdout:
-                logger.info("Импорт stdout: %s", result.stdout[:2000])
-        else:
-            msg = f"Ошибка импорта для {url} (code={result.returncode}): {result.stderr}"
-            logger.error(msg)
-            raise RuntimeError(msg)
-
-    except subprocess.TimeoutExpired as e:
-        msg = f"Импорт для {url} превысил лимит времени (1 час)"
-        logger.error(msg)
-        raise self.retry(exc=e, countdown=600)  # повтор через 10 минут
-
-    except Exception as e:
-        msg = f"Ошибка при импорте {url}: {e}"
-        logger.error(msg)
-        raise self.retry(exc=e, countdown=600)  # повтор через 10 минут
-
 
 
 
