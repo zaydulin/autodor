@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 CHECK_MODEL_LOCK_KEY = "check_model_changes_lock"
 CHECK_MODEL_LOCK_EXPIRE = 60 * 60 + 60  # 1 час + запас 1 минута
 
+
 @shared_task(bind=True, max_retries=3)
 def check_model_changes(self):
     """
@@ -35,7 +36,6 @@ def check_model_changes(self):
         return msg
 
     try:
-        # Источник данных
         URLS = [
             "https://s3.q-parser.ru/automata/63e72f72e46ff8/finn.no.xml",
             "https://s3.q-parser.ru/automata/63e700c07fab20/gratka.pl.xml",
@@ -66,7 +66,7 @@ def check_model_changes(self):
 
         logger.info("Запуск импорта объявлений из XML")
 
-        # Запускаем для каждого URL в списке
+        # Запускаем для каждого URL в списке по очереди
         for url in URLS:
             logger.info(f"Обработка URL: {url}")
             result = subprocess.run(
@@ -106,6 +106,7 @@ def check_model_changes(self):
     finally:
         # снимаем lock в любом случае
         cache.delete(CHECK_MODEL_LOCK_KEY)
+
 
 
 

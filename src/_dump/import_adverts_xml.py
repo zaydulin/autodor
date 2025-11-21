@@ -10,6 +10,7 @@ import django
 from django.db import transaction
 from django.utils.timezone import now
 from lxml import etree as ET  # ✅ быстрее xml.etree
+import argparse
 
 # Настройки Django
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
@@ -21,25 +22,6 @@ from moderation.models import Advert
 # === Логирование ===
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("import_adverts")
-
-# === Источники XML-фидов ===
-URLS = [
-    "https://s3.q-parser.ru/automata/63e72f72e46ff8/finn.no.xml",
-    "https://s3.q-parser.ru/automata/63e700c07fab20/gratka.pl.xml",
-    "https://s3.q-parser.ru/automata/63e72c68f795dc/sauto.cz.xml",
-    "https://s3.q-parser.ru/automata/63e72a4694fc7c/mobile.bg.xml",
-    "https://s3.q-parser.ru/automata/63e72bf469855c/tipcars.com.xml",
-    "https://s3.q-parser.ru/automata/63e72af857b188/bestauto.ro.xml",
-    "https://s3.q-parser.ru/automata/63e72a09b6ef48/webauto.de.xml",
-    "https://s3.q-parser.ru/automata/63e72d2b212094/auto24.ee.xml",
-    "https://s3.q-parser.ru/automata/63e70467af7a58/autotrader.pl.xml",
-    "https://s3.q-parser.ru/automata/63e72b7a4ff0a0/car24.bg.xml",
-    "https://s3.q-parser.ru/automata/63e72acaa3f4f0/auto.ro.xml",
-    "https://s3.q-parser.ru/automata/63e72a6be8bfa8/yauto.cz.xml",
-    "https://s3.q-parser.ru/automata/63e704d25ef57c/autovit.ro.xml",
-    "https://s3.q-parser.ru/automata/63e72d86e3a604/otomoto.pl.xml",
-    "https://s3.q-parser.ru/automata/63e72b3724b54c/cars.cz.xml"
-]
 
 # === Утилиты для парсинга и преобразования данных ===
 def safe_str(x):
@@ -275,6 +257,14 @@ def import_from_url(url, batch_size=100):
     logger.info(f"Готово ✅ Создано: {created}, Обновлено: {updated}, Пропущено: {skipped}")
 
 
+# === Запуск с аргументом командной строки ===
 if __name__ == "__main__":
-    for url in URLS:
-        import_from_url(url)  # Обрабатываем каждый файл по очереди
+    parser = argparse.ArgumentParser(description='Запуск импорта для указанной ссылки')
+    parser.add_argument('--url', type=str, help='URL для импорта')
+    args = parser.parse_args()
+
+    if args.url:
+        import_from_url(args.url)  # Обрабатываем только указанную ссылку
+    else:
+        for url in URLS:
+            import_from_url(url)  # Обрабатываем все ссылки из списка
