@@ -2,7 +2,7 @@
 # Запуск создания файлf для nginx_config
 # chmod +x nginx_config.sh
 # Нужно заменить название домена, директорию проекта и название файла \/
-# ./nginx_config.sh domain_name.com project_directory domain_name.conf
+# ./nginx_config.sh bahtrucks.com autodor bahtrucks.conf
 # Проверяем количество аргументов
 if [ "$#" -ne 3 ]; then
     echo "Usage: $0 domain_name project_directory filename"
