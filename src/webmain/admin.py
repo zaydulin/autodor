@@ -60,7 +60,7 @@ class AboutPageAdmin(admin.ModelAdmin):
 
 @admin.register(Seo)
 class SeoAdmin(admin.ModelAdmin):
-    model = Seo
+    list_display = ["id", "title"]
 
 
 @admin.register(SettingsGlobale)

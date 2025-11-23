@@ -113,8 +113,8 @@ class Advert(models.Model):
     description = models.TextField("Описание", blank=True, null=True)
     images = models.JSONField("Список ссылок на изображения", blank=True, null=True)  # list[str]
     subtitle = models.CharField("Подзаголовок", max_length=255, blank=True, null=True)
-    article = models.CharField("Артикул", max_length=100, blank=True, null=True)
-    address = models.CharField('Адрес', max_length=100, blank=True, null=True)
+    article = models.CharField("Артикул", max_length=500, blank=True, null=True)
+    address = models.CharField('Адрес', max_length=500, blank=True, null=True)
 
     # Характеристики авто
     mileage = models.PositiveIntegerField("Километраж (км)", blank=True, null=True, db_index=True)
