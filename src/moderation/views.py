@@ -41,6 +41,7 @@ from useraccount.models import Profile
 
 from webmain.models import SettingsGlobale
 from django.db.models import Sum
+from django.contrib import messages
 
 
 def car_model_list(request):
@@ -292,7 +293,6 @@ def responsibility_form(request, pk=None):
     return JsonResponse({"success": True, "html": html})
 
 
-
 class AdvertAplicationListView(LoginRequiredMixin, ListView):
     model = AdvertAplication
     template_name = "site/useraccount/advertaplication.html"
@@ -300,16 +300,18 @@ class AdvertAplicationListView(LoginRequiredMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        # Фильтруем по всем трем полям: user, user_menager и user_drivers
+        user = self.request.user
+
         return (
-            AdvertAplication.objects.filter(
-                models.Q(user=self.request.user) |
-                models.Q(user_menager=self.request.user) |
-                models.Q(user_drivers=self.request.user)
+            AdvertAplication.objects.using("default")  # явно работаем с основной БД
+            .filter(
+                models.Q(user=user)
+                | models.Q(user_menager=user)
+                | models.Q(user_drivers=user)
             )
-            .select_related("advert")
+            # .select_related("advert")  # ❌ этого поля больше нет
             .prefetch_related("user", "user_menager", "user_drivers")
-            .distinct()  # Убираем дубликаты если пользователь есть в нескольких полях
+            .distinct()
             .order_by("-created_at")
         )
 
@@ -328,71 +330,97 @@ class AdvertAplicationDetailView(LoginRequiredMixin, DetailView):
     context_object_name = "application"
 
     def get_queryset(self):
-        # Фильтруем по всем трем полям как в ListView
+        user = self.request.user
+
         return (
-            AdvertAplication.objects.filter(
-                models.Q(user=self.request.user) |
-                models.Q(user_menager=self.request.user) |
-                models.Q(user_drivers=self.request.user)
+            AdvertAplication.objects.using("default")
+            .filter(
+                models.Q(user=user)
+                | models.Q(user_menager=user)
+                | models.Q(user_drivers=user)
             )
-            .select_related("advert")
+            # поля advert больше нет, select_related("advert") вызывал ошибку
             .prefetch_related("user", "user_menager", "user_drivers")
             .distinct()
         )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        application = self.object
-        advert = application.advert
+        application: AdvertAplication = self.object
 
-        # Добавляем объявление
+        # --- Объявление из внешней БД ---
+        advert = application.get_advert()  # может вернуть None
         context["application"] = application
         context["advert"] = advert
-        expenses = application.expenses.all()
-        context['expenses'] = expenses
-        total_expenses = sum(expense.amount for expense in expenses)
 
-        # Исправляем получение пользователей - используем first() для user и all() для ManyToMany
+        # --- Расходы ---
+        expenses = application.expenses.all()
+        context["expenses"] = expenses
+        total_expenses = sum(expense.amount for expense in expenses) if expenses else 0
+        context["total_expenses"] = total_expenses
+
+        # --- Общая стоимость ---
+        # если объявление найдено и у него есть price, берём его,
+        # иначе используем сохранённую цену заявки (если есть)
+        if advert and getattr(advert, "price", None) is not None:
+            total_price = advert.price
+        else:
+            total_price = application.price or 0
+
+        context["total_price"] = total_price
+        context["total_ost"] = total_price - total_expenses
+
+        # обновляем цену заявки остатком
+        application.price = context["total_ost"]
+        application.save(update_fields=["price"])
+
+        # --- Пользователи заявки ---
+        # собираем всех участников, кроме текущего
         users_list = []
-        if application.user.first():  # user - это OneToOneField или ForeignKey?
-            users_list.append(application.user.first())
+        users_list.extend(application.user.all())
         users_list.extend(application.user_menager.all())
         users_list.extend(application.user_drivers.all())
 
-        context['users'] = [user for user in users_list if user != self.request.user and user is not None]
-        context['total_price'] = advert.price
-        context['total_expenses'] = total_expenses
-        context['total_ost'] = advert.price - total_expenses
+        context["users"] = [
+            u for u in users_list if u is not None and u != self.request.user
+        ]
 
-        application.price = context['total_ost']
-        application.save()
+        # "основной" пользователь заявки (первый в списке user)
+        main_user = application.user.first()
 
-        # Получаем пользователя для фильтрации сообщений
-        user = application.user.first()
-        messages = ChatMessage.objects.filter(
-            applications=application
-        ).filter(
-            Q(author=user) |
-            Q(author__in=application.user_menager.all()) |
-            Q(author__in=application.user_drivers.all())
-        ).order_by('date')
-        context['messages'] = messages
+        # --- Сообщения ---
+        messages_qs = (
+            ChatMessage.objects.filter(applications=application)
+            .filter(
+                Q(author=main_user)
+                | Q(author__in=application.user_menager.all())
+                | Q(author__in=application.user_drivers.all())
+            )
+            .order_by("date")
+        )
+        context["messages"] = messages_qs
 
-        calls = CallSession.objects.filter(application=application)
-        context['documents'] = application.documents.all().order_by('-created_at')
-        context['calls'] = calls
-        context['expense_masks'] = ExpenseMask.objects.all()
+        # --- Звонки / документы / маски ---
+        context["calls"] = CallSession.objects.filter(application=application)
+        context["documents"] = application.documents.all().order_by("-created_at")
+        context["expense_masks"] = ExpenseMask.objects.all()
 
-        context['all_managers'] = Profile.objects.filter(type=0, employee=2)
-        context['all_drivers'] = Profile.objects.filter(type=0, employee=1)
+        # --- Списки менеджеров и водителей ---
+        context["all_managers"] = Profile.objects.filter(type=0, employee=2)
+        context["all_drivers"] = Profile.objects.filter(type=0, employee=1)
 
+        # --- Маршруты ---
         paths = Path.objects.filter(aplication=application)
-        context['paths'] = paths
-        context['path_responsibilitys'] = PathResponsibility.objects.filter(path_choice__in=paths)
+        context["paths"] = paths
+        context["path_responsibilitys"] = PathResponsibility.objects.filter(
+            path_choice__in=paths
+        )
 
-        # Создаём экземпляры форм и передаём application_id
-        context['path_form'] = PathForm(application_id=application.id)
-        context['path_responsibilitys_form'] = PathResponsibilityForm(application_id=application.id)
+        # --- Формы ---
+        context["path_form"] = PathForm(application_id=application.id)
+        context["path_responsibilitys_form"] = PathResponsibilityForm(
+            application_id=application.id
+        )
 
         return context
 
@@ -891,83 +919,88 @@ def create_application(request, advert_id):
     return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
 
+
 @login_required
-@transaction.atomic
 def create_application_view(request, advert_id):
-    """Создание заявки для текущего пользователя - исправленная версия"""
+    """
+    Создание заявки для текущего пользователя.
+    Advert живёт в БД 'adverts',
+    AdvertAplication и остальные модели — в default.
+    """
+
+    # 1. Забираем объявление из БД 'adverts'
+    advert = get_object_or_404(
+        Advert.objects.using("adverts"),
+        id=advert_id
+    )
+    print(f"Найдено объявление {advert.id} из БД 'adverts'")
+
     try:
-        advert = get_object_or_404(Advert, id=advert_id)
+        # 2. Все изменения — в default
+        with transaction.atomic(using="default"):
+            # создаём заявку, теперь БЕЗ ForeignKey, используем advert_id / advert_name
+            application = AdvertAplication.objects.using("default").create(
+                advert_id=advert.id,
+                advert_name=advert.name,
+                price=Decimal("0.00"),
+                status=AdvertAplication.Status.NEW,
+            )
+            print(f"Создана заявка: {application.id} (БД default)")
 
-        # Создаем заявку с явным указанием статуса
-        application = AdvertAplication.objects.create(
-            advert=advert,
-            price=0,
-            status=AdvertAplication.Status.NEW  # ✅ Явно указываем статус
-        )
+            # Настройки
+            settings_obj = SettingsGlobale.objects.using("default").first()
+            print(f"Настройки: {settings_obj}")
 
-        print(f"Создана заявка: {application.id}")
+            # Документы
+            documents_to_create = []
+            if settings_obj:
+                for i in range(1, 9):
+                    file_field_name = f"document_file_{i}"
+                    file_obj = getattr(settings_obj, file_field_name, None)
 
-        # Получаем настройки
-        settings = SettingsGlobale.objects.first()
-        print(f"Настройки: {settings}")
+                    if file_obj and file_obj.name:
+                        if default_storage.exists(file_obj.name):
+                            documents_to_create.append(AdvertDocument(
+                                aplication=application,
+                                file=file_obj,
+                                document_type=2,
+                                type=i,
+                                name=file_obj.name,
+                            ))
+                            print(f"Добавлен документ: {file_obj.name}")
+                        else:
+                            print(f"Файл не найден в хранилище: {file_obj.name}")
 
-        # Создаем документы только если settings существует
-        documents_to_create = []
-        if settings:
-            for i in range(1, 9):
-                file_field_name = f'document_file_{i}'
-                file_obj = getattr(settings, file_field_name, None)
+            if documents_to_create:
+                AdvertDocument.objects.using("default").bulk_create(documents_to_create)
+                print(f"Создано документов: {len(documents_to_create)}")
+            else:
+                print("Нет документов для создания")
 
-                # Проверяем, что файл существует и валиден
-                if file_obj and file_obj.name:
-                    # Проверяем существование файла в хранилище
-                    if default_storage.exists(file_obj.name):
-                        documents_to_create.append(AdvertDocument(
-                            aplication=application,
-                            file=file_obj,
-                            document_type=2,
-                            type=i,
-                            name=file_obj.name,
-                        ))
-                        print(f"Добавлен документ: {file_obj.name}")
-                    else:
-                        print(f"Файл не найден в хранилище: {file_obj.name}")
+            # Пользователи (Profile живёт в default)
+            admin = Profile.objects.using("default").filter(employee=4).first()
+            users_to_add = [request.user]
 
-        # Bulk создание документов
-        if documents_to_create:
-            AdvertDocument.objects.bulk_create(documents_to_create)
-            print(f"Создано документов: {len(documents_to_create)}")
-        else:
-            print("Нет документов для создания")
+            if admin:
+                users_to_add.append(admin)
+                application.user_menager.add(admin)
+                print(f"Добавлен менеджер: {admin}")
 
-        # Добавляем пользователей
-        admin = Profile.objects.filter(employee=4).first()
-        users_to_add = [request.user]
+            application.user.set(users_to_add)
+            print(f"Добавлены пользователи: {[user.username for user in users_to_add]}")
 
-        if admin:
-            users_to_add.append(admin)
-            # ✅ Сначала сохраняем заявку, потом добавляем связи
-            application.user_menager.add(admin)
-            print(f"Добавлен менеджер: {admin}")
-
-        application.user.set(users_to_add)
-        print(f"Добавлены пользователи: {[user.username for user in users_to_add]}")
-
-        # ⚠️ УБИРАЕМ обновление объявления - это основная проблема
-        # advert.published = False
-        # advert.save()  # ❌ ЭТО ОБНОВЛЯЕТ ДАННЫЕ МОДЕЛИ Advert
-
-        print(f"Объявление НЕ обновлялось - published остался прежним")
-
+        messages.success(request, "Заявка успешно создана.")
         return redirect("moderation:my_applications")
 
     except IntegrityError as e:
         print(f"Ошибка целостности данных: {e}")
-        # Здесь можно добавить логирование или отображение ошибки пользователю
-        return redirect("error_page")
+        messages.error(request, "Ошибка при создании заявки.")
+        return redirect("moderation:my_applications")
+
     except Exception as e:
-        print(f"Общая ошибка: {e}")
-        return redirect("error_page")
+        print(f"Общая ошибка в create_application_view: {e}")
+        messages.error(request, "Произошла непредвиденная ошибка.")
+        return redirect("moderation:my_applications")
 
 def application_list(request):
     # Получаем только те заявки, в которых участвует текущий пользователь

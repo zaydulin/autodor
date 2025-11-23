@@ -1,4 +1,5 @@
 from decimal import Decimal
+from django.apps import apps      # <-- вот это нужно
 
 from django.core.files.base import ContentFile
 from django.db import models
@@ -483,6 +484,7 @@ class AdvertExpense(models.Model):
         return f"{self.title} — {self.amount} ({self.aplication.advert.name})"
 
 
+
 class AdvertAplication(models.Model):
     class Status(models.TextChoices):
         NEW = "new", "Новая"
@@ -490,56 +492,71 @@ class AdvertAplication(models.Model):
         DONE = "done", "Завершена"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
     price = models.DecimalField("Стоимость", max_digits=12, decimal_places=2, blank=True, null=True)
     delevery_price = models.DecimalField("Стоимость доставки", max_digits=12, decimal_places=2, blank=True, null=True)
+
     order_number = models.CharField(
         "Номер заказа",
         max_length=10,
-        blank=True, null=True,
-        editable=False
+        blank=True,
+        null=True,
+        editable=False,
     )
+
     user = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
         verbose_name="Пользователь",
         related_name="advert_requests",
-        blank=True
+        blank=True,
     )
     user_menager = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
         verbose_name="Менеджеры",
         related_name="advert_menager",
-        blank=True
+        blank=True,
     )
     user_drivers = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
         verbose_name="Водители",
         related_name="advert_drivers",
-        blank=True
+        blank=True,
     )
 
-    advert = models.ForeignKey(
-        Advert,
-        on_delete=models.CASCADE,
-        verbose_name="Объявление",
-        related_name="requests"
+    # --- ВАЖНО: заменили ForeignKey на “внешнюю ссылку” ---
+
+    advert_id = models.CharField(
+        "ID объявления (во внешней БД)",
+        db_index=True,max_length=20
     )
+    advert_name = models.CharField(
+        "Название объявления",
+        max_length=255,
+        blank=True,
+        null=True,
+    )
+
+    # -----------------------------------------------
 
     status = models.CharField(
         "Статус",
         max_length=20,
         choices=Status.choices,
-        default=Status.NEW
+        default=Status.NEW,
     )
 
     created_at = models.DateTimeField("Дата создания", auto_now_add=True)
 
+    # ====== служебные методы ======
+
     def generate_order_number(self):
         """Генерирует номер заказа в формате 0000001"""
-        last_order = AdvertAplication.objects.filter(
-            order_number__isnull=False
-        ).exclude(
-            order_number=''
-        ).order_by('order_number').last()
+        last_order = (
+            AdvertAplication.objects.filter(order_number__isnull=False)
+            .exclude(order_number="")
+            .order_by("order_number")
+            .last()
+        )
 
         if last_order and last_order.order_number:
             try:
@@ -553,39 +570,26 @@ class AdvertAplication(models.Model):
         return str(new_number).zfill(7)
 
     def save(self, *args, **kwargs):
-        # Генерируем номер заказа только при создании
         if not self.order_number:
             self.order_number = self.generate_order_number()
-
-        # Сохраняем объект
         super().save(*args, **kwargs)
+
+    def get_advert(self):
+        Advert = apps.get_model("moderation", "Advert")
+        try:
+            return Advert.objects.using("adverts").get(id=self.advert_id)
+        except Advert.DoesNotExist:
+            return None
 
     def sync_users_from_managers_and_drivers(self):
         """Синхронизирует поле user с user_menager и user_drivers"""
-        # Получаем всех менеджеров и водителей
-        managers_and_drivers = set()
-        managers_and_drivers.update(self.user_menager.all())
-        managers_and_drivers.update(self.user_drivers.all())
-
-        # Получаем текущих пользователей в поле user
+        managers_and_drivers = set(self.user_menager.all()) | set(self.user_drivers.all())
         current_users = set(self.user.all())
 
-        # Находим пользователей для добавления (новые менеджеры и водители)
         users_to_add = managers_and_drivers - current_users
 
-        # Находим пользователей для удаления
-        # (те, кто были менеджерами/водителями, но больше не являются ими)
-        users_to_remove = set()
-        for user in current_users:
-            # Если пользователь был добавлен как менеджер или водитель
-            # но больше не является ни тем, ни другим - удаляем его из user
-            if (user in old_managers or user in old_drivers) and user not in managers_and_drivers:
-                users_to_remove.add(user)
-
-        # Выполняем операции
-        if users_to_remove:
-            self.user.remove(*users_to_remove)
-            print(f"Удалены пользователи из user: {[str(u) for u in users_to_remove]}")
+        # old_managers / old_drivers нужно где-то задавать, тут их нет – если они не нужны, можно убрать логику удаления
+        # users_to_remove = ...
 
         if users_to_add:
             self.user.add(*users_to_add)
@@ -593,31 +597,26 @@ class AdvertAplication(models.Model):
 
     def update_cart_vod_for_drivers(self):
         """Обновляет CartVod только для новых водителей"""
-        current_drivers = set(self.user_drivers.all())
+        from cart.models import CartVod  # импорт локально
 
-        # Получаем существующие записи CartVod для этой заявки
+        current_drivers = set(self.user_drivers.all())
         existing_cart_vods = CartVod.objects.filter(application=self)
         existing_drivers = set(cart.voditel for cart in existing_cart_vods)
 
-        # Водители для добавления
         drivers_to_add = current_drivers - existing_drivers
-
-        # Водители для удаления
         drivers_to_remove = existing_drivers - current_drivers
 
-        # Добавляем новых водителей
         for driver in drivers_to_add:
             CartVod.objects.create(
                 voditel=driver,
                 application=self,
-                summa=Decimal('0.01')
+                summa=Decimal("0.01"),
             )
 
-        # Удаляем старых водителей
         if drivers_to_remove:
             CartVod.objects.filter(
                 application=self,
-                voditel__in=drivers_to_remove
+                voditel__in=drivers_to_remove,
             ).delete()
 
     class Meta:
@@ -628,7 +627,14 @@ class AdvertAplication(models.Model):
     def __str__(self):
         users = self.user.all()
         user_str = users[0].username if users.exists() else "нет пользователя"
-        return f"Заявка #{self.order_number} от {user_str} на {self.advert.name if self.advert else 'нет объявления'}"
+
+        # пытаемся взять имя объявления: сначала локальное поле, потом – из внешней БД
+        advert_title = self.advert_name
+        if not advert_title:
+            advert_obj = self.get_advert()
+            advert_title = advert_obj.name if advert_obj else "нет объявления"
+
+        return f"Заявка #{self.order_number} от {user_str} на {advert_title}"
 
 class CartVod(models.Model):
     """

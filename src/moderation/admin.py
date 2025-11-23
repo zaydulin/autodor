@@ -29,29 +29,64 @@ class AdvertAdmin(admin.ModelAdmin):
         return "-"
 
     preview_image.short_description = "Фото"
-
+from django.contrib.auth import get_user_model
 
 
 
 @admin.register(AdvertAplication)
 class AdvertAplicationAdmin(admin.ModelAdmin):
-    list_display = ("id", "advert", "users_list","order_number", "status", "created_at")
+    list_display = (
+        "id",
+        "users_list",
+        "order_number",
+        "status",
+        "advert_title",
+        "created_at",
+    )
     list_filter = ("status", "created_at")
-    search_fields = ("advert__name", "user__username", "user__email")
+    search_fields = ("user__username", "user__email", "advert_name", "advert_id")
     date_hierarchy = "created_at"
-    filter_horizontal = ("user",)  # удобный выбор нескольких пользователей
-    autocomplete_fields = ("advert",)  # если включишь autocomplete для объявлений
+    filter_horizontal = ("user", "user_menager", "user_drivers")
 
     def get_queryset(self, request):
+        # ВСЕГДА работаем с default для заявок
         qs = super().get_queryset(request)
-        return qs.select_related("advert").prefetch_related("user")
+        return qs.using("default")
+
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        """
+        Главное место, где падает ошибка:
+        по умолчанию админка берёт queryset из неправильной БД.
+        Здесь мы жёстко говорим: пользователей брать из default.
+        """
+        if db_field.name in ("user", "user_menager", "user_drivers"):
+            User = get_user_model()  # useraccount.Profile
+            kwargs["queryset"] = User.objects.using("default").all()
+        return super().formfield_for_manytomany(db_field, request, **kwargs)
 
     def users_list(self, obj):
-        # красиво выводим M2M пользователей
-        names = [getattr(u, "get_full_name", lambda: "")() or u.username for u in obj.user.all()]
+        """Красивый вывод M2M пользователей"""
+        users = obj.user.all()
+        names = [
+            (u.get_full_name() if hasattr(u, "get_full_name") else "") or u.username
+            for u in users
+        ]
         return ", ".join(names) or "—"
+
     users_list.short_description = "Пользователи"
 
+    def advert_title(self, obj):
+        """
+        Показать название объявления:
+        - сначала пытаемся подтянуть актуальное из внешней БД (get_advert),
+        - если не нашли – используем сохранённое advert_name.
+        """
+        advert_obj = obj.get_advert()
+        if advert_obj:
+            return advert_obj.name
+        return obj.advert_name or "—"
+
+    advert_title.short_description = "Объявление"
 
 
 admin.site.register(AdvertExpense)

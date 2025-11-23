@@ -119,36 +119,36 @@ def fill_document_file_from_settings(sender, instance, **kwargs):
     except Exception:
         pass
 
-@receiver(post_save, sender=AdvertAplication)
-def download_advert_images(sender, instance, created, **kwargs):
-    if not created:
-        return  # Обрабатываем только создание заявки
-
-    advert = instance.advert
-    images_urls = advert.images or []
-
-    for url in images_urls:
-        try:
-            response = requests.get(url)
-            response.raise_for_status()
-
-            # Получить имя файла из URL
-            parsed_url = urlparse(url)
-            filename = os.path.basename(parsed_url.path)
-            if not filename:
-                filename = 'image.jpg'
-
-            # Создать объект ContentFile
-            image_content = ContentFile(response.content)
-
-            # Создать и сохранить изображение
-            advert_image = AdvertApplicationImage(application=instance)
-            advert_image.image.save(filename, image_content, save=True)
-
-        except Exception as e:
-            # Логировать ошибку или пропустить
-            print(f"Ошибка при скачивании {url}: {e}")
-
-
+# @receiver(post_save, sender=AdvertAplication)
+# def download_advert_images(sender, instance, created, **kwargs):
+#     if not created:
+#         return  # Обрабатываем только создание заявки
+#
+#     advert = instance.advert
+#     images_urls = advert.images or []
+#
+#     for url in images_urls:
+#         try:
+#             response = requests.get(url)
+#             response.raise_for_status()
+#
+#             # Получить имя файла из URL
+#             parsed_url = urlparse(url)
+#             filename = os.path.basename(parsed_url.path)
+#             if not filename:
+#                 filename = 'image.jpg'
+#
+#             # Создать объект ContentFile
+#             image_content = ContentFile(response.content)
+#
+#             # Создать и сохранить изображение
+#             advert_image = AdvertApplicationImage(application=instance)
+#             advert_image.image.save(filename, image_content, save=True)
+#
+#         except Exception as e:
+#             # Логировать ошибку или пропустить
+#             print(f"Ошибка при скачивании {url}: {e}")
+#
+#
 
 
