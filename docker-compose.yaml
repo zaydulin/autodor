@@ -1,20 +1,20 @@
 services:
-  cb-redis:
+  cb-autodor-redis:
     image: redis:latest
-    container_name: cb-redis
+    container_name: cb-autodor-redis
     restart: always
     ports:
       - "127.0.0.1:6379:6379"
     volumes:
-      - cb-redis-data:/data
+      - cb-autodor-redis-data:/data
     env_file:
       - .env
     networks:
-      - cb-net
+      - cb-autodor-net
 
-  cb-db:
+  cb-autodor-db:
     image: postgres:14-alpine
-    container_name: cb-db
+    container_name: cb-autodor-db
     command: [
       "postgres",
       "-c", "max_connections=200",
@@ -28,23 +28,23 @@ services:
     environment:
       PG_DATA: /var/lib/postgresql/data
     volumes:
-      - cb-db-data:/var/lib/postgresql/data
+      - cb-autodor-db-data:/var/lib/postgresql/data
     ports:
       - "5433:5432"
     networks:
-      - cb-net
+      - cb-autodor-net
     mem_limit: 8g
 
-  cb-app:
+  cb-autodor-app:
     build:
       context: .
       dockerfile: _config/app/Dockerfile
-    container_name: cb-app
+    container_name: cb-autodor-app
     command: bash run.sh
     env_file:
       - .env
     environment:
-      WAIT_HOSTS: cb-db:5432,cb-redis:6379
+      WAIT_HOSTS: cb-autodor-db:5432,cb-autodor-redis:6379
     volumes:
       - ./src:/app/marketplace
     ports:
@@ -53,35 +53,35 @@ services:
     tty: true
     restart: on-failure
     depends_on:
-      - cb-db
-      - cb-redis
+      - cb-autodor-db
+      - cb-autodor-redis
     networks:
-      - cb-net
+      - cb-autodor-net
 
-  cb-celery:
+  cb-autodor-celery:
     build:
       context: .
       dockerfile: _config/app/Dockerfile
-    container_name: cb-celery
+    container_name: cb-autodor-celery
     command: celery --app _project worker --beat -l info --concurrency=${CELERY_CONCURRENCY:-4}
     env_file:
       - .env
     environment:
-      WAIT_HOSTS: cb-db:5432,cb-redis:6379
+      WAIT_HOSTS: cb-autodor-db:5432,cb-autodor-redis:6379
       CELERY_CONCURRENCY: 4
     volumes:
       - ./src:/app/marketplace
     restart: always
     depends_on:
-      - cb-db
-      - cb-redis
+      - cb-autodor-db
+      - cb-autodor-redis
     networks:
-      - cb-net
+      - cb-autodor-net
 
 volumes:
-  cb-db-data:
-  cb-redis-data:
+  cb-autodor-db-data:
+  cb-autodor-redis-data:
 
 networks:
-  cb-net:
+  cb-autodor-net:
     driver: bridge
