@@ -302,18 +302,29 @@ class AdvertAplicationListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         user = self.request.user
 
-        return (
-            AdvertAplication.objects.using("default")  # явно работаем с основной БД
+        advert_aplications = (
+            AdvertAplication.objects.using("default")
             .filter(
                 models.Q(user=user)
                 | models.Q(user_menager=user)
                 | models.Q(user_drivers=user)
             )
-            # .select_related("advert")  # ❌ этого поля больше нет
             .prefetch_related("user", "user_menager", "user_drivers")
             .distinct()
             .order_by("-created_at")
         )
+
+        # Получаем данные по `advert_id` из другой базы данных
+        for advertaplication in advert_aplications:
+            try:
+                advert = Advert.objects.using('adverts').get(id=advertaplication.advert_id)
+                advertaplication.advert = advert  # Привязываем найденный объект к текущему
+            except Advert.DoesNotExist:
+                advertaplication.advert = None
+
+        return advert_aplications
+
+
 
 def expense_masks_json(request):
     """Вернёт все маски в JSON для автодополнения"""
