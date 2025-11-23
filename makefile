@@ -16,17 +16,17 @@ restart:
 destroy:
 	docker-compose -f docker-compose.yaml down -v $(c)
 log:
-	docker-compose -f docker-compose.yaml logs --tail=200 -f cb-app
+	docker-compose -f docker-compose.yaml logs --tail=200 -f cb-autodor-app
 logcelery:
-	docker-compose -f docker-compose.yaml logs --tail=200 -f cb-celery
+	docker-compose -f docker-compose.yaml logs --tail=200 -f cb-autodor-celery
 shell:
-	docker-compose -f docker-compose.yaml exec cb-app /bin/bash
+	docker-compose -f docker-compose.yaml exec cb-autodor-app /bin/bash
 manage:
-	docker-compose -f docker-compose.yaml exec cb-app python manage.py $(c)
+	docker-compose -f docker-compose.yaml exec cb-autodor-app python manage.py $(c)
 makemigrations:
-	docker-compose -f docker-compose.yaml exec cb-app python manage.py makemigrations
+	docker-compose -f docker-compose.yaml exec cb-autodor-app python manage.py makemigrations
 migrate:
-	docker-compose -f docker-compose.yaml exec cb-app python manage.py migrate
+	docker-compose -f docker-compose.yaml exec cb-autodor-app python manage.py migrate
 test:
-	docker-compose -f docker-compose.yaml exec cb-app python manage.py test
+	docker-compose -f docker-compose.yaml exec cb-autodor-app python manage.py test
 
