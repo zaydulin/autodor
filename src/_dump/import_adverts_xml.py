@@ -1,5 +1,5 @@
 # Запускать каждую ссылку по отдельности
-# python3 _dump/import_adverts_xml.py --url  "https://s3.q-parser.ru/automata/63e72bf469855c/tipcars.com.xml"
+# python3 _dump/import_adverts_xml.py --url  "https://s3.q-parser.ru/automata/63e700c07fab20/gratka.pl.xml"
 import os
 import sys
 import re
@@ -31,6 +31,57 @@ def safe_str(x):
     return str(x).strip() if x else ""
 
 
+def normalize_name(name: str) -> str:
+    """
+    Нормализация названий марок/моделей:
+    - обрезаем пробелы
+    - убираем двойные пробелы
+    """
+    if not name:
+        return ""
+    name = str(name).strip()
+    name = re.sub(r"\s+", " ", name)
+    return name
+
+
+def get_or_create_brand_and_model(brand_name_raw: str, model_name_raw: str):
+    """
+    Ищем CarBrand и CarModel по имени (case-insensitive).
+    Если не нашли — создаём.
+    Если имя пустое — возвращаем None.
+    """
+    brand_name = normalize_name(brand_name_raw)
+    model_name = normalize_name(model_name_raw)
+
+    car_brand = None
+    car_model = None
+
+    # ----- Марка -----
+    if brand_name:
+        car_brand = CarBrand.objects.filter(name__iexact=brand_name).first()
+        if not car_brand:
+            car_brand = CarBrand.objects.create(name=brand_name)
+            logger.info(f"Создана новая марка: {brand_name}")
+    else:
+        logger.debug("Марка не указана, пропускаем создание CarBrand")
+
+    # ----- Модель -----
+    if model_name and car_brand:
+        car_model = CarModel.objects.filter(
+            brand=car_brand,
+            name__iexact=model_name
+        ).first()
+        if not car_model:
+            car_model = CarModel.objects.create(brand=car_brand, name=model_name)
+            logger.info(f"Создана новая модель: {brand_name} {model_name}")
+    elif model_name and not car_brand:
+        logger.warning(
+            f"Указана модель '{model_name}', но марка отсутствует — модель не будет создана."
+        )
+
+    return car_brand, car_model
+
+
 def parse_int(text):
     if not text:
         return None
@@ -51,64 +102,41 @@ def parse_price(text):
     except Exception:
         return None
 
+
 def parse_engine_volume(text):
     if not text:
         return None
-    t = str(text).lower().strip()  # Преобразуем в строку и убираем пробелы
+    t = str(text).lower().strip()
 
-    # Удаляем все символы, кроме цифр, запятой и точки
     t = re.sub(r"[^\d.,]", "", t)
-
-    # Выводим промежуточное значение после фильтрации
-
-    # Проверяем, если строка пуста после очистки
     if not t:
         return None
 
-    # Заменяем запятую на точку, если разделитель десятичной части — запятая
     t = t.replace(",", ".")
 
-    # Выводим окончательную строку перед преобразованием
-
     try:
-        # Преобразуем строку в Decimal
         engine_volume = decimal.Decimal(t)
-
-        # Проверка, что значение укладывается в пределы для max_digits=4, decimal_places=1
         if abs(engine_volume) >= 1000:
             return None
-
-        # Если значение корректно, то округляем до 1 знака после запятой
         return engine_volume.quantize(decimal.Decimal("0.1"))
-    except decimal.InvalidOperation as e:
+    except decimal.InvalidOperation:
         return None
-
-
 
 
 def parse_power_hp(text):
     if not text:
         return None
-    # Оставляем только цифры, удаляя все символы (например, "hk")
     t = re.sub(r"[^\d]", "", str(text))
-
-    # Выводим промежуточное значение после фильтрации
-
-    # Проверяем, если строка пуста после очистки
     if not t:
         return None
-
     try:
-        # Преобразуем строку в целое число
         power = int(t)
-
-        # Проверяем, что мощность больше нуля
         if power <= 0:
             return None
-
         return power
-    except ValueError as e:
+    except ValueError:
         return None
+
 
 def extract_fields_dict(good_el):
     out = {}
@@ -195,7 +223,22 @@ def extract_address_from_description(desc):
 def good_to_payload(good_el):
     f = extract_fields_dict(good_el)
 
+    # --- Название объявления ---
     name = safe_str(f.get("Название") or f.get("Title") or "Без названия")
+
+    # --- Бренд / модель по названию ---
+    # Пример: "Audi A4 Avant 2.0 TDI ..." → бренд = "Audi", модель = "A4"
+    name_words = name.split()
+    brand_from_title = name_words[0] if len(name_words) >= 1 else ""
+    model_from_title = name_words[1] if len(name_words) >= 2 else ""
+
+    # На всякий случай оставим старый fallback из полей XML
+    brand_from_fields = safe_str(f.get("Merke") or f.get("Марка"))
+    model_from_fields = safe_str(f.get("Modell") or f.get("Модель"))
+
+    car_brand_name = brand_from_title or brand_from_fields
+    car_model_name = model_from_title or model_from_fields
+
     link = safe_str(f.get("URL"))
     if not link or not is_valid_url(link):
         return None
@@ -208,22 +251,76 @@ def good_to_payload(good_el):
     if not images:
         return None
 
-    mileage = parse_int(f.get("Km") or f.get("Przebieg") or f.get("Kilometer") or f.get("Пробег") or f.get("Пробег [км]") or f.get("Najeto")) or 0
-    year = parse_int(f.get("Rok produkcji") or f.get("Rok výroby") or f.get("Год выпуска") or f.get("Vyrobeno") or f.get("Год")) or 2000
-    power = parse_power_hp(f.get("Leistung") or f.get("Moc")  or f.get("Moc silnika") or f.get("Мощность")  or f.get("Мощност") or f.get("Výkon"))
-    engine_volume = parse_engine_volume(f.get("Hubraum") or f.get("Pojemność") or f.get("Pojemność silnika [cm3]") or f.get("Объем") or f.get("Objem"))
-    transmission = map_transmission(f.get("Getriebe") or f.get("Skrzynia biegów") or f.get("КПП")  or f.get("Převodovka") or f.get("Převodovka"))
-    fuel = map_fuel(f.get("Kraftstoff") or f.get("Rodzaj paliwa") or f.get("Топливо")) or Advert.FuelType.GASOLINE
-    drive = map_drive(f.get("Antrieb") or f.get("Napęd") or f.get("Тип привода"))
-    doors = parse_int(f.get("Türen") or f.get("Liczba drzwi") or f.get("Дверей") or f.get("Počet dveří")) or 5
-    color = safe_str(f.get("Farbe") or f.get("Kolor") or f.get("Цвет") or f.get("Barva"))
+    mileage = parse_int(
+        f.get("Km")
+        or f.get("Przebieg")
+        or f.get("Kilometer")
+        or f.get("Пробег")
+        or f.get("Пробег [км]")
+        or f.get("Najeto")
+    ) or 0
 
-    # Создание или поиск марки и модели автомобиля
-    car_brand_name = safe_str(f.get("Merke") or f.get("Марка"))
-    car_model_name = safe_str(f.get("Modell") or f.get("Модель"))
+    year = parse_int(
+        f.get("Rok produkcji")
+        or f.get("Rok výroby")
+        or f.get("Год выпуска")
+        or f.get("Vyrobeno")
+        or f.get("Год")
+    ) or 2000
 
-    car_brand = CarBrand.objects.get_or_create(name=car_brand_name)[0]
-    car_model = CarModel.objects.get_or_create(name=car_model_name, brand=car_brand)[0]
+    power = parse_power_hp(
+        f.get("Leistung")
+        or f.get("Moc")
+        or f.get("Moc silnika")
+        or f.get("Мощность")
+        or f.get("Мощност")
+        or f.get("Výkon")
+    )
+
+    engine_volume = parse_engine_volume(
+        f.get("Hubraum")
+        or f.get("Pojemność")
+        or f.get("Pojemność silnika [cm3]")
+        or f.get("Объем")
+        or f.get("Objem")
+    )
+
+    transmission = map_transmission(
+        f.get("Getriebe")
+        or f.get("Skrzynia biegów")
+        or f.get("КПП")
+        or f.get("Převodovka")
+        or f.get("Převодovka")
+    )
+
+    fuel = map_fuel(
+        f.get("Kraftstoff")
+        or f.get("Rodzaj paliwa")
+        or f.get("Топливо")
+    ) or Advert.FuelType.GASOLINE
+
+    drive = map_drive(
+        f.get("Antrieb")
+        or f.get("Napęd")
+        or f.get("Тип привода")
+    )
+
+    doors = parse_int(
+        f.get("Türen")
+        or f.get("Liczba drzwi")
+        or f.get("Дверей")
+        or f.get("Počet dveří")
+    ) or 5
+
+    color = safe_str(
+        f.get("Farbe")
+        or f.get("Kolor")
+        or f.get("Цвет")
+        or f.get("Barva")
+    )
+
+    # --- Создаём / находим марку и модель по имени ---
+    car_brand, car_model = get_or_create_brand_and_model(car_brand_name, car_model_name)
 
     return {
         "name": name[:255],
@@ -277,7 +374,7 @@ def import_from_url(url, batch_size=100):
                 skipped += 1
                 continue
 
-            existing_advert = Advert.objects.filter(link=payload['link']).first()
+            existing_advert = Advert.objects.filter(link=payload["link"]).first()
             if existing_advert:
                 for field, value in payload.items():
                     setattr(existing_advert, field, value)
@@ -310,12 +407,12 @@ def import_from_url(url, batch_size=100):
 
 # === Запуск с аргументом командной строки ===
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Запуск импорта для указанной ссылки')
-    parser.add_argument('--url', type=str, help='URL для импорта')
+    parser = argparse.ArgumentParser(description="Запуск импорта для указанной ссылки")
+    parser.add_argument("--url", type=str, help="URL для импорта")
     args = parser.parse_args()
 
     if args.url:
-        import_from_url(args.url)  # Обрабатываем только указанную ссылку
+        import_from_url(args.url)
     else:
-        for url in URLS:
-            import_from_url(url)  # Обрабатываем все ссылки из списка
+        logger.error("Нужно передать --url для импорта конкретного фида")
+

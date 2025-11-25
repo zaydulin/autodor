@@ -195,6 +195,7 @@ class Advert(models.Model):
             models.Index(fields=['year', 'created_at']),
             models.Index(fields=['mileage', 'created_at']),
         ]
+        ordering = ['-car_model__pagetype', '-created_at']
 
     def clean_fields(self, exclude=None):
         """Очистка полей перед валидацией"""

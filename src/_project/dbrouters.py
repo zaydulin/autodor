@@ -1,11 +1,6 @@
 # _project/dbrouters.py
 from django.apps import apps
 
-# _project/dbrouters.py
-# _project/dbrouters.py  (путь подставь свой)
-
-# _project/dbrouters.py
-
 class AdvertRouter:
     adverts_models = {  # модели, которые живут в БД "adverts"
         ("moderation", "advert"),

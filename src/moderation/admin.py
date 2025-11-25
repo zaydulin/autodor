@@ -95,13 +95,17 @@ admin.site.register(ChatMessage)
 admin.site.register(AdvertDocument)
 admin.site.register(Path)
 admin.site.register(PathResponsibility)
-admin.site.register(CarModel)
 admin.site.register(CarBrand)
 admin.site.register(AdvertAplicationGallery)
 
 @admin.register(ExpenseMask)
 class ExpenseMaskAdmin(admin.ModelAdmin):
     list_display = ("name",)
+    search_fields = ("name",)
+
+@admin.register(CarModel)
+class CarModelAdmin(admin.ModelAdmin):
+    list_display = ("name","pagetype",)
     search_fields = ("name",)
 
 @admin.register(Withdrawal)
