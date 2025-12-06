@@ -44,6 +44,40 @@ from django.db.models import Sum
 from django.contrib import messages
 
 
+class CustomHtmxMixin:
+    def get_template_names(self):
+        is_htmx = bool(self.request.META.get('HTTP_HX_REQUEST'))
+        if is_htmx:
+            return [self.template_name]
+        else:
+            return ['include_block.html']
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['template_htmx'] = self.template_name
+
+        # Получаем SEO данные из View и передаем их для блоков
+        seo_context = self.get_seo_context()
+        context.update(seo_context)
+
+        return context
+
+    def get_seo_context(self):
+        """
+        Переопределите этот метод в дочерних классах
+        чтобы вернуть SEO данные для этой страницы
+        """
+        return {
+            'block_title': 'Заголовок по умолчанию',
+            'block_description': 'Описание по умолчанию',
+            'block_propertytitle': 'Property Title по умолчанию',
+            'block_propertydescription': 'Property Description по умолчанию',
+            'block_propertyimage': '',
+            'block_head': ''
+        }
+
+
+
 def car_model_list(request):
     # Получаем все модели автомобилей
     car_models = CarModel.objects.all()
@@ -293,7 +327,7 @@ def responsibility_form(request, pk=None):
     return JsonResponse({"success": True, "html": html})
 
 
-class AdvertAplicationListView(LoginRequiredMixin, ListView):
+class AdvertAplicationListView(CustomHtmxMixin, LoginRequiredMixin, ListView):
     model = AdvertAplication
     template_name = "site/useraccount/advertaplication.html"
     context_object_name = "advertaplications"
@@ -335,7 +369,7 @@ def expense_masks_json(request):
     return JsonResponse({"results": [m.name for m in masks[:20]]})
 
 
-class AdvertAplicationDetailView(LoginRequiredMixin, DetailView):
+class AdvertAplicationDetailView(CustomHtmxMixin, LoginRequiredMixin, DetailView):
     model = AdvertAplication
     template_name = "site/useraccount/advertaplication-detail.html"
     context_object_name = "application"
@@ -677,7 +711,7 @@ from django.views.generic import ListView
 from .models import Advert, CarModel
 
 
-class AdvertView(ListView):
+class AdvertView(CustomHtmxMixin, ListView):
     template_name = 'site/useraccount/adverts.html'
     context_object_name = 'adverts'
     model = Advert
@@ -874,7 +908,7 @@ class AdvertView(ListView):
 
 
 
-class AdvertDetailView(DetailView):
+class AdvertDetailView(CustomHtmxMixin, DetailView):
     """Страница новости"""
     model = Advert
     template_name = 'site/useraccount/adverts_detail.html'
@@ -883,7 +917,7 @@ class AdvertDetailView(DetailView):
 
 
 """ЧаВо"""
-class FaqsModerView(ListView):
+class FaqsModerView(CustomHtmxMixin, ListView):
     model = Faqs
     template_name = 'site/useraccount/faqs.html'  # No .html extension
     context_object_name = 'faqs'
@@ -1042,32 +1076,56 @@ def create_application_view(request, advert_id):
         messages.error(request, "Произошла непредвиденная ошибка.")
         return redirect("moderation:my_applications")
 
-def application_list(request):
-    # Получаем только те заявки, в которых участвует текущий пользователь
-    applications = AdvertAplication.objects.filter(
-        # Пользователь может быть в любой из трех групп
-        Q(user=request.user) |
-        Q(user_menager=request.user) |
-        Q(user_drivers=request.user)
-    ).prefetch_related(
-        'user_menager',
-        'user_drivers'
-    ).distinct()  # Добавляем distinct() чтобы избежать дубликатов
 
-    # Создаем пагинатор
-    paginator = Paginator(applications, 10)  # 10 заявок на страницу
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+class ApplicationListView(CustomHtmxMixin, ListView):
+    model = AdvertAplication
+    template_name = 'site/useraccount/documents.html'
+    context_object_name = 'documents'
+    paginate_by = 10  # 10 заявок на страницу
 
-    return render(
-        request,
-        'site/useraccount/documents.html',
-        {
-            'page_obj': page_obj,
+    def get_queryset(self):
+        # Получаем только те заявки, в которых участвует текущий пользователь
+        queryset = super().get_queryset()
+
+        if self.request.user.is_authenticated:
+            queryset = queryset.filter(
+                # Пользователь может быть в любой из трех групп
+                Q(user=self.request.user) |
+                Q(user_menager=self.request.user) |
+                Q(user_drivers=self.request.user)
+            ).prefetch_related(
+                'user_menager',
+                'user_drivers'
+            ).distinct()  # Добавляем distinct() чтобы избежать дубликатов
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Добавляем paginator и page_obj для совместимости с шаблоном
+        paginator = Paginator(self.get_queryset(), self.paginate_by)
+        page_number = self.request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+
+        context.update({
             'paginator': paginator,
-            'documents': page_obj,  # для совместимости с шаблоном
+            'page_obj': page_obj,
+        })
+        return context
+
+    def get_seo_context(self):
+        """
+        Переопределяем SEO данные для страницы заявок
+        """
+        return {
+            'block_title': 'Мои заявки',
+            'block_description': 'Список моих заявок на перевозки',
+            'block_propertytitle': 'Заявки на перевозку',
+            'block_propertydescription': 'Управление заявками на перевозку грузов',
+            'block_propertyimage': '',
+            'block_head': ''
         }
-    )
+
 
 @login_required
 @require_POST

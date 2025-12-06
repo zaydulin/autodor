@@ -1,20 +1,11 @@
-{% extends 'site/useraccount/base.html' %}
 {% load static user_tags i18n %}
-{% block title %}{{ seo_title }}{% endblock title %}
-{% block description %}{{ seo_description }}{% endblock description %}
-{% block propertytitle %}{% if seo_previev %}{{ seo_previev.url }} {% endif %} {% endblock propertytitle %}
-{% block propertydescription %}{{ seo_propertytitle }}{% endblock propertydescription %}
-{% block propertyimage %}{{ seo_propertydescription }}{% endblock propertyimage %}
-{% block head %}
+{% block content %}
 <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.7/dayjs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.7/plugin/relativeTime.js"></script>
 <script>
   dayjs.extend(dayjs_plugin_relativeTime);
 </script>
 
-{% endblock head %}
-
-{% block content %}
 <style>
 
     .button_take:hover {
@@ -93,7 +84,9 @@
                 </tbody>
             </table>
             {% if request.user.employee == 0 %}
-                <a href="{% url 'moderation:advert_apply' advert.id %}" class="button_take w-100">создать заявку на покупку</a>
+                <a href="{% url 'moderation:advert_apply' advert.id %}" hx-get="{% url 'moderation:advert_apply' advert.id %}"
+     hx-target="#content-body"
+     hx-push-url="true" class="button_take w-100">создать заявку на покупку</a>
             {% endif %}
         </div>
     </div>

@@ -1,16 +1,8 @@
-{% extends 'site/useraccount/base.html' %}
 {% load static user_tags i18n %}
-{% block title %}{{ seo_title }}{% endblock title %}
-{% block description %}{{ seo_description }}{% endblock description %}
-{% block propertytitle %}{% if seo_previev %}{{ seo_previev.url }} {% endif %} {% endblock propertytitle %}
-{% block propertydescription %}{{ seo_propertytitle }}{% endblock propertydescription %}
-{% block propertyimage %}{{ seo_propertydescription }}{% endblock propertyimage %}
-{% block head %}
-<link href="https://cdn.jsdelivr.net/npm/suggestions-jquery@latest/dist/css/suggestions.min.css" rel="stylesheet">
-
-{% endblock head %}
 
 {% block content %}
+<link href="https://cdn.jsdelivr.net/npm/suggestions-jquery@latest/dist/css/suggestions.min.css" rel="stylesheet">
+
 <!--  row -->
 <style>
     .nav-tabs .nav-link.active {

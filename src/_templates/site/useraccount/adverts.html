@@ -1,19 +1,11 @@
-{% extends 'site/useraccount/base.html' %}
-{% load static user_tags i18n %}
-{% block title %}{{ seo_title }}{% endblock title %}
-{% block description %}{{ seo_description }}{% endblock description %}
-{% block propertytitle %}{% if seo_previev %}{{ seo_previev.url }} {% endif %} {% endblock propertytitle %}
-{% block propertydescription %}{{ seo_propertytitle }}{% endblock propertydescription %}
-{% block propertyimage %}{{ seo_propertydescription }}{% endblock propertyimage %}
-{% block head %}
+
+
+{% block content %}
 <style>
     option {
     color: #000000;
 }
 </style>
-{% endblock head %}
-
-{% block content %}
 <div class="conatiner-fluid content-inner mt-5 py-0">
     <div class="row">
         <div class="col-lg-4">
@@ -314,33 +306,41 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="card-header swiper-container d-slider2">
                     <div class="row">
                         {% for advert in adverts %}
-                        <div class="col-lg-4" data-href="{% url 'moderation:advert_detail' advert.id %}" style="margin-bottom: 7%;">
-                            <div class="iq-upcoming-cars">
-                                {% if advert.images|length > 1 %}
-                                <div style="position: relative; width: 100%; padding-top: 56.25%; /* пропорции 16:9 */">
-                                    <img src="{{ advert.images.0 }}" class="img-fluid w-100" alt="{{ advert.name }}"
-                                         style="position: absolute; top: 0; left: 0; height: 100%; object-fit: cover;"
-                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
-                                    <div style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: #f0f0f0;"></div>
-                                </div>
-                                {% else %}
-                                <div style="position: relative; width: 100%; padding-top: 56.25%; /* пропорции 16:9 */">
-                                    <img src="{{ advert.images.0 }}" class="img-fluid w-100" alt="{{ advert.name }}"
-                                         style="position: absolute; top: 0; left: 0; height: 100%; object-fit: cover;"
-                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
-                                    <div style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: #f0f0f0;"></div>
-                                </div>                                {% endif %}
-                                <div class="iq-car-details">
-                                    <h6 class="text-primary">{{ advert.name }}</h6>
-                                    <div class="d-flex justify-content-end"></div>
-                                </div>
-                                <div class="iq-car-price d-flex justify-content-between align-items-center">
-                                    <span>Цена</span>
-                                    <h6>{{ advert.price }} {{ advert.currency }}</h6>
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
+<div class="col-lg-4 cursor-pointer"
+     hx-get="{% url 'moderation:advert_detail' advert.id %}"
+     hx-target="#content-body"
+     hx-push-url="true"
+     style="margin-bottom: 7%; cursor: pointer;">
+    <div class="iq-upcoming-cars">
+        {% if advert.images|length > 1 %}
+        <div style="position: relative; width: 100%; padding-top: 56.25%;">
+            <img src="{{ advert.images.0 }}" class="img-fluid w-100" alt="{{ advert.name }}"
+                 style="position: absolute; top: 0; left: 0; height: 100%; object-fit: cover;"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+            <div style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: #f0f0f0;"></div>
+        </div>
+        {% else %}
+        <div style="position: relative; width: 100%; padding-top: 56.25%;">
+            <img src="{{ advert.images.0 }}" class="img-fluid w-100" alt="{{ advert.name }}"
+                 style="position: absolute; top: 0; left: 0; height: 100%; object-fit: cover;"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+            <div style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: #f0f0f0;"></div>
+        </div>
+        {% endif %}
+
+        <div class="iq-car-details">
+            <h6 class="text-primary">{{ advert.name }}</h6>
+            <div class="d-flex justify-content-end"></div>
+        </div>
+
+        <div class="iq-car-price d-flex justify-content-between align-items-center">
+            <span>Цена</span>
+            <h6>{{ advert.price }} {{ advert.currency }}</h6>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
                         {% include 'site/useraccount/include/paginations.html' with items=adverts %}
 
 

@@ -1,0 +1,11 @@
+{% extends 'site/useraccount/base.html' %}
+{% load static %}
+
+
+{% block content %}
+    {% if template_htmx %}
+        {% include template_htmx %}
+    {% else %}
+        <p>Error: template_htmx not provided</p>
+    {% endif %}
+{% endblock content %}

@@ -276,7 +276,7 @@
 
                     <ul class="sub-nav collapse show" id="sidebar-user" data-bs-parent="#sidebar-menu-users">
                         <li class="nav-item">
-                            <a class="nav-link " href="{% url 'moderation:adverts'%}">
+                            <a class="nav-link " href="{% url 'moderation:adverts'%}" hx-get="{% url 'moderation:adverts' %}" hx-target="#content-body" hx-push-url="true">
                                 <i class="icon">
                                     <svg width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                         <path opacity="0.4" d="M16.0756 2H19.4616C20.8639 2 22.0001 3.14585 22.0001 4.55996V7.97452C22.0001 9.38864 20.8639 10.5345 19.4616 10.5345H16.0756C14.6734 10.5345 13.5371 9.38864 13.5371 7.97452V4.55996C13.5371 3.14585 14.6734 2 16.0756 2Z" fill="currentColor"></path>
@@ -287,7 +287,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link " href="{% url 'moderation:my_applications'%}">
+                            <a class="nav-link " href="{% url 'moderation:my_applications'%}"  hx-get="{% url 'moderation:my_applications' %}" hx-target="#content-body" hx-push-url="true">
                                 <i class="icon">
                                     <svg width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                         <path opacity="0.4" d="M12.0865 22C11.9627 22 11.8388 21.9716 11.7271 21.9137L8.12599 20.0496C7.10415 19.5201 6.30481 18.9259 5.68063 18.2336C4.31449 16.7195 3.5544 14.776 3.54232 12.7599L3.50004 6.12426C3.495 5.35842 3.98931 4.67103 4.72826 4.41215L11.3405 2.10679C11.7331 1.96656 12.1711 1.9646 12.5707 2.09992L19.2081 4.32684C19.9511 4.57493 20.4535 5.25742 20.4575 6.02228L20.4998 12.6628C20.5129 14.676 19.779 16.6274 18.434 18.1581C17.8168 18.8602 17.0245 19.4632 16.0128 20.0025L12.4439 21.9088C12.3331 21.9686 12.2103 21.999 12.0865 22Z" fill="currentColor"></path>
@@ -298,7 +298,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link " href="{% url 'moderation:faqs_moder'%}">
+                            <a class="nav-link " href="{% url 'moderation:faqs_moder'%}"  hx-get="{% url 'moderation:faqs_moder' %}" hx-target="#content-body" hx-push-url="true">
                                 <i class="icon">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-people-fill" viewBox="0 0 16 16">
                                         <path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1H7Zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm-5.784 6A2.238 2.238 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.325 6.325 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1h4.216ZM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"/>
@@ -309,7 +309,7 @@
                         </li>
 
                         <li class="nav-item">
-                            <a class="nav-link " href="{% url 'moderation:application_list'%}">
+                            <a class="nav-link " href="{% url 'moderation:application_list'%}"  hx-get="{% url 'moderation:application_list' %}" hx-target="#content-body" hx-push-url="true">
                                 <i class="icon">
                                     <svg width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                         <path opacity="0.4" d="M16.191 2H7.81C4.77 2 3 3.78 3 6.83V17.16C3 20.26 4.77 22 7.81 22H16.191C19.28 22 21 20.26 21 17.16V6.83C21 3.78 19.28 2 16.191 2Z" fill="currentColor"></path>
@@ -380,7 +380,7 @@
         <!--Nav Start-->
         <nav class="nav navbar navbar-expand-lg navbar-light iq-navbar">
             <div class="container-fluid navbar-inner">
-                <a  href="{% url 'webmain:home' %}"  class="navbar-brand">
+                <a  href="{% url 'webmain:home' %}"  hx-get="{% url 'moderation:my_applications' %}" hx-target="#content-body" hx-push-url="true" class="navbar-brand">
                     <!--Logo start-->
                     <img src="{% if settings.favicon %}{{settings.logo.url}}{% endif %}" class="img-fluid" alt="logo-big">
                     <!--Logo end-->
@@ -396,23 +396,23 @@
                             </div>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item" href="{% url 'useraccount:edit_profile' %}">Профиль</a></li>
-                            <li><a class="dropdown-item" href="{% url 'moderation:my_applications' %}">Мои заявки</a></li>
+                            <li><a class="dropdown-item" href="{% url 'useraccount:edit_profile' %}"  hx-get="{% url 'useraccount:edit_profile' %}" hx-target="#content-body" hx-push-url="true">Профиль</a></li>
+                            <li><a class="dropdown-item" href="{% url 'moderation:my_applications' %}"  hx-get="{% url 'moderation:my_applications' %}" hx-target="#content-body" hx-push-url="true">Мои заявки</a></li>
                             {% if request.user.employee == 4  %}
-                            <li><a class="dropdown-item" href="{% url 'moderation:statistics' %}">Статистика</a></li>
+                            <li><a class="dropdown-item" href="{% url 'moderation:statistics' %}"  hx-get="{% url 'moderation:statistics' %}" hx-target="#content-body" hx-push-url="true">Статистика</a></li>
                             {% endif %}
                             {% if request.user.employee != 0 and request.user.employee != 4  %}
-                            <li><a class="dropdown-item" href="{% url 'useraccount:withdraw' %}">Начисление</a></li>
+                            <li><a class="dropdown-item" href="{% url 'useraccount:withdraw' %}"  hx-get="{% url 'useraccount:withdraw' %}" hx-target="#content-body" hx-push-url="true">Начисление</a></li>
                             {% endif %}
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{% url 'useraccount:logout' %}">Выйти</a></li>
+                            <li><a class="dropdown-item" href="{% url 'useraccount:logout' %}" >Выйти</a></li>
                         </ul>
                     </li>
                 </ul>
             </div>
         </nav>        <!--Nav End-->
     </div>
-    <div class="conatiner-fluid content-inner mt-5 py-0">
+    <div class="conatiner-fluid content-inner mt-5 py-0" id="content-body">
        {% block content %}{% endblock content %}
 
     </div>
@@ -420,7 +420,7 @@
 <div class="mobile-bottom-menu d-lg-none">
     <ul class="nav justify-content-around">
         <li class="nav-item">
-            <a class="nav-link" href="{% url 'moderation:adverts' %}">
+            <a class="nav-link" href="{% url 'moderation:adverts' %}" hx-get="{% url 'moderation:adverts' %}" hx-target="#content-body" hx-push-url="true">
                 <i class="icon">
                     <!-- SVG иконка -->
                     <svg width="20" viewBox="0 0 24 24"><path opacity="0.4" d="M16.0756 2H19.4616C20.8639 2 22.0001 3.14585 22.0001 4.55996V7.97452C22.0001 9.38864 20.8639 10.5345 19.4616 10.5345H16.0756C14.6734 10.5345 13.5371 9.38864 13.5371 7.97452V4.55996C13.5371 3.14585 14.6734 2 16.0756 2Z" fill="currentColor"></path><path fill-rule="evenodd" clip-rule="evenodd" d="M4.53852 2H7.92449C9.32676 2 10.463 3.14585 10.463 4.55996V7.97452C10.463 9.38864 9.32676 10.5345 7.92449 10.5345H4.53852C3.13626 10.5345 2 9.38864 2 7.97452V4.55996C2 3.14585 3.13626 2 4.53852 2ZM4.53852 13.4655H7.92449C9.32676 13.4655 10.463 14.6114 10.463 16.0255V19.44C10.463 20.8532 9.32676 22 7.92449 22H4.53852C3.13626 22 2 20.8532 2 19.44V16.0255C2 14.6114 3.13626 13.4655 4.53852 13.4655ZM19.4615 13.4655H16.0755C14.6732 13.4655 13.537 14.6114 13.537 16.0255V19.44C13.537 20.8532 14.6732 22 16.0755 22H19.4615C20.8637 22 22 20.8532 22 19.44V16.0255C22 14.6114 20.8637 13.4655 19.4615 13.4655Z" fill="currentColor"></path></svg>
@@ -428,7 +428,7 @@
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="{% url 'moderation:my_applications'%}">
+            <a class="nav-link" href="{% url 'moderation:my_applications'%}" hx-get="{% url 'moderation:my_applications' %}" hx-target="#content-body" hx-push-url="true">
                 <i class="icon">
                     <!-- SVG иконка -->
                     <svg width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -439,7 +439,7 @@
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="{% url 'moderation:faqs_moder'%}">
+            <a class="nav-link" href="{% url 'moderation:faqs_moder'%}" hx-get="{% url 'moderation:faqs_moder' %}" hx-target="#content-body" hx-push-url="true">
                 <i class="icon">
                     <!-- SVG иконка -->
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-people-fill" viewBox="0 0 16 16">
@@ -449,7 +449,7 @@
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="{% url 'moderation:application_list'%}">
+            <a class="nav-link" href="{% url 'moderation:application_list'%}" hx-get="{% url 'moderation:application_list' %}" hx-target="#content-body" hx-push-url="true">
                 <i class="icon">
                     <!-- SVG иконка -->
                     <svg width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -700,7 +700,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   init();
 });
 </script>
+
 {% endif %}
+<script src="{% static 'site/htmx.min.js' %}"></script>
+
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   const userId = "{{ request.user.id }}";

@@ -1,12 +1,4 @@
-{% extends 'site/useraccount/base.html' %}
 {% load static %}
-{% block title %}{{ seo_title }}{% endblock title %}
-{% block description %}{{ seo_description }}{% endblock description %}
-{% block propertytitle %}{% if seo_previev %}{{ seo_previev.url }} {% endif %} {% endblock propertytitle %}
-{% block propertydescription %}{{ seo_propertytitle }}{% endblock propertydescription %}
-{% block propertyimage %}{{ seo_propertydescription }}{% endblock propertyimage %}
-{% block head %}{% endblock head %}
-
 {% block content %}
 <style>
     .mb-0 {
@@ -213,10 +205,11 @@
     .status-approved { background: #d4edda; color: #155724; }
     .status-rejected { background: #f8d7da; color: #721c24; }
 </style>
-<div class="container">
     {% if advertaplications %}
     {% for advertaplication in advertaplications %}
-    <div  style="padding-bottom: 10%; background: white;" data-href="{% url 'moderation:application_detail' advertaplication.id %}">
+    <div  style="padding-bottom: 10%; background: white;" hx-get="{% url 'moderation:application_detail' advertaplication.id %}"
+     hx-target="#content-body"
+     hx-push-url="true">
         <div style="padding:5%" class="row d-flex align-items-center pb-3 "  >
             <div class="col-lg-6 d-flex justify-content-center align-items-center" style="height:300px;">
                 {% if advertaplication.advert.images %}
@@ -293,7 +286,6 @@
     </div>
     <hr>
     {% endfor %}
-</div>
 {% else %}
 <h4 style="display: flex; justify-content: center;">У вас нет заявок, выберите машину в разделе объявления</h4>
 {% endif %}

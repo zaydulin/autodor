@@ -745,6 +745,7 @@ class AdvertAplicationGalleryGroup(models.Model):
     Группа (альбом) медиа-файлов внутри заявки
     Например: 'Доставка', 'Отгрузка', 'Склад', …
     """
+
     application = models.ForeignKey(
         AdvertAplication,
         on_delete=models.CASCADE,
@@ -770,6 +771,14 @@ class AdvertAplicationGallery(models.Model):
         on_delete=models.CASCADE,
         related_name="gallery"
     )
+    PAGE_CHOICE = [
+        (0, 'Фото-отчет'),
+        (1, 'Видео-отчет'),
+        (2, 'Билет'),
+        (3, 'Чек'),
+    ]
+    pagetype = models.PositiveSmallIntegerField('Тип', choices=PAGE_CHOICE, blank=False, default=1)
+
     group = models.ForeignKey(
         AdvertAplicationGalleryGroup,
         on_delete=models.SET_NULL,

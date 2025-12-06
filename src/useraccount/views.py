@@ -37,6 +37,38 @@ from moderation.forms import TicketCommentForm, WithdrawForm,  TicketWithComment
 
 from useraccount.forms import EmailAuthenticationForm
 
+class CustomHtmxMixin:
+    def get_template_names(self):
+        is_htmx = bool(self.request.META.get('HTTP_HX_REQUEST'))
+        if is_htmx:
+            return [self.template_name]
+        else:
+            return ['include_block.html']
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['template_htmx'] = self.template_name
+
+        # Получаем SEO данные из View и передаем их для блоков
+        seo_context = self.get_seo_context()
+        context.update(seo_context)
+
+        return context
+
+    def get_seo_context(self):
+        """
+        Переопределите этот метод в дочерних классах
+        чтобы вернуть SEO данные для этой страницы
+        """
+        return {
+            'block_title': 'Заголовок по умолчанию',
+            'block_description': 'Описание по умолчанию',
+            'block_propertytitle': 'Property Title по умолчанию',
+            'block_propertydescription': 'Property Description по умолчанию',
+            'block_propertyimage': '',
+            'block_head': ''
+        }
+
 
 def custom_logout(request):
     logout(request)
@@ -168,7 +200,7 @@ class CustomPasswordResetCompleteView(PasswordResetCompleteView):
 
 
 @method_decorator(login_required(login_url='useraccount:login'), name='dispatch')
-class EditMyProfileView(TemplateView, LoginRequiredMixin):
+class EditMyProfileView(CustomHtmxMixin, TemplateView, LoginRequiredMixin):
     template_name = 'site/useraccount/profile_edit.html'
 
     def get(self, request, *args, **kwargs):
@@ -516,7 +548,7 @@ class TicketCommentCreateView(LoginRequiredMixin, CreateView):
         return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
 
 @method_decorator(login_required(login_url='useraccount:login'), name='dispatch')
-class WithdrawPage(LoginRequiredMixin, TemplateView):
+class WithdrawPage(CustomHtmxMixin, LoginRequiredMixin, TemplateView):
     template_name = 'site/useraccount/withdraw.html'
     model = Withdrawal
     context_object_name = 'withdraw'
