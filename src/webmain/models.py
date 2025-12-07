@@ -231,6 +231,7 @@ class Faqs(models.Model):
     create = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     update = models.DateTimeField(auto_now=True, blank=True, null=True)
     publishet = models.BooleanField("Опубликован", default=False)
+    file = models.FileField("Файл",   upload_to="category/%Y/%m/%d/", blank=True, null=True)
 
 
     class Meta:
