@@ -29,6 +29,13 @@ def dict_get(d, key):
         return None
     return d.get(key)
 
+@register.filter
+def split(value, key):
+    """
+    Делит строку по key и возвращает список
+    """
+    return value.split(key)
+
 
 @register.filter
 def time_since_updated(value):

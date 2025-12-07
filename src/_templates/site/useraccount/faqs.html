@@ -1,29 +1,30 @@
 {% load static user_tags i18n %}
 
 {% block content %}
-<!-- FAQ Section -->
 <section class="container my-5">
     <div class="accordion" id="faqAccordion">
         {% for faq in faqs %}
-        <!-- Question {{ forloop.counter }} -->
         <div class="accordion-item">
             <h2 class="accordion-header" id="faqHeading{{ forloop.counter }}">
                 <button
-                        class="accordion-button {% if not forloop.first %}collapsed{% endif %}"
-                        type="button"
-                        data-bs-toggle="collapse"
-                        data-bs-target="#faqCollapse{{ forloop.counter }}"
-                        aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}"
-                        aria-controls="faqCollapse{{ forloop.counter }}">
+                    class="accordion-button {% if not forloop.first %}collapsed{% endif %}"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#faqCollapse{{ forloop.counter }}"
+                    aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}"
+                    aria-controls="faqCollapse{{ forloop.counter }}">
                     {{ faq.question }}
                 </button>
             </h2>
+
             <div
-                    id="faqCollapse{{ forloop.counter }}"
-                    class="accordion-collapse collapse {% if forloop.first %}show{% endif %}"
-                    aria-labelledby="faqHeading{{ forloop.counter }}"
-                    data-bs-parent="#faqAccordion">
+                id="faqCollapse{{ forloop.counter }}"
+                class="accordion-collapse collapse {% if forloop.first %}show{% endif %}"
+                aria-labelledby="faqHeading{{ forloop.counter }}"
+                data-bs-parent="#faqAccordion">
+
                 <div class="accordion-body">
+
                     <!-- Текстовый ответ -->
                     {% if faq.answer %}
                     <div class="mb-3">
@@ -34,56 +35,40 @@
                     <!-- Файл -->
                     {% if faq.file %}
                         {% if faq.is_image %}
-                            <!-- Изображение -->
-                            <div class="faq-image mt-3">
-                                <img
-                                    src="{{ faq.file.url }}"
-                                    alt="Изображение для вопроса: {{ faq.question }}"
-                                    class="img-fluid rounded"
-                                    style="max-height: 400px;"
-                                >
+                            <div class="faq-image mt-3 text-center">
+                                <img src="{{ faq.file.url }}"
+                                     alt="{{ faq.question }}"
+                                     class="img-fluid rounded"
+                                     style="max-height: 400px;">
                                 <p class="text-muted small mt-2">
-                                    <i class="fas fa-image"></i> Изображение: {{ faq.get_file_extension|upper }}
+                                    <i class="fas fa-image"></i> Изображение ({{ faq.get_file_extension|upper }})
                                 </p>
                             </div>
                         {% elif faq.is_video %}
-                            <!-- Видео -->
                             <div class="faq-video mt-3">
-                                <video
-                                    controls
-                                    class="w-100 rounded"
-                                    style="max-height: 400px;"
-                                >
+                                <video controls class="w-100 rounded" style="max-height: 400px;">
                                     <source src="{{ faq.file.url }}" type="video/{{ faq.get_file_extension }}">
                                     Ваш браузер не поддерживает видео.
                                 </video>
                                 <p class="text-muted small mt-2">
-                                    <i class="fas fa-video"></i> Видео: {{ faq.get_file_extension|upper }}
+                                    <i class="fas fa-video"></i> Видео ({{ faq.get_file_extension|upper }})
                                 </p>
                             </div>
                         {% else %}
-                            <!-- Документ или другой файл -->
                             <div class="faq-document mt-3">
                                 <div class="card">
                                     <div class="card-body">
-                                        <h6 class="card-title">
-                                            <i class="fas fa-file"></i> Прикрепленный файл
-                                        </h6>
+                                        <h6 class="card-title"><i class="fas fa-file"></i> Прикрепленный файл</h6>
                                         <p class="card-text small text-muted">
                                             {{ faq.file.name|split:"/"|last }}
                                             ({{ faq.get_file_extension|upper }},
                                              {{ faq.file.size|filesizeformat }})
                                         </p>
-                                        <a href="{{ faq.file.url }}"
-                                           class="btn btn-outline-primary btn-sm"
-                                           target="_blank"
-                                           download>
+                                        <a href="{{ faq.file.url }}" class="btn btn-outline-primary btn-sm" target="_blank" download>
                                             <i class="fas fa-download"></i> Скачать
                                         </a>
                                         {% if faq.is_document %}
-                                        <a href="{{ faq.file.url }}"
-                                           class="btn btn-outline-info btn-sm ms-2"
-                                           target="_blank">
+                                        <a href="{{ faq.file.url }}" class="btn btn-outline-info btn-sm ms-2" target="_blank">
                                             <i class="fas fa-eye"></i> Просмотреть
                                         </a>
                                         {% endif %}
@@ -91,24 +76,21 @@
                                 </div>
                             </div>
                         {% endif %}
+
+                        <!-- Информация о загрузке файла -->
+                        <div class="mt-2 small text-muted">
+                            <i class="fas fa-info-circle"></i> Файл загружен: {{ faq.create|date:"d.m.Y H:i" }}
+                        </div>
                     {% endif %}
 
-                    <!-- Информация о файле -->
-                    {% if faq.file %}
-                    <div class="mt-2 small text-muted">
-                        <i class="fas fa-info-circle"></i> Файл загружен: {{ faq.create|date:"d.m.Y H:i" }}
-                    </div>
-                    {% endif %}
                 </div>
             </div>
         </div>
         {% empty %}
-        <!-- Если нет вопросов -->
         <div class="alert alert-info">
             <i class="fas fa-info-circle"></i> Часто задаваемые вопросы пока не добавлены.
         </div>
         {% endfor %}
     </div>
 </section>
-
 {% endblock content %}

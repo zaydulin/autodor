@@ -216,12 +216,8 @@ class Pages(models.Model):
         verbose_name_plural = "Страницы"
 
 
-from django.db import models
-from django.core.validators import FileExtensionValidator
-
-
 class Faqs(models.Model):
-    """Часто задаваемые вопросы"""
+    """Часто задаваемые вопросы """
     EMPLOYEE = [
         (0, 'Нет должности'),
         (1, 'Водитель'),
@@ -274,7 +270,7 @@ class Faqs(models.Model):
 
     create = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     update = models.DateTimeField(auto_now=True, blank=True, null=True)
-    published = models.BooleanField("Опубликован", default=False)  # Исправлено имя поля
+    publishet = models.BooleanField("Опубликован", default=False)
 
     class Meta:
         verbose_name = 'Часто задаваемый вопрос'
@@ -331,11 +327,6 @@ class Faqs(models.Model):
         if self.file:
             self.file_type = self.get_file_type()
         super().save(*args, **kwargs)
-
-    class Meta:
-        verbose_name = "Часто задаваемые вопросы"
-        verbose_name_plural = "Часто задаваемые вопрос"
-
 
 class CategorysBlogs(models.Model):
     """Категории"""
