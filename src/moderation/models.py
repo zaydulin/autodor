@@ -1007,7 +1007,7 @@ class Path(models.Model):
     name = models.CharField(max_length=100,verbose_name='Название этапа')
     description = models.TextField("Описание", blank=True, null=True)
     request = models.CharField(max_length=255, verbose_name='Заявка')
-    responsible = models.ForeignKey(Profile, verbose_name='Ответственный',on_delete=models.CASCADE)
+    responsible = models.ForeignKey(Profile, verbose_name='Ответственный',on_delete=models.CASCADE, blank=True, null=True)
 
     def __str__(self):
         return f"Path {self.name} ({self.latitude}, {self.longitude})"
