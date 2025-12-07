@@ -216,8 +216,12 @@ class Pages(models.Model):
         verbose_name_plural = "Страницы"
 
 
+from django.db import models
+from django.core.validators import FileExtensionValidator
+
+
 class Faqs(models.Model):
-    """Часто задаваемые вопросы """
+    """Часто задаваемые вопросы"""
     EMPLOYEE = [
         (0, 'Нет должности'),
         (1, 'Водитель'),
@@ -225,14 +229,108 @@ class Faqs(models.Model):
         (3, 'Посредник'),
         (4, 'Админ'),
     ]
+
+    # Типы файлов
+    FILE_TYPES = [
+        ('image', 'Изображение'),
+        ('video', 'Видео'),
+        ('document', 'Документ'),
+        ('other', 'Другое'),
+    ]
+
     employee = models.PositiveSmallIntegerField('Тип пользователя', choices=EMPLOYEE, blank=False, default=0)
     question = models.TextField(blank=True, null=True, verbose_name='Вопрос')
-    answer = models.TextField(blank=True, null=True, verbose_name='Ответ', default=' ')
+    answer = models.TextField(blank=True, null=True, verbose_name='Ответ', default='')
+
+    # Добавляем поле для определения типа файла
+    file_type = models.CharField(
+        'Тип файла',
+        max_length=10,
+        choices=FILE_TYPES,
+        default='document',
+        blank=True,
+        null=True
+    )
+
+    # Файл с валидацией расширений
+    file = models.FileField(
+        "Файл",
+        upload_to="faqs/%Y/%m/%d/",
+        blank=True,
+        null=True,
+        validators=[
+            FileExtensionValidator(
+                allowed_extensions=[
+                    # Изображения
+                    'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg',
+                    # Видео
+                    'mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv', 'webm',
+                    # Документы
+                    'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt',
+                ]
+            )
+        ]
+    )
+
     create = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     update = models.DateTimeField(auto_now=True, blank=True, null=True)
-    publishet = models.BooleanField("Опубликован", default=False)
-    file = models.FileField("Файл",   upload_to="category/%Y/%m/%d/", blank=True, null=True)
+    published = models.BooleanField("Опубликован", default=False)  # Исправлено имя поля
 
+    class Meta:
+        verbose_name = 'Часто задаваемый вопрос'
+        verbose_name_plural = 'Часто задаваемые вопросы'
+        ordering = ['-create']
+
+    def __str__(self):
+        return self.question[:50] + "..." if self.question and len(self.question) > 50 else self.question
+
+    def get_file_type(self):
+        """Определить тип файла по расширению"""
+        if not self.file:
+            return None
+
+        filename = self.file.name.lower()
+
+        # Изображения
+        image_ext = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg']
+        if any(filename.endswith(ext) for ext in image_ext):
+            return 'image'
+
+        # Видео
+        video_ext = ['.mp4', '.avi', '.mov', '.wmv', '.flv', '.mkv', '.webm']
+        if any(filename.endswith(ext) for ext in video_ext):
+            return 'video'
+
+        # Документы
+        doc_ext = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt']
+        if any(filename.endswith(ext) for ext in doc_ext):
+            return 'document'
+
+        return 'other'
+
+    def get_file_extension(self):
+        """Получить расширение файла"""
+        if self.file:
+            return self.file.name.split('.')[-1].lower()
+        return None
+
+    def is_image(self):
+        """Проверить, является ли файл изображением"""
+        return self.get_file_type() == 'image'
+
+    def is_video(self):
+        """Проверить, является ли файл видео"""
+        return self.get_file_type() == 'video'
+
+    def is_document(self):
+        """Проверить, является ли файл документом"""
+        return self.get_file_type() == 'document'
+
+    def save(self, *args, **kwargs):
+        # Автоматически определяем тип файла при сохранении
+        if self.file:
+            self.file_type = self.get_file_type()
+        super().save(*args, **kwargs)
 
     class Meta:
         verbose_name = "Часто задаваемые вопросы"
