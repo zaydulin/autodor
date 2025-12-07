@@ -72,6 +72,8 @@ class Profile(AbstractUser):
     device_token = models.TextField(blank=True, null=True, verbose_name="FCM токен устройства")
     listen = models.BooleanField(default=False, verbose_name="Слушать")
     position = models.PositiveSmallIntegerField('Позиция', blank=False, null=True)
+    longitude = models.FloatField(verbose_name='Долгота', blank=True, null=True)
+    latitude = models.FloatField(verbose_name='Широта', blank=True, null=True)
 
     """Паспортные данные пользователя"""
     passport_issued_by_whom = models.TextField("Кем выдан", blank=True, null=True)

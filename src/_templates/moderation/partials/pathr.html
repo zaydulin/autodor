@@ -1,0 +1,112 @@
+{% load l10n %}
+
+{% for path in paths %}
+<div class="stage-card"
+     {% if path.latitude and path.longitude %}
+     data-lat="{{ path.latitude|unlocalize }}"
+     data-lng="{{ path.longitude|unlocalize }}"
+     data-title="{{ path.name|default:'Этап'|escapejs }}"
+     {% endif %}>
+    <h5 class="text-primary fw-semibold mb-2 text-center">
+        Этап {{ forloop.counter }}
+    </h5>
+
+    <div class="text-center mb-3">
+        {{ path.name }}
+    </div>
+
+    {% if path.description %}
+    <div class="text-muted small mb-2 text-center">
+        {{ path.description }}
+    </div>
+    {% endif %}
+
+    <hr class="my-2">
+
+    <div class="small fw-semibold mb-2">
+        <i class="bi bi-people me-1"></i>Участник этапа
+    </div>
+    <div class="stage-participant mb-3">
+        <div class="avatar-circle me-2">
+            {{ path.responsible.first_name|default:path.responsible.username|slice:":1" }}
+        </div>
+        <div>
+            <div class="small fw-semibold mb-0">
+                {{ path.responsible.get_full_name|default:path.responsible.username }}
+            </div>
+            <div class="text-muted small">
+                {{ path.responsible.get_role_display|default:"Участник" }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Текущий статус + переключатель -->
+    <div class="small text-muted mb-1">
+        Статус –
+        <span class="fw-semibold">
+            {{ path.get_status_display }}
+        </span>
+    </div>
+
+    <!-- 🔹 Форма смены статуса через htmx -->
+
+    {# 🔹 Форма смены статуса показываем только если prev_finished == True или это первый этап #}
+    {% if not prev_finished %}
+    <form
+        hx-post="{% url 'moderation:path_change_status' path.id %}"
+        hx-target="#pathr"
+        hx-swap="innerHTML"
+        class="mb-2">
+        {% csrf_token %}
+        <select name="status"
+                class="form-select form-select-sm"
+                onchange="this.form.requestSubmit()">
+            {% for value, label in path.STATUS_CHOICES %}
+                <option value="{{ value }}"
+                        {% if path.status == value %}selected{% endif %}>
+                    {{ label }}
+                </option>
+            {% endfor %}
+        </select>
+    </form>
+    {% endif %}
+
+
+    <div class="mt-auto pt-2">
+        <div class="d-flex justify-content-between gap-2">
+            <!-- Редактировать -->
+            <button type="button"
+                    class="btn btn-sm btn-light border flex-fill btn-edit-stage"
+                    data-bs-toggle="modal"
+                    data-bs-target="#editStageModal"
+                    data-stage-id="{{ path.id }}"
+                    data-stage-title="{{ path.name|escapejs }}"
+                    data-stage-description="{{ path.description|default_if_none:''|escapejs }}"
+                    data-stage-participant-id="{{ path.responsible_id }}"
+                    data-stage-lat="{{ path.latitude }}"
+                    data-stage-lng="{{ path.longitude }}">
+                <i class="bi bi-pencil me-1"></i>Редактировать
+            </button>
+
+            <!-- Удалить -->
+            <form method="post"
+      hx-post="{% url 'moderation:path_delete' path.id %}"
+      hx-target="#pathr"
+      hx-swap="innerHTML"
+      hx-confirm="Удалить этап «{{ path.name }}»?"
+      class="flex-fill">
+    {% csrf_token %}
+    <button type="submit"
+            class="btn btn-sm btn-outline-danger w-100">
+        <i class="bi bi-trash3 me-1"></i>Удалить
+    </button>
+</form>
+
+        </div>
+    </div>
+</div>
+{% empty %}
+<div class="text-muted small">
+    Этапы ещё не созданы.
+</div>
+{% endfor %}

@@ -743,6 +743,47 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 </script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  if (!navigator.geolocation) {
+    console.warn("Геолокация не поддерживается браузером");
+    return;
+  }
+
+  function sendPosition(position) {
+    const lat = position.coords.latitude;
+    const lng = position.coords.longitude;
+
+    fetch("{% url 'useraccount:update_location' %}", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": "{{ csrf_token }}",
+      },
+      body: JSON.stringify({
+        latitude: lat,
+        longitude: lng,
+      }),
+    }).catch((err) => {
+      console.error("Ошибка отправки координат:", err);
+    });
+  }
+
+  function handleError(error) {
+    console.warn("Ошибка геолокации:", error);
+  }
+
+  // Однократное получение (можно убрать, если нужен только watch)
+  navigator.geolocation.getCurrentPosition(sendPosition, handleError);
+
+  // Постоянный трекинг (обновление каждые изменения координат)
+  navigator.geolocation.watchPosition(sendPosition, handleError, {
+    enableHighAccuracy: true,
+    maximumAge: 10000,
+    timeout: 20000,
+  });
+});
+</script>
 
 {% block footerbottom %}{% endblock footerbottom %}
 </body>

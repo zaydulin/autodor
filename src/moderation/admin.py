@@ -97,6 +97,7 @@ admin.site.register(Path)
 admin.site.register(PathResponsibility)
 admin.site.register(CarBrand)
 admin.site.register(AdvertAplicationGallery)
+admin.site.register(AdvertApplicationLog)
 
 @admin.register(ExpenseMask)
 class ExpenseMaskAdmin(admin.ModelAdmin):

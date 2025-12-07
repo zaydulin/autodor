@@ -1,0 +1,57 @@
+{# moderation/partials/wallet_driver_modal.html #}
+{% load l10n %}
+
+<div class="modal-header">
+    <h5 class="modal-title">
+        💰 Кошелек: {{ driver.first_name }} {{ driver.last_name }}
+    </h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal"
+            aria-label="Закрыть"></button>
+</div>
+
+<div class="modal-body">
+    <form
+        hx-post="{% url 'moderation:wallet_driver' application.id driver.id %}"
+        hx-target="#walletModalContent"
+        hx-swap="innerHTML"
+    >
+        {% csrf_token %}
+        <div class="mb-3">
+            <label class="form-label">Баланс</label>
+            <input type="number"
+                   step="0.01"
+                   min="0"
+                   name="balance"
+                   class="form-control"
+                   value="{{ wallet.balance|default_if_none:'0.00'|unlocalize }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Израсходовано</label>
+            <input type="number"
+                   step="0.01"
+                   min="0"
+                   name="spent"
+                   class="form-control"
+                   value="{{ wallet.spent|default_if_none:'0.00'|unlocalize }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Остаток</label>
+            <input type="number"
+                   class="form-control"
+                   value="{{ wallet.remainder|default_if_none:'0.00'|unlocalize }}"
+                   disabled>
+            <div class="form-text">
+                Остаток считается автоматически (баланс – израсходовано).
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                Отмена
+            </button>
+            <button type="submit" class="btn btn-primary">
+                💾 Сохранить
+            </button>
+        </div>
+    </form>
+</div>

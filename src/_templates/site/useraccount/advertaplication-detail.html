@@ -1,4 +1,5 @@
 {% load static %}
+{% load l10n user_tags %}
 
 {% block content %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -467,30 +468,47 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
- document.addEventListener("DOMContentLoaded", function () {
-    // Инициализация карты (центр примерно на Польше)
-    var map = L.map('map').setView([52.0, 20.5], 4);
+document.addEventListener("DOMContentLoaded", function () {
+    // Глобальные переменные карты
+    window.stageMap = L.map('map').setView([52.0, 20.5], 4);
 
-    // Подложка OpenStreetMap
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 18,
         attribution: '&copy; OpenStreetMap'
-    }).addTo(map);
+    }).addTo(window.stageMap);
 
-    // Иконка для стран (стандартный маркер)
-    function addCountryMarker(lat, lng, label) {
-        L.marker([lat, lng])
-            .addTo(map)
-            .bindPopup(label);
+    // Слой для маркеров этапов
+    window.stageMarkersLayer = L.layerGroup().addTo(window.stageMap);
+
+    // Функция перерисовки маркеров по DOM
+    function renderPathMarkersFromDom() {
+        if (!window.stageMap || !window.stageMarkersLayer) return;
+
+        window.stageMarkersLayer.clearLayers();
+        const cards = document.querySelectorAll('.stage-card[data-lat][data-lng]');
+        const bounds = [];
+
+        cards.forEach(card => {
+            const lat = parseFloat(card.dataset.lat);
+            const lng = parseFloat(card.dataset.lng);
+            if (isNaN(lat) || isNaN(lng)) return;
+
+            const label = card.dataset.title || card.querySelector('h5')?.textContent || 'Этап';
+
+            const marker = L.marker([lat, lng]).addTo(window.stageMarkersLayer)
+                            .bindPopup(label);
+            bounds.push([lat, lng]);
+        });
+
+        if (bounds.length > 0) {
+            window.stageMap.fitBounds(bounds, { padding: [20, 20] });
+        }
     }
 
-    // Метки стран
-    addCountryMarker(51.1657, 10.4515, 'Германия');
-    addCountryMarker(51.9194, 19.1451, 'Польша');
-    addCountryMarker(53.7098, 27.9534, 'Беларусь');
-    addCountryMarker(48.0196, 66.9237, 'Казахстан');
+    // сразу отрисуем маркеры при первой загрузке
+    renderPathMarkersFromDom();
 
-    // Кастомная иконка "машинка" между Польшей и Беларусью
+    // Машинка-иконка
     var carIcon = L.divIcon({
         className: 'car-marker',
         html: '🚗',
@@ -498,11 +516,36 @@ document.addEventListener('DOMContentLoaded', function () {
         iconAnchor: [12, 12]
     });
 
-    // Примерная точка между Польшей и Беларусью
-    var carLat = 52.5;
-    var carLng = 23.0;
+    {% if current_driver and current_driver_lat is not None and current_driver_lng is not None %}
+        // Координаты берём из подготовленных полей во вьюхе
+        var carLat = {{ current_driver_lat|unlocalize }};
+        var carLng = {{ current_driver_lng|unlocalize }};
 
-    // HTML с расширенной информацией о водителе
+        var driverName = "{{ current_driver.get_full_name|default:current_driver.username|escapejs }}";
+        var driverEmail = "{{ current_driver.email|escapejs }}";
+
+        {% if current_path %}
+            var driverStatusText = "{{ current_path.get_status_display|escapejs }}";
+        {% else %}
+            var driverStatusText = "Нет активного этапа";
+        {% endif %}
+
+        {% if current_driver_wallet %}
+            var driverBalance = "{{ current_driver_wallet.remainder|default_if_none:'0.00'|unlocalize }}";
+        {% else %}
+            var driverBalance = "0.00";
+        {% endif %}
+    {% else %}
+        // Фолбэк, если нет водителя со статусом "Принял" или координат
+        var carLat = 52.5;
+        var carLng = 23.0;
+
+        var driverName = "Водитель не выбран";
+        var driverEmail = "";
+        var driverStatusText = "Нет активного этапа";
+        var driverBalance = "0.00";
+    {% endif %}
+
     var driverPopupHtml = `
         <div class="driver-popup">
             <div class="driver-popup-header mb-1">
@@ -511,37 +554,40 @@ document.addEventListener('DOMContentLoaded', function () {
             <div class="driver-popup-body small">
                 <div class="driver-popup-row">
                     <span class="driver-label">Имя:</span>
-                    <span class="driver-value">Георгий Водителевич</span>
+                    <span class="driver-value">${driverName}</span>
                 </div>
                 <div class="driver-popup-row">
-                    <span class="driver-label">Телефон:</span>
-                    <span class="driver-value">+48 600 000 000</span>
+                    <span class="driver-label">Email:</span>
+                    <span class="driver-value">${driverEmail}</span>
                 </div>
                 <div class="driver-popup-row">
-                    <span class="driver-label">Авто:</span>
-                    <span class="driver-value">Fiat Ducato, WN 1234K</span>
+                    <span class="driver-label">Статус этапа:</span>
+                    <span class="driver-value text-primary">${driverStatusText}</span>
                 </div>
-                <div class="driver-popup-row">
-                    <span class="driver-label">Статус:</span>
-                    <span class="driver-value text-primary">Между Польшей и Беларусью</span>
-                </div>
-                <div class="driver-popup-row">
-                    <span class="driver-label">Баланс:</span>
-                    <span class="driver-value text-success">5 320 PLN</span>
-                </div>
-                <div class="driver-popup-row">
-                    <span class="driver-label">Последнее обновление:</span>
-                    <span class="driver-value">5 минут назад</span>
-                </div>
-            </div>
 
+            </div>
         </div>
     `;
 
-    L.marker([carLat, carLng], { icon: carIcon })
-        .addTo(map)
-        .bindPopup(driverPopupHtml);
+    // Добавляем машинку только если координаты осмысленные
+    if (!isNaN(carLat) && !isNaN(carLng)) {
+        var carMarker = L.marker([carLat, carLng], { icon: carIcon })
+            .addTo(window.stageMap)
+            .bindPopup(driverPopupHtml);
+
+        // немного центрируем карту на водителе (можно подобрать зум)
+        window.stageMap.setView([carLat, carLng], 6);
+    }
+
+    document.body.addEventListener("htmx:afterSwap", function (event) {
+        if (event.target.id === "pathr") {
+            renderPathMarkersFromDom();
+        }
+    });
 });
+
+
+
 
 document.addEventListener('DOMContentLoaded', function () {
     /* ====== ПРОГРЕСС ====== */
@@ -686,443 +732,261 @@ document.addEventListener('DOMContentLoaded', function () {
                     {% if advert.color %}<span class="tag-pill">Цвет: {{ advert.color }}</span>{% endif %}
                     {% if advert.doors %}<span class="tag-pill">Дверей: {{ advert.doors }}</span>{% endif %}
                     {% if advert.engine_volume %}<span class="tag-pill">Объём: {{ advert.engine_volume }} л</span>{% endif %}
-                    {% if advert.power %}<span class="tag-pill">Мощн.: {{ advert.power }} л.с.</span></div>{% endif %}
-                {% if advert.transmission %}<span class="tag-pill">Коробка: {{ advert.get_transmission_display }}</span>{% endif %}
-                {% if advert.fuel %}<span class="tag-pill">Топливо: {{ advert.get_fuel_display }}</span>{% endif %}
-                {% if advert.drive %}<span class="tag-pill">Привод: {{ advert.get_drive_display }}</span>{% endif %}
+                    {% if advert.power %}<span class="tag-pill">Мощн.: {{ advert.power }} л.с.</span>{% endif %}
+                    {% if advert.transmission %}<span class="tag-pill">Коробка: {{ advert.get_transmission_display }}</span>{% endif %}
+                    {% if advert.fuel %}<span class="tag-pill">Топливо: {{ advert.get_fuel_display }}</span>{% endif %}
+                    {% if advert.drive %}<span class="tag-pill">Привод: {{ advert.get_drive_display }}</span>{% endif %}
+                </div>
+
+                <!-- Фото -->
+                {% if advert.images %}
+                <div id="advCarousel" class="carousel slide gallery mb-3" data-bs-ride="carousel">
+                    <div class="carousel-inner rounded">
+                        {% for img in advert.images %}
+                        <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                            <img src="{{ img }}" class="d-block w-100" alt="{{ advert.name }}">
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#advCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon"></span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#advCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon"></span>
+                    </button>
+                </div>
+                {% endif %}
             </div>
 
-            <!-- Фото -->
-            {% if advert.images %}
-            <div id="advCarousel" class="carousel slide gallery mb-3" data-bs-ride="carousel">
-                <div class="carousel-inner rounded">
-                    {% for img in advert.images %}
-                    <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                        <img src="{{ img }}" class="d-block w-100" alt="{{ advert.name }}">
+            <!-- Карточка с картой -->
+            <div class="card card-shadow mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="mb-0">Маршрут</h6>
+                        <span class="badge bg-light text-muted small">Европа / Азия</span>
                     </div>
-                    {% endfor %}
+
+                    <div id="map" style="height: 260px; border-radius: 12px; overflow: hidden;"></div>
                 </div>
-                <button class="carousel-control-prev" type="button" data-bs-target="#advCarousel" data-bs-slide="prev">
-                    <span class="carousel-control-prev-icon"></span>
+            </div>
+
+            <!-- Leaflet CSS -->
+            <link
+                    rel="stylesheet"
+                    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+                    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+                    crossorigin=""
+            />
+
+            <!-- Leaflet JS -->
+            <script
+                    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+                    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+                    crossorigin=""
+            ></script>
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="fw-bold mb-0">Система этапов</h2>
+
+                <button type="button"
+                        class="btn btn-primary btn-sm d-flex align-items-center"
+                        id="createStageBtn"
+                        data-bs-toggle="modal"
+                        data-bs-target="#editStageModal">
+                    <i class="bi bi-plus-lg me-1"></i>
+                    Создать этап
                 </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#advCarousel" data-bs-slide="next">
-                    <span class="carousel-control-next-icon"></span>
+            </div>
+
+
+            <!-- ===== ЭТАПЫ В ОДНУ ЛИНИЮ С ПРОКРУТКОЙ ===== -->
+            <div class="stages-scroll-container mb-3">
+
+                <!-- Кнопки прокрутки -->
+                <button class="stages-scroll-btn stages-scroll-btn-left" type="button">
+                    <i class="bi bi-chevron-left"></i>
                 </button>
-            </div>
-            {% endif %}
-        </div>
-
-        <!-- Карточка с картой -->
-        <div class="card card-shadow mb-3">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <h6 class="mb-0">Маршрут</h6>
-                    <span class="badge bg-light text-muted small">Европа / Азия</span>
+                <div class="stages-scroll-wrapper">
+                    <div class="stages-scroll" id="pathr">
+                        {% include 'moderation/partials/pathr.html' %}
+                    </div>
                 </div>
 
-                <div id="map" style="height: 260px; border-radius: 12px; overflow: hidden;"></div>
-            </div>
-        </div>
-
-        <!-- Leaflet CSS -->
-        <link
-                rel="stylesheet"
-                href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-                integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-                crossorigin=""
-        />
-
-        <!-- Leaflet JS -->
-        <script
-                src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-                integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-                crossorigin=""
-        ></script>
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="fw-bold mb-0">Система этапов</h2>
-
-            <button type="button"
-                    class="btn btn-primary btn-sm d-flex align-items-center"
-                    id="createStageBtn"
-                    data-bs-toggle="modal"
-                    data-bs-target="#editStageModal">
-                <i class="bi bi-plus-lg me-1"></i>
-                Создать этап
-            </button>
-        </div>
-
-
-        <!-- ===== ЭТАПЫ В ОДНУ ЛИНИЮ С ПРОКРУТКОЙ ===== -->
-        <div class="stages-scroll-container mb-3">
-
-            <!-- Кнопки прокрутки -->
-            <button class="stages-scroll-btn stages-scroll-btn-left" type="button">
-                <i class="bi bi-chevron-left"></i>
-            </button>
-            <div class="stages-scroll-wrapper">
-                <div class="stages-scroll">
-
-                    <!-- Этап 1 -->
-                    <div class="stage-card">
-                        <h5 class="text-primary fw-semibold mb-2 text-center">Этап 1</h5>
-                        <div class="text-center mb-3">Дополнение</div>
-                        <hr class="my-2">
-                        <div class="small fw-semibold mb-2">
-                            <i class="bi bi-people me-1"></i>Участники этапа
-                        </div>
-                        <div class="stage-participant mb-3">
-                            <div class="avatar-circle me-2">ГВ</div>
-                            <div>
-                                <div class="small fw-semibold mb-0">Георгий Водителевич</div>
-                                <div class="text-muted small">Водитель</div>
+                <div class="modal fade" id="editStageModal" tabindex="-1" aria-labelledby="editStageModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="editStageModalLabel">Редактирование этапа</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
                             </div>
-                        </div>
+                            <div class="modal-body">
+                                <form id="editStageForm"
+                                      hx-post="{% url 'moderation:path_save' application.id %}"
+                                      hx-target="#pathr"
+                                      hx-swap="innerHTML">
 
-                        <div class="mt-auto pt-2">
-                            <div class="text-center small text-muted mb-2">
-                                статус – <span class="text-success fw-semibold">закончил</span>
-                            </div>
-                            <div class="d-flex justify-content-between gap-2">
-                                <button type="button"
-                                        class="btn btn-sm btn-light border flex-fill btn-edit-stage"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#editStageModal"
-                                        data-stage-id="1"
-                                        data-stage-title="Этап 1"
-                                        data-stage-description="Дополнение"
-                                        data-stage-participant-id="1"
-                                        data-stage-role="Водитель"
-                                        data-stage-status="закончил"
-                                        data-stage-location="Германия"
-                                        data-stage-lat="51.1657"
-                                        data-stage-lng="10.4515">
-                                    <i class="bi bi-pencil me-1"></i>Редактировать
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-danger flex-fill">
-                                    <i class="bi bi-trash3 me-1"></i>Удалить
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                                    {% csrf_token %}
+                                    <input type="hidden" id="editStageId" name="stage_id">
 
-                    <!-- Этап 2 -->
-                    <div class="stage-card">
-                        <h5 class="text-primary fw-semibold mb-2 text-center">Этап 2</h5>
-                        <div class="text-center mb-3">Проверка документов</div>
-                        <hr class="my-2">
-                        <div class="small fw-semibold mb-2">
-                            <i class="bi bi-people me-1"></i>Участники этапа
-                        </div>
-                        <div class="stage-participant mb-3">
-                            <div class="avatar-circle me-2">АД</div>
-                            <div>
-                                <div class="small fw-semibold mb-0">Администратор</div>
-                                <div class="text-muted small">Админ</div>
-                            </div>
-                        </div>
-
-                        <div class="mt-auto pt-2">
-                            <div class="text-center small text-muted mb-2">
-                                статус – <span class="text-primary fw-semibold">принял</span>
-                            </div>
-                            <div class="d-flex justify-content-between gap-2">
-                                <button type="button"
-                                        class="btn btn-sm btn-light border flex-fill btn-edit-stage"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#editStageModal"
-                                        data-stage-id="2"
-                                        data-stage-title="Этап 2"
-                                        data-stage-description="Проверка документов"
-                                        data-stage-participant-id="3"
-                                        data-stage-role="Админ"
-                                        data-stage-status="принял"
-                                        data-stage-location="Польша"
-                                        data-stage-lat="51.9194"
-                                        data-stage-lng="19.1451">
-                                    <i class="bi bi-pencil me-1"></i>Редактировать
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-danger flex-fill">
-                                    <i class="bi bi-trash3 me-1"></i>Удалить
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Этап 3 -->
-                    <div class="stage-card">
-                        <h5 class="text-primary fw-semibold mb-2 text-center">Этап 3</h5>
-                        <div class="text-center mb-3">Оплата</div>
-                        <hr class="my-2">
-                        <div class="small fw-semibold mb-2">
-                            <i class="bi bi-people me-1"></i>Участники этапа
-                        </div>
-                        <div class="stage-participant mb-3">
-                            <div class="avatar-circle me-2">ГМ</div>
-                            <div>
-                                <div class="small fw-semibold mb-0">Георгий Менеджеров</div>
-                                <div class="text-muted small">Менеджер</div>
-                            </div>
-                        </div>
-
-                        <div class="mt-auto pt-2">
-                            <div class="text-center small text-muted mb-2">
-                                статус – <span class="text-primary fw-semibold">в процессе</span>
-                            </div>
-                            <div class="d-flex justify-content-between gap-2">
-                                <button type="button"
-                                        class="btn btn-sm btn-light border flex-fill btn-edit-stage"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#editStageModal"
-                                        data-stage-id="3"
-                                        data-stage-title="Этап 3"
-                                        data-stage-description="Оплата"
-                                        data-stage-participant-id="2"
-                                        data-stage-role="Менеджер"
-                                        data-stage-status="в процессе"
-                                        data-stage-location="Между Польшей и Беларусью"
-                                        data-stage-lat="52.5"
-                                        data-stage-lng="23.0">
-                                    <i class="bi bi-pencil me-1"></i>Редактировать
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-danger flex-fill">
-                                    <i class="bi bi-trash3 me-1"></i>Удалить
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Этап 4 -->
-                    <div class="stage-card">
-                        <h5 class="text-primary fw-semibold mb-2 text-center">Этап 4</h5>
-                        <div class="text-center mb-3">Погрузка</div>
-                        <hr class="my-2">
-                        <div class="small fw-semibold mb-2">
-                            <i class="bi bi-people me-1"></i>Участники этапа
-                        </div>
-                        <div class="stage-participant mb-3">
-                            <div class="avatar-circle me-2">СК</div>
-                            <div>
-                                <div class="small fw-semibold mb-0">Склад</div>
-                                <div class="text-muted small">Логистика</div>
-                            </div>
-                        </div>
-
-                        <div class="mt-auto pt-2">
-                            <div class="text-center small text-muted mb-2">
-                                статус – <span class="text-muted fw-semibold">ожидает</span>
-                            </div>
-                            <div class="d-flex justify-content-between gap-2">
-                                <button type="button"
-                                        class="btn btn-sm btn-light border flex-fill btn-edit-stage"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#editStageModal"
-                                        data-stage-id="4"
-                                        data-stage-title="Этап 4"
-                                        data-stage-description="Погрузка"
-                                        data-stage-participant-id="4"
-                                        data-stage-role="Логистика"
-                                        data-stage-status="ожидает"
-                                        data-stage-location="Беларусь"
-                                        data-stage-lat="53.7098"
-                                        data-stage-lng="27.9534">
-                                    <i class="bi bi-pencil me-1"></i>Редактировать
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-danger flex-fill">
-                                    <i class="bi bi-trash3 me-1"></i>Удалить
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Этап 5 -->
-                    <div class="stage-card">
-                        <h5 class="text-primary fw-semibold mb-2 text-center">Этап 5</h5>
-                        <div class="text-center mb-3">Доставка в страну</div>
-                        <hr class="my-2">
-                        <div class="small fw-semibold mb-2">
-                            <i class="bi bi-people me-1"></i>Участники этапа
-                        </div>
-                        <div class="stage-participant mb-3">
-                            <div class="avatar-circle me-2">ТР</div>
-                            <div>
-                                <div class="small fw-semibold mb-0">Транспортная компания</div>
-                                <div class="text-muted small">Перевозчик</div>
-                            </div>
-                        </div>
-
-                        <div class="mt-auto pt-2">
-                            <div class="text-center small text-muted mb-2">
-                                статус – <span class="text-muted fw-semibold">ожидает</span>
-                            </div>
-                            <div class="d-flex justify-content-between gap-2">
-                                <button type="button"
-                                        class="btn btn-sm btn-light border flex-fill btn-edit-stage"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#editStageModal"
-                                        data-stage-id="5"
-                                        data-stage-title="Этап 5"
-                                        data-stage-description="Доставка в страну"
-                                        data-stage-participant-id="4"
-                                        data-stage-role="Перевозчик"
-                                        data-stage-status="ожидает"
-                                        data-stage-location="Граница Беларусь/Казахстан"
-                                        data-stage-lat="50.0"
-                                        data-stage-lng="40.0">
-                                    <i class="bi bi-pencil me-1"></i>Редактировать
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-danger flex-fill">
-                                    <i class="bi bi-trash3 me-1"></i>Удалить
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Этап 6 -->
-                    <div class="stage-card">
-                        <h5 class="text-primary fw-semibold mb-2 text-center">Этап 6</h5>
-                        <div class="text-center mb-3">Выдача клиенту</div>
-                        <hr class="my-2">
-                        <div class="small fw-semibold mb-2">
-                            <i class="bi bi-people me-1"></i>Участники этапа
-                        </div>
-                        <div class="stage-participant mb-3">
-                            <div class="avatar-circle me-2">НК</div>
-                            <div>
-                                <div class="small fw-semibold mb-0">Николай Климентович</div>
-                                <div class="text-muted small">Клиент</div>
-                            </div>
-                        </div>
-
-                        <div class="mt-auto pt-2">
-                            <div class="text-center small text-muted mb-2">
-                                статус – <span class="text-muted fw-semibold">ожидает</span>
-                            </div>
-                            <div class="d-flex justify-content-between gap-2">
-                                <button type="button"
-                                        class="btn btn-sm btn-light border flex-fill btn-edit-stage"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#editStageModal"
-                                        data-stage-id="6"
-                                        data-stage-title="Этап 6"
-                                        data-stage-description="Выдача клиенту"
-                                        data-stage-participant-id="5"
-                                        data-stage-role="Клиент"
-                                        data-stage-status="ожидает"
-                                        data-stage-location="Казахстан"
-                                        data-stage-lat="48.0196"
-                                        data-stage-lng="66.9237">
-                                    <i class="bi bi-pencil me-1"></i>Редактировать
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-danger flex-fill">
-                                    <i class="bi bi-trash3 me-1"></i>Удалить
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
-            <div class="modal fade" id="editStageModal" tabindex="-1" aria-labelledby="editStageModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered modal-lg">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="editStageModalLabel">Редактирование этапа</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
-                        </div>
-                        <div class="modal-body">
-                            <form id="editStageForm">
-                                <input type="hidden" id="editStageId" name="stage_id">
-
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label small mb-1">Название этапа</label>
-                                        <input type="text" class="form-control form-control-sm" id="editStageTitle" name="title">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label small mb-1">Краткое описание</label>
-                                        <input type="text" class="form-control form-control-sm" id="editStageDescription" name="description">
-                                    </div>
-
-                                    <div class="col-md-6">
-                                        <label class="form-label small mb-1">Участник</label>
-                                        <select class="form-select form-select-sm" id="editStageParticipant" name="participant_id">
-                                            <option value="1">Георгий Водителевич — Водитель</option>
-                                            <option value="2">Георгий Менеджеров — Менеджер</option>
-                                            <option value="3">Администратор — Админ</option>
-                                            <option value="4">Транспортная компания — Перевозчик</option>
-                                            <option value="5">Николай Климентович — Клиент</option>
-                                        </select>
-                                    </div>
-                                    <!-- Привязка к карте -->
-                                    <div class="col-6">
-
-                                        <div class="row g-2">
-                                            <div class="col-md-6">
-                                                <label class="form-label small mb-1">Широта</label>
-                                                <input type="text" class="form-control form-control-sm" id="editStageLat" name="lat">
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label small mb-1">Долгота</label>
-                                                <input type="text" class="form-control form-control-sm" id="editStageLng" name="lng">
-                                            </div>
-
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label small mb-1">Название этапа</label>
+                                            <input type="text" class="form-control form-control-sm" id="editStageTitle" name="name" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small mb-1">Краткое описание</label>
+                                            <input type="text" class="form-control form-control-sm" id="editStageDescription" name="description">
                                         </div>
 
+                                        <div class="col-md-6">
+                                            <label class="form-label small mb-1">Участник</label>
+                                            <select class="form-select form-select-sm" id="editStageParticipant" name="participant_id" required>
+                                                {% for men in application.user_drivers.all %}
+                                                <option value="{{ men.id }}">
+                                                    {{ men.get_full_name }} — {{ men.get_role_display }}
+                                                </option>
+                                                {% endfor %}
+                                                {% for men in application.user_menager.all %}
+                                                <option value="{{ men.id }}">
+                                                    {{ men.get_full_name }} — {{ men.get_role_display }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
 
+                                        <!-- Привязка к карте -->
+                                        <div class="col-6">
+                                            <div class="row g-2">
+                                                <div class="col-md-6">
+                                                    <label class="form-label small mb-1">Широта</label>
+                                                    <input type="text" class="form-control form-control-sm" id="editStageLat" name="lat">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label small mb-1">Долгота</label>
+                                                    <input type="text" class="form-control form-control-sm" id="editStageLng" name="lng">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div id="stageMap" class="mt-2"></div>
                                     </div>
-                                    <div id="stageMap" class="mt-2"></div>
-                                </div>
-                            </form>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Отмена</button>
+                                <button type="button" class="btn btn-primary" id="saveStageBtn">
+                                    Сохранить
+                                </button>
+                            </div>
                         </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Отмена</button>
-                            <button type="button" class="btn btn-primary">
-                                Сохранить
-                            </button>
-                        </div>
+                    </div>
+                </div>
+
+                <script>
+                    document.addEventListener("DOMContentLoaded", function () {
+                      const modalEl = document.getElementById("editStageModal");
+                      const modalTitleEl = document.getElementById("editStageModalLabel");
+                      const form = document.getElementById("editStageForm");
+                      const createBtn = document.getElementById("createStageBtn");
+                      const saveBtn = document.getElementById("saveStageBtn");
+
+                      const idInput = document.getElementById("editStageId");
+                      const titleInput = document.getElementById("editStageTitle");
+                      const descInput = document.getElementById("editStageDescription");
+                      const participantSelect = document.getElementById("editStageParticipant");
+                      const latInput = document.getElementById("editStageLat");
+                      const lngInput = document.getElementById("editStageLng");
+
+                      // Создание этапа — чистим форму
+                      if (createBtn) {
+                        createBtn.addEventListener("click", function () {
+                          if (!form) return;
+                          form.reset();
+                          if (idInput) idInput.value = "";
+                          if (modalTitleEl) modalTitleEl.textContent = "Создать этап";
+                        });
+                      }
+
+                      // Сохранить — отправляем форму (htmx сам сделает запрос)
+                      if (saveBtn && form) {
+                        saveBtn.addEventListener("click", function () {
+                          form.requestSubmit();
+                        });
+                      }
+
+                      // Делегирование клика по кнопкам .btn-edit-stage
+                      document.addEventListener("click", function (event) {
+                        const btn = event.target.closest(".btn-edit-stage");
+                        if (!btn || !form) return;
+
+                        const stageId = btn.getAttribute("data-stage-id") || "";
+                        const title = btn.getAttribute("data-stage-title") || "";
+                        const description = btn.getAttribute("data-stage-description") || "";
+                        const participantId = btn.getAttribute("data-stage-participant-id") || "";
+                        const lat = btn.getAttribute("data-stage-lat") || "";
+                        const lng = btn.getAttribute("data-stage-lng") || "";
+
+                        if (idInput) idInput.value = stageId;
+                        if (titleInput) titleInput.value = title;
+                        if (descInput) descInput.value = description;
+                        if (participantSelect && participantId) {
+                          participantSelect.value = participantId;
+                        }
+                        if (latInput) latInput.value = lat;
+                        if (lngInput) lngInput.value = lng;
+
+                        if (modalTitleEl) modalTitleEl.textContent = "Редактирование этапа";
+                      });
+
+                      // После успешного обновления списка этапов (#pathr) — закрываем модалку
+                      document.body.addEventListener("htmx:afterSwap", function (event) {
+                        if (event.target.id === "pathr" && modalEl && window.bootstrap) {
+                          const modalInstance = bootstrap.Modal.getInstance(modalEl);
+                          if (modalInstance) {
+                            modalInstance.hide();
+                          }
+                        }
+                      });
+                    });
+                </script>
+
+
+
+                <button class="stages-scroll-btn stages-scroll-btn-right" type="button">
+                    <i class="bi bi-chevron-right"></i>
+                </button>
+            </div>
+
+            <!-- ===== ПРОГРЕСС + СТРЕЛКИ В ОДНОЙ РАМКЕ ===== -->
+            <div class="progress-arrows-block">
+
+
+
+                <!-- Дорожка со стрелками -->
+                <div class="arrow-track-wrapper">
+                    <div class="arrow-track" id="arrowTrack">
+                        <!-- кол-во стрелок можно менять -->
+                        <div class="arrow-step"></div>
+                        <div class="arrow-step"></div>
+                        <div class="arrow-step"></div>
+                        <div class="arrow-step"></div>
+                        <div class="arrow-step"></div>
+                        <div class="arrow-step"></div>
+                        <div class="arrow-step"></div>
+                        <div class="arrow-step"></div>
+                        <div class="arrow-step"></div>
+                        <div class="arrow-step"></div>
+                        <div class="arrow-step"></div>
+                        <div class="arrow-step"></div>
+                        <div class="arrow-step"></div>
+
                     </div>
                 </div>
             </div>
 
 
 
-            <button class="stages-scroll-btn stages-scroll-btn-right" type="button">
-                <i class="bi bi-chevron-right"></i>
-            </button>
         </div>
-
-        <!-- ===== ПРОГРЕСС + СТРЕЛКИ В ОДНОЙ РАМКЕ ===== -->
-        <div class="progress-arrows-block">
-
-
-
-            <!-- Дорожка со стрелками -->
-            <div class="arrow-track-wrapper">
-                <div class="arrow-track" id="arrowTrack">
-                    <!-- кол-во стрелок можно менять -->
-                    <div class="arrow-step"></div>
-                    <div class="arrow-step"></div>
-                    <div class="arrow-step"></div>
-                    <div class="arrow-step"></div>
-                    <div class="arrow-step"></div>
-                    <div class="arrow-step"></div>
-                    <div class="arrow-step"></div>
-                    <div class="arrow-step"></div>
-                    <div class="arrow-step"></div>
-                    <div class="arrow-step"></div>
-                    <div class="arrow-step"></div>
-                    <div class="arrow-step"></div>
-                    <div class="arrow-step"></div>
-
-                </div>
-            </div>
-        </div>
-
-
-
     </div>
-
     <!-- Правая колонка: управление и информация -->
     <div class="col-lg-4">
 
@@ -1136,10 +1000,15 @@ document.addEventListener('DOMContentLoaded', function () {
                     Групповой чат
                 </button>
                 {% if request.user in application.user_menager.all or request.user.employee == 4 %}
-                <button class="btn btn-outline-primary w-100" id="edit-sidebar-btn">
+                <button class="btn btn-outline-primary w-100"
+                        id="edit-sidebar-btn"
+                        type="button"
+                        data-bs-toggle="modal"
+                        data-bs-target="#editApplicationModal">
                     Внести изменения
                 </button>
                 {% endif %}
+
                 <!-- Новая кнопка: Активность -->
                 <button class="btn btn-outline-dark w-100"
                         type="button"
@@ -1160,56 +1029,65 @@ document.addEventListener('DOMContentLoaded', function () {
             <div class="offcanvas-body">
 
                 <div class="small text-muted mb-2">
-                    Последние действия по заявке и водителю
+                    Последние действия по заявке
                 </div>
 
                 <ul class="list-unstyled activity-list mb-0">
-                    <li class="activity-item">
-                        <div class="activity-time">10:24</div>
-                        <div class="activity-content">
-                            <div class="activity-title">Статус заявки изменён на <span class="text-primary">"В пути"</span></div>
-                            <div class="activity-meta text-muted small">Системное действие • Менеджер: Георгий Менеджеров</div>
-                        </div>
-                    </li>
+                    {% for log in application.logs.all|dictsortreversed:"created_at" %}
+<li class="activity-item">
+    <div class="activity-time">{{ log.created_at|time:"H:i" }}</div>
 
-                    <li class="activity-item">
-                        <div class="activity-time">09:58</div>
-                        <div class="activity-content">
-                            <div class="activity-title">Водитель подтвердил получение авто</div>
-                            <div class="activity-meta text-muted small">Водитель: Георгий Водителевич</div>
-                        </div>
-                    </li>
+    <div class="activity-content">
+        {# Заголовок: если в changes есть поле status — показываем изменение статуса #}
+        {% if log.action == "update" and log.changes and log.changes.status %}
+            <div class="activity-title">
+                Статус заявки изменён на <span class="text-primary">"{{ log.changes.status }}"</span>
+            </div>
+        {% elif log.action == "create" %}
+            <div class="activity-title">
+                Создан связанный объект <span class="text-primary">{{ log.related_model|capfirst }}</span>
+            </div>
+        {% elif log.action == "delete" %}
+            <div class="activity-title">
+                Удалён связанный объект <span class="text-primary">{{ log.related_model|capfirst }}</span>
+            </div>
+        {% else %}
+            <div class="activity-title">
+                {{ log.related_model|capfirst }} — {{ log.action }}
+            </div>
+        {% endif %}
 
-                    <li class="activity-item">
-                        <div class="activity-time">09:15</div>
-                        <div class="activity-content">
-                            <div class="activity-title">Добавлен фото-отчёт: <span class="text-danger">Поломка</span></div>
-                            <div class="activity-meta text-muted small">Файлы: 3 фото • Добавил: Георгий Водителевич</div>
-                        </div>
-                    </li>
+        {# Мета: если есть пользователь — выводим роль и имя, иначе «Системное действие» #}
+        <div class="activity-meta text-muted small">
+            {% if log.user %}
+                {% if log.user in application.user_menager.all %}
+                    Системное действие • Менеджер:
+                {% elif log.user in application.user_drivers.all %}
+                    Системное действие • Водитель:
+                {% elif log.user in application.user.all %}
+                    Системное действие • Пользователь:
+                {% else %}
+                    Пользователь:
+                {% endif %}
+                {{ log.user.get_full_name|default:log.user.username }}
+            {% else %}
+                Системное действие
+            {% endif %}
+        </div>
+    </div>
+</li>
+{% empty %}
+<li class="text-muted small">Действий в логе пока нет.</li>
+{% endfor %}
 
-                    <li class="activity-item">
-                        <div class="activity-time">08:40</div>
-                        <div class="activity-content">
-                            <div class="activity-title">Создан отчёт по расходам</div>
-                            <div class="activity-meta text-muted small">Сумма: 1 000 PLN • Категория: Доставка</div>
-                        </div>
-                    </li>
 
-                    <li class="activity-item">
-                        <div class="activity-time">Вчера</div>
-                        <div class="activity-content">
-                            <div class="activity-title">Создана заявка #0000063</div>
-                            <div class="activity-meta text-muted small">Заказчик: Николай Климентович</div>
-                        </div>
-                    </li>
                 </ul>
 
             </div>
         </div>
 
         <!-- Основная информация по заявке -->
-        <div class="card card-shadow mb-3">
+        <div class="card card-shadow mb-3" id="application-sidebar">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <div>
@@ -1227,36 +1105,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div class="mb-3">
                     <div class="small-label mb-1">Финансы</div>
 
-                    <table class="table table-sm mb-0 align-middle finance-table">
-                        <tbody>
-                        <tr>
-                            <td class="text-muted small">Стоимость авто</td>
-                            <td class="text-end fw-semibold">
-                                {{ advert.price }}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="text-muted small">Доставка</td>
-                            <td class="text-end fw-semibold">
-                                {{ application.delevery_price }}
-                            </td>
-                        </tr>
+                    <div id="application-finance">
+                        {% include 'moderation/partials/application_sidebar.html' %}
+                    </div>
 
-                        <tr>
-                            <td class="text-muted small">Баланс</td>
-                            <td class="text-end fw-semibold">
-                                12 000,00 PLN
-
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="text-muted small">Расходы</td>
-                            <td class="text-end fw-semibold text-danger">
-                                1 250,00 PLN
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
                 </div>
 
 
@@ -1302,156 +1154,47 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 <div class="mb-0">
                     <div class="small-label mb-1">Водители:</div>
-                    {% for men in application.user_drivers.all %}
-                    <div class="d-flex justify-content-between align-items-start mt-1">
-                        <!-- Левая часть: аватар + текст + таблица -->
-                        <div class="flex-grow-1">
-                            <div class="d-flex align-items-center">
-                                <div class="avatar-circle me-2">
-                                    {{ men.first_name|slice:":1" }}
-                                </div>
-                                <div>
-                                    <div>{{ men.first_name }} {{ men.last_name }}</div>
-                                    <div class="text-muted small">{{ men.email }}</div>
-                                </div>
-                            </div>
-
-                            <!-- Таблица баланса водителя ровно под строкой "водителя" -->
-                            <div class="mt-2">
-                                <table class="table table-sm mb-0 driver-finance-table">
-                                    <tbody>
-                                    <tr>
-                                        <td>
-                                            <div class="text-muted small">Баланс</div>
-                                            <div class="fw-semibold">
-                                                5 320 PLN
-                                                {# {{ men.wallet_balance }} #}
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="text-muted small">Израсходовано</div>
-                                            <div class="fw-semibold text-danger">
-                                                1 000 PLN
-                                                {# {{ men.wallet_spent }} #}
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="text-muted small">Остаток</div>
-                                            <div class="fw-semibold text-success">
-                                                4 320 PLN
-                                                {# {{ men.wallet_left }} #}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <!-- Правая часть: кошелёк -->
-                        <button class="btn btn-light btn-sm border rounded-3 ms-2 driver-wallet-btn"
-                                type="button"
-                                data-driver-id="{{ men.id }}"
-                                data-driver-name="{{ men.first_name }} {{ men.last_name }}"
-                                data-bs-toggle="modal"
-                                data-bs-target="#walletModal"
-                                title="Кошелёк водителя">
-                            <i class="bi bi-wallet2"></i>
-                        </button>
+                    <div id="driver-wallets-block">
+                        {% include 'moderation/partials/driver_wallets_block.html' %}
                     </div>
-                    {% endfor %}
+
 
                     <!-- ОДНА модалка на всех водителей -->
                     <div class="modal fade" id="walletModal" tabindex="-1" aria-hidden="true">
                         <div class="modal-dialog">
-                            <div class="modal-content">
+                            <div class="modal-content" id="walletModalContent">
+                                {# сюда htmx будет подгружать форму #}
                                 <div class="modal-header">
-                                    <h5 class="modal-title" id="walletModalTitle">💰 Кошелек водителя</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                                    <h5 class="modal-title">Кошелек</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Закрыть"></button>
                                 </div>
                                 <div class="modal-body">
-                                    <div class="wallet-info">
-                                        <div class="driver-name mb-3">
-                                            <strong id="walletDriverName"></strong>
-                                        </div>
-                                        <div class="current-amount mb-3">
-                                            <label class="form-label">Текущая сумма:</label>
-                                            <div class="amount-display" id="walletAmountDisplay">
-                                                <div class="spinner-border spinner-border-sm" role="status"></div>
-                                                Загрузка...
-                                            </div>
-                                        </div>
-                                        <div class="amount-edit mb-3">
-                                            <label for="walletAmountInput" class="form-label">Изменить сумму:</label>
-                                            <div class="input-group">
-                                                <input type="number"
-                                                       step="0.01"
-                                                       min="0"
-                                                       class="form-control"
-                                                       id="walletAmountInput"
-                                                       placeholder="0.00">
-                                                <span class="input-group-text">руб.</span>
-                                            </div>
-                                        </div>
+                                    <div class="text-muted small">
+                                        Выберите водителя, чтобы загрузить данные кошелька...
                                     </div>
-                                </div>
-                                <div class="modal-footer">
-                                    <button class="btn btn-primary" id="saveWalletAmount">
-                                        💾 Сохранить
-                                    </button>
-                                    <button class="btn btn-secondary" data-bs-dismiss="modal">
-                                        ❌ Отмена
-                                    </button>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <script>
                         document.addEventListener("DOMContentLoaded", function () {
-                            const walletModalEl = document.getElementById("walletModal");
-                            const driverNameEl = document.getElementById("walletDriverName");
-                            const amountDisplayEl = document.getElementById("walletAmountDisplay");
-                            const amountInputEl = document.getElementById("walletAmountInput");
-
-                            // При открытии модалки Bootstrap прокидывает кнопку в event.relatedTarget
-                            walletModalEl.addEventListener("show.bs.modal", function (event) {
-                                const button = event.relatedTarget;
-                                if (!button) return;
-
-                                const driverId = button.getAttribute("data-driver-id");
-                                const driverName = button.getAttribute("data-driver-name");
-
-                                // Подставляем имя водителя
-                                driverNameEl.textContent = driverName || "Неизвестный водитель";
-
-                                // Сбрасываем состояние суммы
-                                amountDisplayEl.innerHTML =
-                                    '<div class="spinner-border spinner-border-sm" role="status"></div> Загрузка...';
-                                amountInputEl.value = "";
-
-                                // TODO: здесь можно дернуть htmx или fetch, чтобы получить текущий баланс
-                                // Пример (потом переделаешь под свой URL/htmx):
-                                /*
-                                fetch(`/api/drivers/${driverId}/wallet/`)
-                                    .then(r => r.json())
-                                    .then(data => {
-                                        amountDisplayEl.textContent = data.amount + " руб.";
-                                        amountInputEl.value = data.amount;
-                                    })
-                                    .catch(() => {
-                                        amountDisplayEl.textContent = "Не удалось загрузить данные";
-                                    });
-                                */
-                            });
-
-                            // Сохранение (потом привяжешь к своему API / htmx)
-                            document.getElementById("saveWalletAmount").addEventListener("click", function () {
-                                const newAmount = amountInputEl.value;
-                                // здесь отправка на сервер (htmx / fetch / form submit)
-                                console.log("Сохранить новую сумму:", newAmount);
-                            });
+                          document.body.addEventListener("htmx:afterSwap", function (event) {
+                            // Обновился контент модалки кошелька
+                            if (event.target.id === "walletModalContent") {
+                              const modalEl = document.getElementById("walletModal");
+                              if (modalEl && window.bootstrap) {
+                                const modalInstance = bootstrap.Modal.getInstance(modalEl);
+                                if (modalInstance) {
+                                  modalInstance.hide();
+                                }
+                              }
+                            }
+                          });
                         });
                     </script>
+
+
                 </div>
             </div>
         </div>
@@ -1492,160 +1235,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     <span class="badge bg-light text-muted">Образцы формата</span>
                 </div>
 
-                <div class="list-group list-group-flush report-list mb-3">
+                <div class="list-group list-group-flush report-list mb-3"  id="gallery-groups-wrapper">
                     {% for group in application.gallery_groups.all %}
-                    <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
-                        <div class="d-flex align-items-center">
-            <span class="report-icon me-2">
-                {% if group.pagetype == 0 %}
-                    <i class="bi bi-camera"></i>
-                {% elif group.pagetype == 1 %}
-                    <i class="bi bi-camera-video"></i>
-                {% elif group.pagetype == 2 %}
-                    <i class="bi bi-ticket-perforated"></i>
-                {% else %}
-                    <i class="bi bi-receipt"></i>
-                {% endif %}
-            </span>
-                            <div>
-                                <div class="fw-semibold small">{{ group.title }}</div>
-                                {% if group.description %}
-                                <div class="text-muted small">
-                                    {{ group.description }}
-                                </div>
-                                {% endif %}
-                            </div>
-                        </div>
+                    {% include "moderation/partials/gallery_group_item.html" with group=group %}
 
-                        <div class="text-end">
-                            <div class="mb-1">
-                                {# Бейджи по типу #}
-                                {% if group.pagetype == 0 %}
-                                <span class="badge rounded-pill bg-light text-muted me-1">Фото</span>
-                                <span class="badge rounded-pill bg-danger-subtle text-danger">Поломка</span>
-                                {% elif group.pagetype == 1 %}
-                                <span class="badge rounded-pill bg-light text-muted me-1">Видео</span>
-                                <span class="badge rounded-pill bg-danger-subtle text-danger">Поломка</span>
-                                {% elif group.pagetype == 2 %}
-                                <span class="badge rounded-pill bg-light text-muted me-1">Фото</span>
-                                <span class="badge rounded-pill bg-warning-subtle text-warning">Билет</span>
-                                {% else %}
-                                <span class="badge rounded-pill bg-light text-muted me-1">Фото</span>
-                                <span class="badge rounded-pill bg-success-subtle text-success">Чек</span>
-                                {% endif %}
-                            </div>
-
-                            {% if group.items.all %}
-                            <button type="button"
-                                    class="btn btn-sm btn-outline-secondary"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#groupModal-{{ group.id }}">
-                                Подробнее
-                            </button>
-                            {% else %}
-                            <button type="button"
-                                    class="btn btn-sm btn-outline-secondary"
-                                    disabled>
-                                Нет файлов
-                            </button>
-                            {% endif %}
-                        </div>
-                    </div>
-
-                    {# МОДАЛКА ДЛЯ ЭТОЙ ГРУППЫ – С КАРУСЕЛЬЮ ВНУТРИ #}
-                    {% if group.items.all %}
-                    <div class="modal fade" id="groupModal-{{ group.id }}" tabindex="-1"
-                         aria-labelledby="groupModalLabel-{{ group.id }}" aria-hidden="true">
-                        <div class="modal-dialog modal-lg modal-dialog-centered">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="groupModalLabel-{{ group.id }}">{{ group.title }}</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
-                                </div>
-                                <div class="modal-body">
-
-                                    <!-- Карусель с 3 элементами в слайде -->
-                                    <div id="carousel-{{ group.id }}" class="carousel slide" data-bs-ride="carousel">
-                                        <!-- Индикаторы -->
-                                        {% with items_count=group.items.all|length %}
-                                        {% if items_count > 3 %}
-                                        <div class="carousel-indicators">
-                                            {% for item in group.items.all %}
-                                            {% if forloop.counter0|divisibleby:"3" %}
-                                            <button type="button"
-                                                    data-bs-target="#carousel-{{ group.id }}"
-                                                    data-bs-slide-to="{{ forloop.counter0|divisibleby:'3' }}"
-                                                    class="{% if forloop.first %}active{% endif %}">
-                                            </button>
-                                            {% endif %}
-                                            {% endfor %}
-                                        </div>
-                                        {% endif %}
-                                        {% endwith %}
-
-                                        <!-- Слайды -->
-                                        <div class="carousel-inner">
-                                            {% for item in group.items.all %}
-                                            {% if forloop.counter0|divisibleby:"3" %}
-                                            <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                                                <div class="row g-3">
-                                                    {% endif %}
-
-                                                    <div class="col-md-4">
-                                                        {% if item.is_image %}
-                                                        <div class="gallery-item position-relative">
-                                                            <img src="{{ item.file.url }}"
-                                                                 class="img-fluid rounded gallery-thumbnail"
-                                                                 style="width: 100%; object-fit: cover; cursor: pointer;"
-                                                                 alt="Изображение {{ forloop.counter }}">
-                                                            <div class="position-absolute top-0 end-0 m-2">
-                                                                <span class="badge bg-primary">Фото</span>
-                                                            </div>
-                                                        </div>
-                                                        {% elif item.is_video %}
-                                                        <div class="gallery-item position-relative">
-                                                            <video class="img-fluid rounded gallery-thumbnail"
-                                                                   style="height: 200px; width: 100%; object-fit: cover; cursor: pointer;"
-                                                                   controls>
-                                                                <source src="{{ item.file.url }}">
-                                                            </video>
-                                                            <div class="position-absolute top-0 end-0 m-2">
-                                                                <span class="badge bg-success">Видео</span>
-                                                            </div>
-                                                            <div class="position-absolute top-50 start-50 translate-middle">
-                                                                <i class="bi bi-play-circle-fill text-white fs-1 opacity-75"></i>
-                                                            </div>
-                                                        </div>
-                                                        {% endif %}
-                                                    </div>
-
-                                                    {% if forloop.counter|divisibleby:"3" or forloop.last %}
-                                                </div>
-                                            </div>
-                                            {% endif %}
-                                            {% endfor %}
-                                        </div>
-
-                                        <!-- Кнопки навигации -->
-                                        {% if group.items.all|length > 3 %}
-                                        <button class="carousel-control-prev" type="button"
-                                                data-bs-target="#carousel-{{ group.id }}" data-bs-slide="prev">
-                                            <span class="carousel-control-prev-icon bg-dark rounded-circle p-2" aria-hidden="true"></span>
-                                            <span class="visually-hidden">Предыдущий</span>
-                                        </button>
-                                        <button class="carousel-control-next" type="button"
-                                                data-bs-target="#carousel-{{ group.id }}" data-bs-slide="next">
-                                            <span class="carousel-control-next-icon bg-dark rounded-circle p-2" aria-hidden="true"></span>
-                                            <span class="visually-hidden">Следующий</span>
-                                        </button>
-                                        {% endif %}
-                                    </div>
-
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {% endif %}
                     {% endfor %}
 
                     {% if not application.gallery_groups.all %}
@@ -1666,7 +1259,12 @@ document.addEventListener('DOMContentLoaded', function () {
             <div class="modal-dialog modal-fullscreen">
                 <div class="modal-content">
                     <div class="modal-body">
-                        <form id="addGroupWithItemsForm" enctype="multipart/form-data">
+                        <form id="addGroupWithItemsForm"
+                              enctype="multipart/form-data"
+                              hx-post="{% url 'moderation:add_gallery_group_with_items' application.id %}"
+                              hx-target="#gallery-groups-wrapper"
+                              hx-swap="beforeend"
+                              hx-encoding="multipart/form-data">
                             {% csrf_token %}
                             <div class="row g-4">
                                 <div class="col-md-4">
@@ -1693,19 +1291,27 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <div class="col-md-8">
                                     <div class="mb-3">
                                         <label class="form-label">Файлы (фото/видео)</label>
-                                        <input type="file" name="files[]" accept="image/*,video/*" class="form-control" multiple required>
+                                        <input type="file"
+                                               name="files[]"
+                                               accept="image/*,video/*"
+                                               class="form-control"
+                                               multiple
+                                               required>
                                     </div>
-
 
                                     <!-- превью -->
                                     <div id="groupFilesPreview" class="row g-2"></div>
                                 </div>
                             </div>
                             <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                                <button type="submit" class="btn btn-primary">Создать и загрузить</button>
+                                <button type="button"
+                                        class="btn btn-secondary"
+                                        data-bs-dismiss="modal">Отмена</button>
+                                <button type="submit"
+                                        class="btn btn-primary">Создать и загрузить</button>
                             </div>
                         </form>
+
                     </div>
                 </div>
             </div>
@@ -1714,103 +1320,61 @@ document.addEventListener('DOMContentLoaded', function () {
         <div class="card card-shadow">
             <div class="card-body">
                 <div class="balance-box mb-3">
-                    <div class="d-flex justify-content-between">
-                        <div class="text-center flex-fill">
-                            <div class="small text-uppercase mb-1">Баланс</div>
-                            <div class="value">53 860 PLN</div>
-                        </div>
-                        <div class="text-center flex-fill">
-                            <div class="small text-uppercase mb-1">Остаток</div>
-                            <div class="value">52 860 PLN</div>
-                        </div>
-                        <div class="text-center flex-fill">
-                            <div class="small text-uppercase mb-1">Израсходовано</div>
-                            <div class="value text-danger">1 000 PLN</div>
-                        </div>
+                    <div class="d-flex justify-content-between" id="set-balanse">
+                        {% include 'moderation/partials/set-balanse.html' %}
                     </div>
                 </div>
 
-                <button class="btn btn-outline-primary w-100 mb-3">
+                <button class="btn btn-outline-primary w-100 mb-3" data-bs-toggle="modal" data-bs-target="#addExpenseModal">
                     Добавить расход
                 </button>
 
-                <table class="table table-sm align-middle mb-0">
-                    <thead>
-                    <tr>
-                        <th>Статья</th>
-                        <th>Сумма</th>
-                        <th>Дата</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr>
-                        <td>Доставка</td>
-                        <td>1 000 PLN</td>
-                        <td>05.12.2025</td>
-                    </tr>
-                    <!-- другие строки -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-    </div>
-</div>
-
-<!-- Правая колонка -->
-<div class="col-lg-4" id="sidebar-container">
-    <!-- Список документов -->
-    <div class="card mb-4">
-        <!-- Расходы -->
-        <div class="card">
-            <div class="table-responsive mb-3">
-                <table class="table table-sm table-borderless mb-0" style="font-size: 10px;">
-                    <thead>
-                    <tr>
-                        <th class="text-start">Баланс</th>
-                        <th class="text-center">Остаток</th>
-                        <th class="text-end">Израсходовано</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr>
-                        <td class="text-start">
-                            <span class="badge badge-blue">{{total_price}} {{ advert.currency }}</span>
-                        </td>
-                        <td class="text-center">
-                            <span class="badge badge-green">{{total_ost}} {{ advert.currency }}</span>
-                        </td>
-                        <td class="text-end">
-                            <span class="badge badge-red">{{total_expenses}} {{ advert.currency }}</span>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-            {% if request.user in application.user_menager.all or request.user.employee == 4 %}
-            <button type="button" style="margin-top: 10px;" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addExpenseModal">
-                <i class="bi bi-plus"></i> Добавить расход
-            </button>
-            {% endif %}
-            <div class="card-body">
-                {% if expenses %}
-                <table class="table table-sm align-middle">
+                <table class="table table-sm align-middle" id="expenses">
                     <thead>
                     <tr><th>Статья</th><th class="text-end">Сумма</th><th>Дата</th></tr>
                     </thead>
-                    <tbody>
-                    {% for expense in expenses %}
-                    <tr><td title="{{ expense.title }}">{{ expense.title|slice:":10" }}</td><td class="text-end">{{ expense.amount }} {{ advert.currency }}</td><td>{{ expense.created_at|date:"d.m.Y" }}</td></tr>
-                    {% endfor %}
+                    <tbody id="expensesList">
+                          {% for expense in application.expenses.all %}
+                        {% include "moderation/partials/_expense_item.html" with expense=expense %}
+                        {% empty %}
+                        <div class="text-muted small">Расходы ещё не добавлены.</div>
+                        {% endfor %}
                     </tbody>
                 </table>
-                {% else %}
-                <p style="text-align: center;">Нет дополнительных расходов</p>
-                {% endif %}
-            </div>
+
+
+
+
+
         </div>
     </div>
+
 </div>
+</div>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const priceInput = document.getElementById('edit-on-hands');
+      const priceError = document.getElementById('delevery_price_error');
+
+      if (priceInput && priceError) {
+        priceInput.addEventListener('input', () => {
+          priceError.style.display = 'none';
+        });
+      }
+
+      // закрываем модалку после успешного ответа htmx (перезагрузки страницы)
+      document.body.addEventListener('htmx:beforeOnLoad', function (event) {
+        // 204 + HX-Refresh не попадёт сюда, но если потом решишь возвращать HTML — пригодится
+      });
+
+      // если всё же останешься с HX-Refresh, модалка закроется сама при перезагрузке страницы
+    });
+</script>
+
+
+
+
+
 
 <!-- Offcanvas: Звонки -->
 <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasCalls">
@@ -1893,7 +1457,6 @@ document.addEventListener('DOMContentLoaded', function () {
 <input type="hidden" id="application-id" value="{{ application.id }}">
 <input type="hidden" id="user-id" value="{{ request.user.id }}">
 <input type="hidden" id="user-name" value="{{ request.user.first_name }} {{ request.user.last_name }}">
-
 <div class="modal fade" id="addExpenseModal" tabindex="-1" aria-labelledby="addExpenseModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-sm">
         <div class="modal-content">
@@ -1902,39 +1465,78 @@ document.addEventListener('DOMContentLoaded', function () {
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
             </div>
             <div class="modal-body">
-                <form id="add-expense-form">
+               <form id="add-expense-form"
+      hx-post="{% url 'moderation:create_expense' %}"
+      hx-target="#content-body"
+      hx-swap="afterbegin"
+      hx-on="htmx:afterRequest:
+        const modalEl = document.getElementById('addExpenseModal');
+        const modalInstance = bootstrap.Modal.getInstance(modalEl);
+        if (modalInstance) modalInstance.hide();
+        this.reset();">
                     {% csrf_token %}
-                    <div class="mb-3">
-                        <label for="expenseTitle" class="form-label">Статья расходов</label>
+                    <input type="hidden" name="application" value="{{ application.id }}">
 
-                        <!-- выпадающий список с готовыми масками -->
+                    <div class="mb-3">
+                        <label class="form-label">Статья расходов</label>
+
                         <select id="expenseMaskSelect" class="form-select mb-2">
                             <option value="">— выбрать из списка —</option>
                             {% for mask in expense_masks %}
-                            <option value="{{ mask.name }}">{{ mask.name }}</option>
+                                <option value="{{ mask.name }}">{{ mask.name }}</option>
                             {% endfor %}
                         </select>
 
-                        <!-- или ввести своё -->
-                        <input type="text" class="form-control" id="expenseTitle"
-                               placeholder="или введите вручную…">
-                        <div class="mb-3">
-                            <label for="expenseAmount" class="form-label">Сумма</label>
-                            <input type="number" step="0.01" class="form-control" id="expenseAmount" required>
-                        </div>
+                        <input type="text" class="form-control" id="expenseTitleManual" placeholder="или введите вручную…">
                     </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Сумма</label>
+                        <input type="number" step="0.01" class="form-control" name="amount" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Сохранить</button>
                 </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-                <button type="button" class="btn btn-primary" id="saveExpenseBtn">Сохранить</button>
             </div>
         </div>
     </div>
 </div>
+<script>
+document.getElementById('add-expense-form').addEventListener('submit', function(e) {
+    const select = document.getElementById('expenseMaskSelect');
+    const input = document.getElementById('expenseTitleManual');
+
+    // Убираем name у обоих полей
+    select.removeAttribute('name');
+    input.removeAttribute('name');
+
+    // Выбираем, какое поле отправлять
+    if (input.value.trim()) {
+        input.name = 'title';
+    } else if (select.value) {
+        select.name = 'title';
+    } else {
+        e.preventDefault();
+        alert("Выберите маску или введите вручную название расхода");
+        return;
+    }
+
+    // Закрытие модалки после успешного htmx-запроса
+    this.addEventListener('htmx:afterRequest', function(evt) {
+        const modalEl = document.getElementById('addExpenseModal');
+        const modalInstance = bootstrap.Modal.getInstance(modalEl);
+        if (modalInstance) modalInstance.hide();
+        e.target.reset();
+    }, {once: true}); // сработает один раз после этого submit
+});
+</script>
+
+
+
 
 <!-- Модальное окно для редактирования заявки -->
-<div class="modal fade" id="editApplicationModal" tabindex="-1" aria-labelledby="editApplicationModalLabel" aria-hidden="true">
+<div class="modal fade" id="editApplicationModal" tabindex="-1"
+     aria-labelledby="editApplicationModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
@@ -1942,172 +1544,124 @@ document.addEventListener('DOMContentLoaded', function () {
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
             </div>
             <div class="modal-body">
-                <form id="edit-application-form">
+
+                <form id="edit-application-form"
+                      hx-post="{% url 'moderation:update_application' application.id %}"
+                      hx-target="#application-finance"
+                      hx-swap="outerHTML"
+                      hx-trigger="click from:#save-changes-btn">
+
                     {% csrf_token %}
-                    <input type="hidden" id="edit-application-id" name="application_id" value="{{ application.id }}">
+                    <input type="hidden" name="application_id" value="{{ application.id }}">
 
-
-                    <!-- Поле для статуса -->
+                    <!-- Статус -->
                     <div class="mb-3">
                         <label for="edit-status" class="form-label">Статус</label>
                         <select class="form-select" id="edit-status" name="status">
                             {% for key, value in application.Status.choices %}
-                            <option value="{{ key }}">{{ value }}</option>
+                            <option value="{{ key }}" {% if application.status == key %}selected{% endif %}>
+                                {{ value }}
+                            </option>
                             {% endfor %}
                         </select>
                     </div>
 
-                    <!-- Выбор менеджеров -->
+                    <!-- Менеджеры -->
                     <div class="mb-3">
                         <label for="edit-managers" class="form-label">Менеджеры</label>
                         <select multiple class="form-select" id="edit-managers" name="user_menager">
                             {% for manager in all_managers %}
-                            <option value="{{ manager.id }}">{{ manager.first_name }} {{ manager.last_name }} ({{ manager.email }})</option>
+                            <option value="{{ manager.id }}"
+                                    {% if manager in application.user_menager.all %}selected{% endif %}>
+                                {{ manager.first_name }} {{ manager.last_name }} ({{ manager.email }})
+                            </option>
                             {% endfor %}
                         </select>
                     </div>
 
-
-
-                    <!-- Выбор водителей -->
+                    <!-- Водители -->
                     <div class="mb-3">
                         <label for="edit-drivers" class="form-label">Водители</label>
                         <select multiple class="form-select" id="edit-drivers" name="user_drivers">
                             {% for driver in all_drivers %}
-                            <option value="{{ driver.id }}">{{ driver.first_name }} {{ driver.last_name }} ({{ driver.email }})</option>
+                            <option value="{{ driver.id }}"
+                                    {% if driver in application.user_drivers.all %}selected{% endif %}>
+                                {{ driver.first_name }} {{ driver.last_name }} ({{ driver.email }})
+                            </option>
                             {% endfor %}
                         </select>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="edit-on-hands" class="form-label">Стоимость доставки</label>
-                        <input type="number"
-                               class="form-control"
-                               id="edit-on-hands"
-                               name="delevery_price"
-                               value="{{ application.delevery_price|floatformat:0|default:0 }}"
-                               step="1"
-                               min="0"
-                               placeholder="0">
-                        <div id="delevery_price_error" class="text-danger" style="display: none;">
-                            Это поле не может быть пустым и должно быть больше 0.
+                    <!-- Стоимость + баланс/расходы -->
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label for="edit-on-hands" class="form-label">Доставка</label>
+                            <input type="number"
+                                   class="form-control"
+                                   id="edit-on-hands"
+                                   name="delevery_price"
+                                   value="{{ application.delevery_price|default_if_none:'0.00'|unlocalize  }}"
+                                   step="0.01"
+                                   min="0">
+                            <div id="delevery_price_error" class="text-danger" style="display: none;">
+                                Это поле не может быть пустым и должно быть ≥ 0.
+                            </div>
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+                            <label for="edit-balance" class="form-label">Баланс</label>
+                            <input type="number"
+                                   class="form-control"
+                                   id="edit-balance"
+                                   name="balance"
+                                   value="{{ application.balance|default_if_none:'0.00'|unlocalize }}"
+                                   step="0.01"
+                                   min="0">
+
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+                            <label for="edit-current-balance" class="form-label">Текущий баланс</label>
+                            <input type="number"
+                                   class="form-control"
+                                   id="edit-current-balance"
+                                   name="current_balance"
+                                   value="{{ application.current_balance|default_if_none:'0.00'|unlocalize  }}"
+                                   step="0.01"
+                                   min="0">
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+                            <label for="edit-expenses-total" class="form-label">Расходы</label>
+                            <input type="number"
+                                   class="form-control"
+                                   id="edit-expenses-total"
+                                   name="expenses_total"
+                                   value="{{ application.expenses_total|default_if_none:'0.00'|unlocalize }}"
+                                   step="0.01"
+                                   min="0">
                         </div>
                     </div>
-
                 </form>
+
+
+
+
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                <button type="button" class="btn btn-primary" id="save-changes-btn">Сохранить</button>
+                <button type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">Отмена</button>
+                <button type="button"
+                        class="btn btn-primary"
+                        id="save-changes-btn">
+                    Сохранить
+                </button>
             </div>
         </div>
     </div>
 </div>
 
-
-<div class="container">
-    <div style="display: flex; justify-content: center;">
-        <h1 class="display-5 fw-bold">Система этапов</h1>
-    </div>
-
-    <!-- Верхние фазы -->
-    <div class="row text-center mb-4" id="phasesRow">
-        {% for pathr in path_responsibilitys %}
-
-        <div class="col-md-4 mb-4">
-            <div class="phase-card">
-                {% if request.user.employee == 1 or request.user.employee == 2 %}
-                <div class="edit-panel">
-
-                    <div class="edit-btn" onclick="openEditResponsibility({{ pathr.id }})" title="Редактировать">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil" viewBox="0 0 16 16">
-                            <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325"/>
-                        </svg>
-                    </div>
-                    <div class="edit-btn" onclick="removePhase(this)">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
-                            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
-                            <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
-                        </svg>
-                    </div>
-                </div>
-                {% endif %}
-
-                <h5 class="phase-title"><strong>Этап {{ forloop.counter  }}</strong></h5>
-                <p>{{ pathr.additional }}</p>
-
-                <div class="users-container">
-                    <h6><i class="fas fa-users me-2"></i>Участники этапа</h6>
-
-                    <div class="user">
-                        <img src="{{ pathr.responsible.avatar.url }} " class="user-avatar" alt="John Doe">
-                        <div class="user-info">
-                            <div class="user-name">{{ pathr.responsible.first_name}} {{ pathr.responsible.last_name}}</div>
-                            <div class="user-role">{{ pathr.responsible.get_employee_display }}</div>
-                        </div>
-                        <div class="user-action">
-                            <i class="fas fa-times text-danger"></i>
-                        </div>
-                    </div>
-                    <p>статус - {{ pathr.status }}</p>
-
-                </div>
-            </div>
-        </div>
-        {% endfor %}
-
-
-    </div>
-
-    <!-- Кнопка добавления этапа -->
-    {% if request.user.employee == 2 %}
-
-    <button class="btn add-phase-btn" data-bs-toggle="modal" data-bs-target="#editPhaseModal" data-phase="1">
-        Добавить новый этап
-    </button>
-    {% endif %}
-    <!-- стрелки -->
-    <div class="arrow-line" id="arrowLine">
-        <div class="arrow blue"></div>
-        <div class="arrow blue"></div>
-        <div class="arrow blue"></div>
-        <div class="arrow blue"></div>
-        <div class="arrow blue"></div>
-        <div class="arrow blue"></div>
-        <div class="arrow blue"></div>
-        <div class="arrow blue"></div>
-        <div class="arrow blue"></div>
-        <div class="arrow blue"></div>
-        <div class="arrow blue"></div>
-        <div class="arrow blue"></div>
-        <div class="arrow blue"></div>
-        <div class="arrow blue"></div>
-        <div class="arrow blue"></div>
-    </div>
-    {% if request.user.employee == 2 %}
-    <button class="btn add-phase-btn" data-bs-toggle="modal" data-bs-target="#addPhaseModal">
-        <i class="fas fa-plus me-2"></i>Добавить новый путь
-    </button>
-    {% endif %}
-
-    <!-- Нижние шаги -->
-    <div class="row text-center mt-4" id="stepsRow">
-        {% for step in paths %}
-        <div class="col-md-4 mb-4">
-            <div class="step-card">
-                <h5 class="step-title">
-                    <strong>{{ forloop.counter  }}. {{ step.name }}</strong>
-                </h5>
-                <p>{{ step.description }}</p>
-                <div class="text-primary step-icon">
-                    <i class="bi bi-geo-alt-fill"></i>
-                </div>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-
-</div>
 
 
 
@@ -2134,6 +1688,22 @@ document.addEventListener('DOMContentLoaded', function () {
     </div>
 </div>
 
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+      // закрываем модалку после обновления блока с финансами
+      document.body.addEventListener('htmx:afterSwap', function (event) {
+        if (event.target.id === 'application-finance') {
+          const modalEl = document.getElementById('editApplicationModal');
+          if (modalEl && window.bootstrap) {
+            const modalInstance = bootstrap.Modal.getInstance(modalEl);
+            if (modalInstance) {
+              modalInstance.hide();
+            }
+          }
+        }
+      });
+    });
+</script>
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
@@ -2297,79 +1867,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
 </script>
 
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-    const modal = new bootstrap.Modal(document.getElementById('editApplicationModal'));
-    const form = document.getElementById('edit-application-form');
-    const saveBtn = document.getElementById('save-changes-btn');
-
-    let currentApplicationId = "{{ application.id }}";
-
-    // Заполнение формы при открытии
-    document.getElementById('edit-sidebar-btn')?.addEventListener('click', () => {
-        document.getElementById('edit-status').value = "{{ application.status }}";
-
-        const managerIds = [{% for m in application.user_menager.all %}'{{ m.id }}',{% endfor %}];
-        const managerSelect = document.getElementById('edit-managers');
-        Array.from(managerSelect.options).forEach(option => {
-            option.selected = managerIds.includes(option.value);
-        });
-
-        const driverIds = [{% for d in application.user_drivers.all %}'{{ d.id }}',{% endfor %}];
-        const driverSelect = document.getElementById('edit-drivers');
-        Array.from(driverSelect.options).forEach(option => {
-            option.selected = driverIds.includes(option.value);
-        });
-
-        modal.show();
-    });
-
-    // Сохранение изменений
-    saveBtn?.addEventListener('click', () => {
-        const deliveryPrice = document.getElementById('edit-on-hands').value;
-
-        // Проверяем, что поле не пустое и больше 0
-        if (deliveryPrice === "" || parseFloat(deliveryPrice) <= 0) {
-            document.getElementById('delevery_price_error').style.display = 'block';
-            return;
-        }
-
-        // Скрываем ошибку, если проверка прошла успешно
-        document.getElementById('delevery_price_error').style.display = 'none';
-
-        // Собираем данные формы
-        const data = {
-            application_id: document.getElementById('edit-application-id').value, // добавлен id
-            status: document.getElementById('edit-status').value,
-            user_menager: Array.from(document.getElementById('edit-managers').selectedOptions).map(opt => opt.value),
-            user_drivers: Array.from(document.getElementById('edit-drivers').selectedOptions).map(opt => opt.value),
-            delevery_price: deliveryPrice  // добавлено
-        };
-
-        fetch("{% url 'moderation:update_application' application.id %}", {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-        })
-        .then(res => res.json())
-        .then(result => {
-            if (result.success) {
-                location.reload();
-                modal.hide();
-            } else {
-                alert('Ошибка при сохранении: ' + result.error);
-            }
-        })
-        .catch(() => {
-            alert('Ошибка сервера');
-        });
-    });
-});
-
-</script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
       const address = "{{ advert.address|escapejs }}"; // Получаем адрес из контекста
@@ -3610,52 +3107,59 @@ function addNewPhase() {
     });
 
 </script>
-
 <script>
     document.addEventListener("DOMContentLoaded", () => {
-  const form = document.getElementById("addGroupWithItemsForm");
-  const preview = document.getElementById("groupFilesPreview");
+      const form = document.getElementById("addGroupWithItemsForm");
+      const preview = document.getElementById("groupFilesPreview");
 
-  // 📌 превью
-  form.querySelector("input[type=file]").addEventListener("change", (e) => {
-    preview.innerHTML = "";
-    Array.from(e.target.files).forEach(f => {
-      const url = URL.createObjectURL(f);
-      const col = document.createElement("div");
-      col.className = "col-4";
-      col.innerHTML = f.type.startsWith("image")
-        ? `<img src="${url}" class="img-fluid rounded">`
-        : `<video src="${url}" class="w-100 rounded" controls></video>`;
-      preview.appendChild(col);
-    });
-  });
+      // превью файлов (как раньше)
+      if (form && preview) {
+        const fileInput = form.querySelector('input[type="file"]');
+        if (fileInput) {
+          fileInput.addEventListener("change", (e) => {
+            preview.innerHTML = "";
+            Array.from(e.target.files).forEach((f) => {
+              const url = URL.createObjectURL(f);
+              const col = document.createElement("div");
+              col.className = "col-4 mb-2";
 
-  // 📌 отправка
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const data = new FormData(form);
-
-    try {
-      const res = await fetch("{% url 'moderation:add_gallery_group_with_items' application.id %}", {
-        method: "POST",
-        body: data,
-        headers: { "X-CSRFToken": "{{ csrf_token }}" }
-      });
-      const json = await res.json();
-
-      if (json.success) {
-        location.reload(); // ✅ перезагрузка — новая вкладка + медиа появятся
-      } else {
-        alert("Ошибка: " + (json.error || "Неизвестная"));
+              if (f.type.startsWith("image")) {
+                col.innerHTML = `<img src="${url}" class="img-fluid rounded border">`;
+              } else {
+                col.innerHTML = `
+                  <video src="${url}" class="w-100 rounded border" controls muted></video>
+                `;
+              }
+              preview.appendChild(col);
+            });
+          });
+        }
       }
-    } catch (err) {
-      console.error(err);
-      alert("Ошибка сети");
-    }
-  });
-});
 
+      // ❗ закрываем модалку после успешного обновления #gallery-groups-wrapper
+      document.body.addEventListener("htmx:afterSwap", function (event) {
+        if (event.target.id === "gallery-groups-wrapper") {
+          const modalEl = document.getElementById("addGroupModal");
+          if (modalEl && window.bootstrap) {
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) {
+              modal.hide();
+            }
+          }
+
+          // очистить форму и превью
+          if (form) {
+            form.reset();
+          }
+          if (preview) {
+            preview.innerHTML = "";
+          }
+        }
+      });
+    });
 </script>
+
+
 <script>
     (() => {
       let shouldReload = false; // флаг перезагрузки после закрытия

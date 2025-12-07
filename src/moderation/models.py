@@ -87,6 +87,21 @@ class Advertpayment(models.Model):
     def __str__(self):
         return self.name
 
+
+
+class Currencys(models.Model):
+    code = models.CharField("Код валюты", max_length=10, unique=True)  # USD, EUR, KZT
+    name = models.CharField("Название", max_length=50)
+    rate_to_base = models.DecimalField("Курс к базовой валюте", max_digits=20, decimal_places=6)  # курс относительно базовой валюты
+
+    class Meta:
+        verbose_name = "Валюта"
+        verbose_name_plural = "Валюты"
+
+    def __str__(self):
+        return self.code
+
+
 class Advert(models.Model):
     # Основные
     name = models.CharField("Название", max_length=255, db_index=True)
@@ -110,6 +125,7 @@ class Advert(models.Model):
     original_link = models.URLField("Оригинальная ссылка", max_length=500, blank=True, null=True, unique=True)
     price = models.IntegerField("Стоимость", db_index=True)
     currency = models.CharField("Валюта", max_length=10, db_index=True)  # например, 'USD', 'EUR', 'KZT'
+
     description = models.TextField("Описание", blank=True, null=True)
     images = models.JSONField("Список ссылок на изображения", blank=True, null=True)  # list[str]
     subtitle = models.CharField("Подзаголовок", max_length=255, blank=True, null=True)
@@ -475,6 +491,7 @@ class AdvertExpense(models.Model):
         "Дата добавления",
         auto_now_add=True
     )
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Пользователь', related_name='expense_user', null=True, blank=True, on_delete=models.CASCADE)
 
     class Meta:
         verbose_name = "Расход по заявке"
@@ -482,8 +499,32 @@ class AdvertExpense(models.Model):
         ordering = ["-date"]
 
     def __str__(self):
-        return f"{self.title} — {self.amount} ({self.aplication.advert.name})"
+        return f"{self.title} — {self.amount} "
 
+class AdvertApplicationLog(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    application = models.ForeignKey(
+        'AdvertAplication',
+        on_delete=models.CASCADE,
+        related_name='logs',
+        verbose_name="Заявка"
+    )
+    related_model = models.CharField("Модель", max_length=255)
+    related_object_id = models.CharField("ID объекта", max_length=255)
+    action = models.CharField("Действие", max_length=50)  # create, update, delete
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        verbose_name="Пользователь"
+    )
+    changes = models.JSONField("Изменения", blank=True, null=True)  # опционально
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Лог заявки"
+        verbose_name_plural = "Логи заявок"
 
 
 class AdvertAplication(models.Model):
@@ -496,6 +537,32 @@ class AdvertAplication(models.Model):
 
     price = models.DecimalField("Стоимость", max_digits=12, decimal_places=2, blank=True, null=True)
     delevery_price = models.DecimalField("Стоимость доставки", max_digits=12, decimal_places=2, blank=True, null=True)
+
+    balance = models.DecimalField(
+        "Баланс",
+        max_digits=12,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        default=0,
+    )
+    current_balance = models.DecimalField(
+        "Текущий баланс",
+        max_digits=12,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        default=0,
+    )
+    # 🔁 БЫЛО: expenses = models.DecimalField(...)
+    expenses_total = models.DecimalField(
+        "Расходы",
+        max_digits=12,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        default=0,
+    )
 
     order_number = models.CharField(
         "Номер заказа",
@@ -524,20 +591,8 @@ class AdvertAplication(models.Model):
         blank=True,
     )
 
-    # --- ВАЖНО: заменили ForeignKey на “внешнюю ссылку” ---
-
-    advert_id = models.CharField(
-        "ID объявления (во внешней БД)",
-        db_index=True,max_length=20
-    )
-    advert_name = models.CharField(
-        "Название объявления",
-        max_length=255,
-        blank=True,
-        null=True,
-    )
-
-    # -----------------------------------------------
+    advert_id = models.CharField("ID объявления (во внешней БД)", db_index=True, max_length=20)
+    advert_name = models.CharField("Название объявления", max_length=255, blank=True, null=True)
 
     status = models.CharField(
         "Статус",
@@ -884,15 +939,75 @@ class ChatMessage(models.Model):
         ordering = ['-date']
 
 
+class WalletDriver(models.Model):
+    aplication = models.ForeignKey(
+        AdvertAplication,
+        blank=True,
+        null=True,
+        on_delete=models.CASCADE,
+        verbose_name="Заявка",
+        related_name="driver_wallets",
+    )
+    responsible = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name="Водитель",
+        on_delete=models.CASCADE,
+        related_name="wallets",
+    )
+
+    # 💰 Деньги
+    balance = models.DecimalField(
+        "Баланс",
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+    )
+    spent = models.DecimalField(
+        "Израсходовано",
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+    )
+    remainder = models.DecimalField(
+        "Остаток",
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+    )
+
+    class Meta:
+        verbose_name = "Кошелек водителя"
+        verbose_name_plural = "Кошельки водителей"
+
+    def __str__(self):
+        return f"Кошелёк {self.responsible} по заявке {self.aplication_id}"
+
+    def recalc_remainder(self):
+        """Пересчитать остаток = баланс - израсходовано."""
+        bal = self.balance or Decimal("0")
+        sp = self.spent or Decimal("0")
+        self.remainder = bal - sp
+
+    def save(self, *args, **kwargs):
+        # перед сохранением всегда синхронизируем остаток
+        self.recalc_remainder()
+        super().save(*args, **kwargs)
 
 
 class Path(models.Model):
+    STATUS_CHOICES = [
+        (0, 'В ожидании'),
+        (1, 'Принял'),
+        (2, 'Закончил'),
+    ]
+    status = models.SmallIntegerField(verbose_name="Статус", choices=STATUS_CHOICES, default=0,  editable=False)
     aplication = models.ForeignKey(AdvertAplication,blank=True,null=True, on_delete=models.CASCADE)
     longitude = models.FloatField(verbose_name='Долгота')
     latitude = models.FloatField(verbose_name='Широта')
     name = models.CharField(max_length=100,verbose_name='Название этапа')
     description = models.TextField("Описание", blank=True, null=True)
     request = models.CharField(max_length=255, verbose_name='Заявка')
+    responsible = models.ForeignKey(Profile, verbose_name='Ответственный',on_delete=models.CASCADE)
 
     def __str__(self):
         return f"Path {self.name} ({self.latitude}, {self.longitude})"

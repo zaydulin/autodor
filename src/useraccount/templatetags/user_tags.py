@@ -23,6 +23,11 @@ def get_unread_notifications(user):
         return Notification.objects.filter(user=user, status=1).order_by('-created_at')[:4]
     return []
 
+@register.filter
+def dict_get(d, key):
+    if not d:
+        return None
+    return d.get(key)
 
 
 @register.filter

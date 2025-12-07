@@ -1,0 +1,30 @@
+<table class="table table-sm mb-0 align-middle finance-table">
+    <tbody>
+    <tr>
+        <td class="text-muted small">Стоимость авто</td>
+        <td class="text-end fw-semibold">
+            {{ application.price }}  $
+        </td>
+    </tr>
+    <tr>
+        <td class="text-muted small">Доставка</td>
+        <td class="text-end fw-semibold">
+            {{ application.delevery_price }}  $
+        </td>
+    </tr>
+
+    <tr>
+        <td class="text-muted small">Баланс</td>
+        <td class="text-end fw-semibold">
+            {{ application.current_balance }} $
+
+        </td>
+    </tr>
+    <tr>
+        <td class="text-muted small">Расходы</td>
+        <td class="text-end fw-semibold text-danger">
+            {{ application.expenses_total }} $
+        </td>
+    </tr>
+    </tbody>
+</table>

@@ -25,5 +25,9 @@ urlpatterns = [
     # Карта
     path('card/create/', views.CardsCreateView.as_view(), name='cards_create'),
     path('card/update/<int:pk>/', views.CardsUpdateView.as_view(), name='cards_update'),
-
+    path(
+        "api/update-location/",
+        views.UpdateLocationView.as_view(),
+        name="update_location",
+    ),
 ]

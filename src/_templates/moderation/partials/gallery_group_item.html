@@ -1,0 +1,279 @@
+
+<div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
+    <div class="d-flex align-items-center">
+            <span class="report-icon me-2">
+                {% if group.pagetype == 0 %}
+                    <i class="bi bi-camera"></i>
+                {% elif group.pagetype == 1 %}
+                    <i class="bi bi-camera-video"></i>
+                {% elif group.pagetype == 2 %}
+                    <i class="bi bi-ticket-perforated"></i>
+                {% else %}
+                    <i class="bi bi-receipt"></i>
+                {% endif %}
+            </span>
+        <div>
+            <div class="fw-semibold small">{{ group.title }}</div>
+            {% if group.description %}
+            <div class="text-muted small">
+                {{ group.description }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="text-end">
+       <div class="mb-1">
+    {# Берём первый элемент группы #}
+    {% with item=group.items.all|first %}
+        {% if item %}
+            {% if item.pagetype == 0 %}
+                <span class="badge rounded-pill bg-light text-muted me-1">Фото</span>
+                <span class="badge rounded-pill bg-danger-subtle text-danger">
+                    {{ item.get_pagetype_display }}
+                </span>
+            {% elif item.pagetype == 1 %}
+                <span class="badge rounded-pill bg-light text-muted me-1">Видео</span>
+                <span class="badge rounded-pill bg-danger-subtle text-danger">
+                    {{ item.get_pagetype_display }}
+                </span>
+            {% elif item.pagetype == 2 %}
+                <span class="badge rounded-pill bg-light text-muted me-1">Билет</span>
+                <span class="badge rounded-pill bg-warning-subtle text-warning">
+                    {{ item.get_pagetype_display }}
+                </span>
+            {% elif item.pagetype == 3 %}
+                <span class="badge rounded-pill bg-light text-muted me-1">Чек</span>
+                <span class="badge rounded-pill bg-success-subtle text-success">
+                    {{ item.get_pagetype_display }}
+                </span>
+            {% endif %}
+        {% endif %}
+    {% endwith %}
+</div>
+
+
+        {% if group.items.all %}
+        <button type="button"
+                class="btn btn-sm btn-outline-secondary"
+                data-bs-toggle="modal"
+                data-bs-target="#groupModal-{{ group.id }}">
+            Подробнее
+        </button>
+        {% else %}
+        <button type="button"
+                class="btn btn-sm btn-outline-secondary"
+                disabled>
+            Нет файлов
+        </button>
+        {% endif %}
+    </div>
+</div>
+
+{# МОДАЛКА ДЛЯ ЭТОЙ ГРУППЫ – С КАРУСЕЛЬЮ ВНУТРИ #}
+{% if group.items.all %}
+<div class="modal fade" id="groupModal-{{ group.id }}" tabindex="-1"
+     aria-labelledby="groupModalLabel-{{ group.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="groupModalLabel-{{ group.id }}">{{ group.title }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <div class="modal-body">
+
+                <!-- Карусель с 3 элементами в слайде -->
+               <div id="carousel-{{ group.id }}" class="carousel slide gallery-carousel" data-bs-ride="carousel">
+
+                    <!-- Индикаторы -->
+                    {% with items_count=group.items.all|length %}
+                    {% if items_count > 3 %}
+                    <div class="carousel-indicators">
+                        {% for item in group.items.all %}
+                        {% if forloop.counter0|divisibleby:"3" %}
+                        <button type="button"
+                                data-bs-target="#carousel-{{ group.id }}"
+                                data-bs-slide-to="{{ forloop.counter0|divisibleby:'3' }}"
+                                class="{% if forloop.first %}active{% endif %}">
+                        </button>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+
+                    <!-- Слайды -->
+                    <div class="carousel-inner">
+                        {% for item in group.items.all %}
+                        {% if forloop.counter0|divisibleby:"3" %}
+                        <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                            <div class="row g-3">
+                                {% endif %}
+
+                                <div class="col-md-4">
+                                    {% if item.is_image %}
+                                    <div class="gallery-item position-relative">
+                                        <img src="{{ item.file.url }}"
+                                             class="img-fluid rounded gallery-thumbnail"
+                                             style="width: 100%; object-fit: cover; cursor: pointer;"
+                                             alt="Изображение {{ forloop.counter }}">
+                                        <div class="position-absolute top-0 end-0 m-2">
+                                            <span class="badge bg-primary">Фото</span>
+                                        </div>
+                                    </div>
+                                    {% elif item.is_video %}
+                                    <div class="gallery-item position-relative">
+                                        <video class="img-fluid rounded gallery-thumbnail"
+                                               style="height: 200px; width: 100%; object-fit: cover; cursor: pointer;"
+                                               controls>
+                                            <source src="{{ item.file.url }}">
+                                        </video>
+                                        <div class="position-absolute top-0 end-0 m-2">
+                                            <span class="badge bg-success">Видео</span>
+                                        </div>
+                                        <div class="position-absolute top-50 start-50 translate-middle">
+                                            <i class="bi bi-play-circle-fill text-white fs-1 opacity-75"></i>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+
+                                {% if forloop.counter|divisibleby:"3" or forloop.last %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+
+                    <!-- Кнопки навигации -->
+                    {% if group.items.all|length > 3 %}
+                    <button class="carousel-control-prev" type="button"
+                            data-bs-target="#carousel-{{ group.id }}" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon bg-dark rounded-circle p-2" aria-hidden="true"></span>
+                        <span class="visually-hidden">Предыдущий</span>
+                    </button>
+                    <button class="carousel-control-next" type="button"
+                            data-bs-target="#carousel-{{ group.id }}" data-bs-slide="next">
+                        <span class="carousel-control-next-icon bg-dark rounded-circle p-2" aria-hidden="true"></span>
+                        <span class="visually-hidden">Следующий</span>
+                    </button>
+                    {% endif %}
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+<style>
+   /* === МОДАЛКА ГАЛЕРЕИ === */
+.gallery-carousel .carousel-inner {
+    padding: 0.5rem 0;
+}
+
+/* Один слайд с тремя элементами */
+.gallery-carousel .carousel-item {
+    transition: transform 0.6s ease-in-out;
+}
+
+/* Карточка одного элемента */
+.gallery-item {
+    position: relative;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    background: #000;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.25);
+}
+
+/* Превью (и для фото, и для видео) */
+.gallery-thumbnail {
+    display: block;
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
+}
+
+/* Для видео убираем стандартный фон */
+.gallery-item video.gallery-thumbnail {
+    background: #000;
+}
+
+/* Бейдж “Фото / Видео” в углу */
+.gallery-item .badge {
+    font-size: 0.7rem;
+    padding: 0.35rem 0.6rem;
+}
+
+/* Иконка play поверх видео */
+.gallery-item .bi-play-circle-fill {
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.7));
+}
+
+/* Лёгкий hover-эффект */
+.gallery-item:hover .gallery-thumbnail {
+    transform: scale(1.02);
+    transition: transform 0.25s ease-out;
+}
+
+/* === ИНДИКАТОРЫ КАРУСЕЛИ === */
+.gallery-carousel .carousel-indicators {
+    bottom: -10px;
+}
+
+.gallery-carousel .carousel-indicators [data-bs-target] {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    border: none;
+    margin: 0 4px;
+    background-color: rgba(148, 163, 184, 0.6);
+}
+
+.gallery-carousel .carousel-indicators .active {
+    width: 22px;
+    background-color: #0d6efd; /* можно заменить на свой брендовый цвет */
+}
+
+/* === СТРЕЛКИ НАВИГАЦИИ === */
+.gallery-carousel .carousel-control-prev,
+.gallery-carousel .carousel-control-next {
+    width: 2.5rem;
+}
+
+.gallery-carousel .carousel-control-prev-icon,
+.gallery-carousel .carousel-control-next-icon {
+    border-radius: 999px;
+    padding: 0.5rem;
+    background-color: rgba(15, 23, 42, 0.85);
+    background-size: 60% 60%;
+}
+
+/* Hover по стрелкам */
+.gallery-carousel .carousel-control-prev:hover .carousel-control-prev-icon,
+.gallery-carousel .carousel-control-next:hover .carousel-control-next-icon {
+    background-color: rgba(15, 23, 42, 1);
+}
+
+/* === АДАПТИВ === */
+@media (max-width: 767.98px) {
+    .gallery-thumbnail {
+        height: 180px;
+    }
+
+    .gallery-carousel .carousel-control-prev,
+    .gallery-carousel .carousel-control-next {
+        width: 2rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .gallery-thumbnail {
+        height: 160px;
+    }
+
+    /* Можно сделать по 2 элемента в ряд на очень узких экранах,
+       если захочешь — но тогда надо будет править верстку с col-md-4 */
+}
+
+
+</style>

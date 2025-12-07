@@ -8,7 +8,7 @@ from django.contrib.auth import logout, authenticate, login, get_user_model
 from django.contrib.auth import views as auth_views
 from django.urls import reverse_lazy
 from django.urls import reverse
-from django.http import HttpResponseServerError, HttpResponseForbidden, JsonResponse
+from django.http import HttpResponseServerError, HttpResponseForbidden, JsonResponse, HttpResponseBadRequest
 from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmView, PasswordResetCompleteView, PasswordResetDoneView
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
@@ -546,6 +546,38 @@ class TicketCommentCreateView(LoginRequiredMixin, CreateView):
     def form_invalid(self, form):
         print(form.errors)  # Для отладки
         return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
+
+
+class UpdateLocationView(LoginRequiredMixin, View):
+    """
+    Принимает координаты от клиента и сохраняет их в Profile пользователя.
+    """
+
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body.decode("utf-8"))
+        except Exception:
+            return HttpResponseBadRequest("Invalid JSON")
+
+        lat = data.get("latitude")
+        lng = data.get("longitude")
+
+        if lat is None or lng is None:
+            return HttpResponseBadRequest("Missing coordinates")
+
+        try:
+            lat = float(str(lat).replace(",", "."))
+            lng = float(str(lng).replace(",", "."))
+        except ValueError:
+            return HttpResponseBadRequest("Bad coordinates")
+
+        user = request.user  # это твой Profile(AbstractUser)
+        user.latitude = lat
+        user.longitude = lng
+        user.save(update_fields=["latitude", "longitude"])
+
+        return JsonResponse({"success": True})
+
 
 @method_decorator(login_required(login_url='useraccount:login'), name='dispatch')
 class WithdrawPage(CustomHtmxMixin, LoginRequiredMixin, TemplateView):

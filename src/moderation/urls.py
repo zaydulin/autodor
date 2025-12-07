@@ -24,6 +24,26 @@ urlpatterns = [
     path('car_models/change_type/<int:model_id>/', views.change_car_model_type, name='change_car_model_type'),
 
     path('application/<uuid:application_id>/driver/<uuid:driver_id>/wallet/', views.driver_wallet_view, name='driver_wallet'),
+    path(
+        "application/<uuid:application_id>/paths/save/",
+        views.PathSaveView.as_view(),
+        name="path_save",
+    ),
+    path(
+        "paths/<int:pk>/delete/",
+        views.PathDeleteView.as_view(),
+        name="path_delete",
+    ),
+    path(
+        "paths/<int:pk>/change-status/",
+        views.PathChangeStatusView.as_view(),
+        name="path_change_status",
+    ),
+    path(
+        "application/<uuid:application_id>/wallet/<uuid:driver_id>/",
+        views.WalletDriverView.as_view(),
+        name="wallet_driver",
+    ),
 
     path("my-applications/", views.AdvertAplicationListView.as_view(), name="my_applications"),
     path("my-applications/<uuid:pk>/", views.AdvertAplicationDetailView.as_view(), name="application_detail"),

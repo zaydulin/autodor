@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 
 import requests
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
@@ -24,7 +25,8 @@ from django.contrib.auth.mixins import UserPassesTestMixin
 
 from django.contrib.auth.decorators import login_required
 from django.db import models, transaction, IntegrityError
-from django.http import JsonResponse, HttpResponse, HttpResponseServerError, FileResponse
+from django.http import JsonResponse, HttpResponse, HttpResponseServerError, FileResponse, HttpResponseBadRequest, \
+    HttpResponseForbidden
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_http_methods
@@ -34,7 +36,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 
 from .forms import PathForm, PathResponsibilityForm, AdvertAplicationGalleryForm
 from .models import AdvertAplication, ChatMessage, CallSession, AdvertDocument, AdvertExpense, AdvertApplicationImage, \
-    CarModel, CarBrand, AdvertAplicationGallery, ExpenseMask,AdvertAplicationGalleryGroup,CartVod
+    CarModel, CarBrand, AdvertAplicationGallery, ExpenseMask, AdvertAplicationGalleryGroup, CartVod, WalletDriver
 from moderation.models import Advert, AdvertAplication,Path,PathResponsibility, Withdrawal
 from webmain.models import Faqs, Seo
 from useraccount.models import Profile
@@ -184,6 +186,7 @@ def add_gallery_group(request):
     return JsonResponse({"success": False, "error": "Неверный запрос"})
 
 
+
 @login_required
 @require_POST
 def add_gallery_group_with_items(request, pk):
@@ -191,11 +194,17 @@ def add_gallery_group_with_items(request, pk):
 
     title = request.POST.get("title")
     description = request.POST.get("description", "")
-    files = request.FILES.getlist("files[]")  # multiple input
+    files = request.FILES.getlist("files[]")
     report_description = request.POST.get("report_description", "")
+    report_type = request.POST.get("report_type")  # <- ВАЖНО
 
     if not title or not files:
-        return JsonResponse({"success": False, "error": "Название и файлы обязательны"}, status=400)
+        if request.headers.get("HX-Request") == "true":
+            return HttpResponse("Название и файлы обязательны", status=400)
+        return JsonResponse(
+            {"success": False, "error": "Название и файлы обязательны"},
+            status=400,
+        )
 
     # 1. Создаём группу
     group = AdvertAplicationGalleryGroup.objects.create(
@@ -205,33 +214,43 @@ def add_gallery_group_with_items(request, pk):
         position=application.gallery_groups.count() + 1,
     )
 
-    items_data = []
+    # 2. Создаём элементы с правильным pagetype
     for f in files:
-        item = AdvertAplicationGallery.objects.create(
+        filename = f.name.lower()
+
+        # базовый pagetype по report_type
+        if report_type == "ticket":
+            pagetype = 2      # Билет
+        elif report_type == "receipt":
+            pagetype = 3      # Чек
+        else:
+            # Поломка / Другое — определяем по типу файла
+            if filename.endswith((".png", ".jpg", ".jpeg", ".gif", ".webp")):
+                pagetype = 0  # Фото-отчет
+            elif filename.endswith((".mp4", ".mov", ".webm", ".mkv")):
+                pagetype = 1  # Видео-отчет
+            else:
+                pagetype = 0  # дефолт — фото
+
+        AdvertAplicationGallery.objects.create(
             application=application,
             group=group,
             file=f,
             description=report_description,
             uploaded_by=request.user,
+            pagetype=pagetype,  # <- вот тут
         )
-        items_data.append({
-            "id": item.id,
-            "url": item.file.url,
-            "description": item.description,
-            "is_image": item.is_image,
-            "is_video": item.is_video,
-            "uploaded_at": item.uploaded_at.strftime("%d.%m.%Y %H:%M"),
-        })
 
-    return JsonResponse({
-        "success": True,
-        "group": {
-            "id": group.id,
-            "title": group.title,
-            "description": group.description,
-        },
-        "items": items_data,
-    })
+    if request.headers.get("HX-Request") == "true":
+        html = render_to_string(
+            "moderation/partials/gallery_group_item.html",
+            {"group": group, "application": application},
+            request=request,
+        )
+        return HttpResponse(html)
+
+    return redirect(request.META.get("HTTP_REFERER", "/"))
+
 
 
 @login_required
@@ -289,6 +308,93 @@ def driver_wallet_view(request, application_id, driver_id):
     except Exception as e:
         print(f"Error in driver_wallet_view: {str(e)}")
         return JsonResponse({'error': 'Внутренняя ошибка сервера'}, status=500)
+
+class PathDeleteView(View):
+    """
+    Удаление этапа через htmx.
+    """
+
+    def post(self, request, pk):
+        path = get_object_or_404(Path, pk=pk)
+        application = path.aplication
+        path.delete()
+
+        # После удаления тоже возвращаем обновлённый список
+        paths = Path.objects.filter(aplication=application).select_related("responsible").order_by("id")
+        html = render_to_string(
+            "moderation/partials/pathr.html",
+            {"paths": paths},
+            request=request,
+        )
+        return HttpResponse(html)
+
+
+class PathSaveView(View):
+    def post(self, request, application_id):
+        application = get_object_or_404(AdvertAplication, id=application_id)
+
+        stage_id = request.POST.get("stage_id")
+        name = request.POST.get("name") or ""
+        description = request.POST.get("description") or ""
+        participant_id = request.POST.get("participant_id")
+        lat_raw = request.POST.get("lat")
+        lng_raw = request.POST.get("lng")
+
+        errors = {}
+
+        if not name:
+            errors["name"] = "Название этапа обязательно"
+
+        if not participant_id:
+            errors["participant_id"] = "Участник обязателен"
+
+        def parse_float(value, field_name):
+            if not value:
+                return None
+            try:
+                return float(value.replace(",", "."))
+            except Exception:
+                errors[field_name] = "Некорректное значение"
+                return None
+
+        latitude = parse_float(lat_raw, "lat")
+        longitude = parse_float(lng_raw, "lng")
+
+        if errors:
+            if request.headers.get("HX-Request") == "true":
+                return HttpResponse(
+                    "; ".join(f"{k}: {v}" for k, v in errors.items()),
+                    status=400,
+                )
+            return JsonResponse({"success": False, "errors": errors}, status=400)
+
+        responsible = get_object_or_404(Profile, pk=participant_id)
+
+        if stage_id:
+            path = get_object_or_404(Path, pk=stage_id, aplication=application)
+        else:
+            path = Path(aplication=application)
+            path.request = application.order_number or str(application.id)
+
+        path.name = name
+        path.description = description
+        path.responsible = responsible
+        if latitude is not None:
+            path.latitude = latitude
+        if longitude is not None:
+            path.longitude = longitude
+
+        path.save()
+
+        # Перерисовываем список этапов
+        paths = Path.objects.filter(aplication=application).select_related("responsible").order_by("id")
+        html = render_to_string(
+            "moderation/partials/pathr.html",
+            {"paths": paths},          # 👈 ВАЖНО: paths, как в шаблоне
+            request=request,
+        )
+
+        return HttpResponse(html)
 
 
 # moderation/views.py
@@ -369,6 +475,8 @@ def expense_masks_json(request):
     return JsonResponse({"results": [m.name for m in masks[:20]]})
 
 
+
+
 class AdvertAplicationDetailView(CustomHtmxMixin, LoginRequiredMixin, DetailView):
     model = AdvertAplication
     template_name = "site/useraccount/advertaplication-detail.html"
@@ -380,11 +488,10 @@ class AdvertAplicationDetailView(CustomHtmxMixin, LoginRequiredMixin, DetailView
         return (
             AdvertAplication.objects.using("default")
             .filter(
-                models.Q(user=user)
-                | models.Q(user_menager=user)
-                | models.Q(user_drivers=user)
+                Q(user=user)
+                | Q(user_menager=user)
+                | Q(user_drivers=user)
             )
-            # поля advert больше нет, select_related("advert") вызывал ошибку
             .prefetch_related("user", "user_menager", "user_drivers")
             .distinct()
         )
@@ -398,29 +505,34 @@ class AdvertAplicationDetailView(CustomHtmxMixin, LoginRequiredMixin, DetailView
         context["application"] = application
         context["advert"] = advert
 
+        # --- Кошельки водителей по заявке ---
+        wallets = (
+            WalletDriver.objects.filter(aplication=application)
+            .select_related("responsible")
+        )
+        wallets_by_driver = {w.responsible_id: w for w in wallets}
+        context["wallets_by_driver"] = wallets_by_driver
+
         # --- Расходы ---
         expenses = application.expenses.all()
         context["expenses"] = expenses
-        total_expenses = sum(expense.amount for expense in expenses) if expenses else 0
+        total_expenses = sum(exp.amount for exp in expenses) if expenses else Decimal("0")
         context["total_expenses"] = total_expenses
 
         # --- Общая стоимость ---
-        # если объявление найдено и у него есть price, берём его,
-        # иначе используем сохранённую цену заявки (если есть)
         if advert and getattr(advert, "price", None) is not None:
             total_price = advert.price
         else:
-            total_price = application.price or 0
+            total_price = application.price or Decimal("0")
 
         context["total_price"] = total_price
         context["total_ost"] = total_price - total_expenses
 
-        # обновляем цену заявки остатком
+        # Обновляем цену заявки остатком
         application.price = context["total_ost"]
         application.save(update_fields=["price"])
 
-        # --- Пользователи заявки ---
-        # собираем всех участников, кроме текущего
+        # --- Пользователи заявки (кроме текущего) ---
         users_list = []
         users_list.extend(application.user.all())
         users_list.extend(application.user_menager.all())
@@ -433,7 +545,7 @@ class AdvertAplicationDetailView(CustomHtmxMixin, LoginRequiredMixin, DetailView
         # "основной" пользователь заявки (первый в списке user)
         main_user = application.user.first()
 
-        # --- Сообщения ---
+        # --- Сообщения по заявке ---
         messages_qs = (
             ChatMessage.objects.filter(applications=application)
             .filter(
@@ -450,25 +562,170 @@ class AdvertAplicationDetailView(CustomHtmxMixin, LoginRequiredMixin, DetailView
         context["documents"] = application.documents.all().order_by("-created_at")
         context["expense_masks"] = ExpenseMask.objects.all()
 
-        # --- Списки менеджеров и водителей ---
+        # --- Списки менеджеров и водителей (для форм) ---
         context["all_managers"] = Profile.objects.filter(type=0, employee=2)
         context["all_drivers"] = Profile.objects.filter(type=0, employee=1)
 
-        # --- Маршруты ---
-        paths = Path.objects.filter(aplication=application)
+        # --- Маршруты (этапы) ---
+        paths = Path.objects.filter(aplication=application).select_related("responsible")
         context["paths"] = paths
         context["path_responsibilitys"] = PathResponsibility.objects.filter(
             path_choice__in=paths
         )
 
-        # --- Формы ---
-        context["path_form"] = PathForm(application_id=application.id)
-        context["path_responsibilitys_form"] = PathResponsibilityForm(
-            application_id=application.id
+        # 🔹 Этап "Принял" (status = 1)
+        current_path = (
+            paths.filter(status=1)
+            .select_related("responsible")
+            .first()
         )
+        context["current_path"] = current_path
+
+        # 🔹 Текущий водитель и его кошелёк
+        current_driver = None
+        current_driver_wallet = None
+
+        if current_path is not None and current_path.responsible:
+            current_driver = current_path.responsible  # Profile(AbstractUser)
+
+        if current_driver is not None:
+            current_driver_wallet = wallets_by_driver.get(current_driver.id)
+
+        context["current_driver"] = current_driver
+        context["current_driver_wallet"] = current_driver_wallet
+
+        # 🔹 Итоговые координаты для машинки:
+        #   1) пытаемся взять живые координаты из Profile
+        #   2) если их нет, берём координаты этапа (Path)
+        driver_lat = None
+        driver_lng = None
+
+        if current_driver is not None and current_driver.latitude is not None and current_driver.longitude is not None:
+            driver_lat = current_driver.latitude
+            driver_lng = current_driver.longitude
+        elif current_path is not None and current_path.latitude is not None and current_path.longitude is not None:
+            driver_lat = current_path.latitude
+            driver_lng = current_path.longitude
+
+        context["current_driver_lat"] = driver_lat
+        context["current_driver_lng"] = driver_lng
 
         return context
 
+
+
+User = get_user_model()
+
+class WalletDriverView(View):
+    def get(self, request, application_id, driver_id):
+        application = get_object_or_404(AdvertAplication, id=application_id)
+        driver = get_object_or_404(User, id=driver_id)
+
+        wallet, _ = WalletDriver.objects.get_or_create(
+            aplication=application,
+            responsible=driver,
+            defaults={"balance": 0, "spent": 0},
+        )
+
+        modal_html = render_to_string(
+            "moderation/partials/wallet_driver_modal.html",
+            {
+                "application": application,
+                "driver": driver,
+                "wallet": wallet,
+            },
+            request=request,
+        )
+        return HttpResponse(modal_html)
+
+    def post(self, request, application_id, driver_id):
+        application = get_object_or_404(AdvertAplication, id=application_id)
+        driver = get_object_or_404(User, id=driver_id)
+
+        wallet, _ = WalletDriver.objects.get_or_create(
+            aplication=application,
+            responsible=driver,
+            defaults={"balance": 0, "spent": 0},
+        )
+
+        balance_raw = request.POST.get("balance")
+        spent_raw = request.POST.get("spent")
+
+        def parse_decimal(raw, default="0"):
+            if raw in (None, ""):
+                raw = default
+            return Decimal(str(raw).replace(",", "."))
+
+        wallet.balance = parse_decimal(balance_raw)
+        wallet.spent = parse_decimal(spent_raw)
+        wallet.save()
+
+        # 1) снова рендерим модалку (чтобы там были актуальные значения)
+        modal_html = render_to_string(
+            "moderation/partials/wallet_driver_modal.html",
+            {
+                "application": application,
+                "driver": driver,
+                "wallet": wallet,
+            },
+            request=request,
+        )
+
+        # 2) обновляем блок со всеми водителями
+        wallets = WalletDriver.objects.filter(
+            aplication=application
+        ).select_related("responsible")
+        wallets_by_driver = {w.responsible_id: w for w in wallets}
+
+        drivers_html = render_to_string(
+            "moderation/partials/driver_wallets_block.html",
+            {
+                "application": application,
+                "wallets_by_driver": wallets_by_driver,
+            },
+            request=request,
+        )
+
+        full_html = (
+            modal_html +
+            f'<div id="driver-wallets-block" hx-swap-oob="innerHTML">{drivers_html}</div>'
+        )
+
+        return HttpResponse(full_html)
+
+
+
+class PathChangeStatusView(View):
+    """
+    Смена статуса этапа (Path) через htmx.
+    """
+
+    def post(self, request, pk):
+        path = get_object_or_404(Path, pk=pk)
+        application = path.aplication  # поле aplication в модели Path
+
+        new_status = request.POST.get("status")
+
+        # Допустимые статусы из choices
+        allowed_values = {str(choice[0]) for choice in Path.STATUS_CHOICES}
+
+        if new_status not in allowed_values:
+            if request.headers.get("HX-Request") == "true":
+                return HttpResponse("Некорректный статус", status=400)
+            return JsonResponse({"success": False, "error": "Некорректный статус"}, status=400)
+
+        path.status = int(new_status)
+        path.save()
+
+        # Перерисовываем список этапов для этой заявки
+        paths = Path.objects.filter(aplication=application).select_related("responsible").order_by("id")
+
+        html = render_to_string(
+            "moderation/partials/pathr.html",
+            {"paths": paths},
+            request=request,
+        )
+        return HttpResponse(html)
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -621,76 +878,110 @@ def save_document(request, pk):
     document.save()
     return JsonResponse({'status': 'success'})
 
-
 class UpdateApplicationView(View):
-    """
-    Обработчик для обновления заявки по UUID с использованием класса.
-    """
-
     def post(self, request, application_id):
-        try:
-            # Загружаем данные из запроса
-            data = json.loads(request.body)
-            print(f"Полученные данные для обновления заявки: {data}")
+        application = get_object_or_404(AdvertAplication, id=application_id)
 
-            # Находим заявку по ID
-            application = get_object_or_404(AdvertAplication, id=application_id)
-            print(f"Заявка найдена: {application.id}, {application.status}")
+        status = request.POST.get("status")
+        managers_ids = request.POST.getlist("user_menager")
+        drivers_ids = request.POST.getlist("user_drivers")
 
-            # Обновляем статус заявки, если передан в данных
-            if 'status' in data and data['status'] != application.status:
-                print(f"Обновление статуса: {application.status} -> {data['status']}")
-                application.status = data['status']
+        delevery_price_raw = request.POST.get("delevery_price")
+        balance_raw = request.POST.get("balance")
+        current_balance_raw = request.POST.get("current_balance")
+        expenses_total_raw = request.POST.get("expenses_total")
 
-            # Обработка поля ManyToMany для менеджеров
-            if 'user_menager' in data:
-                if data['user_menager']:
-                    menager_ids = data['user_menager']
-                    menagers = Profile.objects.filter(id__in=menager_ids)
-                    print(f"Менеджеры для обновления: {menagers}")
-                    application.user_menager.set(menagers)
-                else:
-                    # Если пустой список - очищаем
-                    application.user_menager.clear()
+        errors = {}
 
-            # Обработка поля ManyToMany для водителей
-            if 'user_drivers' in data:
-                if data['user_drivers']:
-                    driver_ids = data['user_drivers']
-                    drivers = Profile.objects.filter(id__in=driver_ids)
-                    print(f"Водители для обновления: {drivers}")
-                    application.user_drivers.set(drivers)
-                else:
-                    # Если пустой список - очищаем
-                    application.user_drivers.clear()
+        def parse_decimal(raw_value, field_name, allow_empty=True):
+            if (raw_value is None or raw_value == "") and allow_empty:
+                return None
+            try:
+                value = Decimal(str(raw_value).replace(",", "."))
+                if value < 0:
+                    errors[field_name] = "Значение не может быть отрицательным."
+                    return None
+                return value
+            except Exception:
+                errors[field_name] = "Некорректное значение."
+                return None
 
-            # Обновление стоимости доставки
-            if 'delevery_price' in data and data['delevery_price']:
-                try:
-                    delevery_price = int(data['delevery_price'])
-                    if delevery_price != application.delevery_price:
-                        print(f"Обновление стоимости доставки: {application.delevery_price} -> {delevery_price}")
-                        application.delevery_price = delevery_price
-                except ValueError:
-                    print(f"Ошибка при преобразовании стоимости доставки: {data['delevery_price']}")
+        delevery_price = parse_decimal(delevery_price_raw, "delevery_price")
+        balance = parse_decimal(balance_raw, "balance")
+        current_balance = parse_decimal(current_balance_raw, "current_balance")
+        expenses_total = parse_decimal(expenses_total_raw, "expenses_total")
 
-            # Сохраняем изменения
-            application.save()
-            print(f"Заявка сохранена: {application.id}")
+        if errors:
+            if request.headers.get("HX-Request") == "true":
+                return HttpResponse(
+                    "; ".join(f"{k}: {v}" for k, v in errors.items()),
+                    status=400,
+                )
+            return JsonResponse({"success": False, "errors": errors}, status=400)
 
-            # Возвращаем JSON ответ как ожидает фронтенд
-            return JsonResponse({
-                'success': True,
-                'message': 'Заявка успешно обновлена',
-                'application_id': str(application.id)
-            })
+        # статус
+        if status and status != application.status:
+            application.status = status
 
-        except AdvertAplication.DoesNotExist:
-            print("Заявка не найдена")
-            return JsonResponse({'success': False, 'error': 'Заявка не найдена'}, status=404)
-        except Exception as e:
-            print(f"Ошибка при обновлении заявки: {e}")
-            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+        # менеджеры
+        if managers_ids:
+            menagers = Profile.objects.filter(id__in=managers_ids)
+            application.user_menager.set(menagers)
+        else:
+            application.user_menager.clear()
+
+        # водители
+        if drivers_ids:
+            drivers = Profile.objects.filter(id__in=drivers_ids)
+            application.user_drivers.set(drivers)
+        else:
+            application.user_drivers.clear()
+
+        # деньги
+        if delevery_price is not None:
+            application.delevery_price = delevery_price
+        if balance is not None:
+            application.balance = balance
+        if current_balance is not None:
+            application.current_balance = current_balance
+        if expenses_total is not None:
+            application.expenses_total = expenses_total
+
+        application.save()
+
+        # 🔹 htmx: за один ответ обновляем ДВА места
+        if request.headers.get("HX-Request") == "true":
+            finance_html = render_to_string(
+                "moderation/partials/application_sidebar.html",
+                {"application": application},
+                request=request,
+            )
+            set_balance_html = render_to_string(
+                "moderation/partials/set-balanse.html",
+                {"application": application},
+                request=request,
+            )
+
+            full_html = (
+                # 1) основной таргет: заменит #application-finance
+                f'<div id="application-finance">{finance_html}</div>'
+                # 2) второй блок: заменит #set-balanse через oob
+                f'<div id="set-balanse" class="d-flex justify-content-between" hx-swap-oob="outerHTML">'
+                f'{set_balance_html}</div>'
+            )
+
+            return HttpResponse(full_html)
+
+        # обычный POST (не htmx)
+        return JsonResponse({
+            "success": True,
+            "message": "Заявка успешно обновлена",
+            "application_id": str(application.id),
+        })
+
+
+
+
 
 # Create your views here.
 
@@ -1325,47 +1616,42 @@ def call_page_iframe(request, application_id,calle_id):
         'other_user': other_user,
     })
 
-
 @method_decorator(login_required, name='dispatch')
 class CreateExpenseView(View):
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         try:
-            # Парсим JSON данные
-            data = json.loads(request.body)
+            application_id = request.POST.get("application")
+            title = request.POST.get("title")
+            amount = request.POST.get("amount")
+            date = datetime.now().date()
 
-            # Получаем данные из запроса
-            application_id = data.get('application')
-            title = data.get('title')
-            amount = data.get('amount')
-            date = datetime.now()
+            if not application_id or not title or not amount:
+                return HttpResponseBadRequest("Не все данные переданы")
 
-            # Проверяем права доступа
             application = AdvertAplication.objects.get(id=application_id)
-            if request.user not in application.user_menager.all() and request.user.employee != 4:
+            if request.user not in application.user_menager.all() and getattr(request.user, "employee", None) != 4:
                 raise PermissionDenied("У вас нет прав на добавление расходов")
 
-            # Создаем новый расход
+            # Создаём расход
             expense = AdvertExpense.objects.create(
                 aplication=application,
                 title=title,
                 amount=amount,
-                date=date
+                date=date,
+                user=request.user
             )
 
+            # Рендерим HTML для вставки через htmx
+            html = render_to_string("moderation/partials/_expense_item.html", {"expense": expense})
 
-
-            return JsonResponse({
-                'success': True,
-                'message': 'Расход успешно добавлен',
-                'expense_id': expense.id
-            }, status=201)
-
+            return HttpResponse(html)  # <-- возвращаем чистый HTML
 
         except PermissionDenied as e:
-            return JsonResponse({
-                'success': False,
-                'message': str(e)
-            }, status=403)
+            return HttpResponseForbidden(str(e))
+        except Exception as e:
+            return HttpResponseBadRequest(str(e))
+
+
 
 @login_required
 def check_active_call(request):

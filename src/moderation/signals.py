@@ -1,15 +1,20 @@
 import json
 import os
+from decimal import Decimal, InvalidOperation  # <-- стандартный Decimal
 from urllib.parse import urlparse
 from django.db.models.signals import m2m_changed
 
 import requests
 from django.core.files.base import ContentFile
-from django.db.models.signals import post_save, pre_save
+from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
-from .models import AdvertDocument, AdvertAplication, AdvertApplicationImage, Advert
+from django.forms.models import model_to_dict
+
+from .models import AdvertDocument, AdvertAplication, AdvertApplicationImage, Advert, WalletDriver, AdvertExpense, AdvertApplicationLog
 from webmain.models import SettingsGlobale
 import logging
+
+
 
 # Логирование
 logger = logging.getLogger(__name__)
@@ -66,6 +71,60 @@ logger = logging.getLogger(__name__)
 #         for driver_id in removed_driver_ids:
 #             if driver_id not in current_managers:
 #                 instance.user.remove(driver_id)
+
+
+def safe_decimal(value):
+    try:
+        return Decimal(str(value))
+    except (InvalidOperation, TypeError, ValueError):
+        return Decimal("0")
+
+@receiver(post_save, sender=AdvertExpense)
+def update_application_and_wallet(sender, instance, created, **kwargs):
+    if not created:
+        return
+
+    expense = instance
+    application = expense.aplication
+
+    amount = safe_decimal(expense.amount)
+    current_balance = safe_decimal(application.current_balance)
+    expenses_total = safe_decimal(application.expenses_total)
+
+    # Обновляем заявку
+    application.expenses_total = expenses_total + amount
+    application.current_balance = current_balance - amount
+    application.save(update_fields=["expenses_total", "current_balance"])
+
+    # Если пользователь — водитель заявки, обновляем кошелёк
+    if expense.user and expense.user in application.user_drivers.all():
+        wallet, _ = WalletDriver.objects.get_or_create(
+            aplication=application,
+            responsible=expense.user,
+            defaults={
+                "balance": Decimal("0"),
+                "spent": Decimal("0"),
+                "remainder": Decimal("0")
+            }
+        )
+
+        wallet.spent = safe_decimal(wallet.spent) + amount
+        wallet.remainder = safe_decimal(wallet.remainder) - amount
+        wallet.save(update_fields=["spent", "remainder"])
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # В сигнале

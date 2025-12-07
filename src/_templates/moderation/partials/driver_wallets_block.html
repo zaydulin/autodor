@@ -1,0 +1,65 @@
+{# moderation/partials/driver_wallets_block.html #}
+{% load user_tags %}
+
+{% for men in application.user_drivers.all %}
+    {% with wallet=wallets_by_driver|dict_get:men.id %}
+    <div class="d-flex justify-content-between align-items-start mt-1">
+        <!-- Левая часть: аватар + текст + таблица -->
+        <div class="flex-grow-1">
+            <div class="d-flex align-items-center">
+                <div class="avatar-circle me-2">
+                    {{ men.first_name|slice:":1" }}
+                </div>
+                <div>
+                    <div>{{ men.first_name }} {{ men.last_name }}</div>
+                    <div class="text-muted small">{{ men.email }}</div>
+                </div>
+            </div>
+
+            <!-- Таблица баланса водителя -->
+            <div class="mt-2">
+                <table class="table table-sm mb-0 driver-finance-table">
+                    <tbody>
+                    <tr>
+                        <td>
+                            <div class="text-muted small">Баланс</div>
+                            <div class="fw-semibold">
+                                {{ wallet.balance|default:"0.00" }} $
+                            </div>
+                        </td>
+                        <td>
+                            <div class="text-muted small">Израсходовано</div>
+                            <div class="fw-semibold text-danger">
+                                {{ wallet.spent|default:"0.00" }} $
+                            </div>
+                        </td>
+                        <td>
+                            <div class="text-muted small">Остаток</div>
+                            <div class="fw-semibold text-success">
+                                {{ wallet.remainder|default:"0.00" }} $
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Правая часть: кошелёк -->
+        <button class="btn btn-light btn-sm border rounded-3 ms-2 driver-wallet-btn"
+                type="button"
+                data-driver-id="{{ men.id }}"
+                data-driver-name="{{ men.first_name }} {{ men.last_name }}"
+                data-bs-toggle="modal"
+                data-bs-target="#walletModal"
+                hx-get="{% url 'moderation:wallet_driver' application.id men.id %}"
+                hx-target="#walletModalContent"
+                hx-swap="innerHTML"
+                title="Кошелёк водителя">
+            <i class="bi bi-wallet2"></i>
+        </button>
+    </div>
+    {% endwith %}
+{% empty %}
+    <div class="text-muted small">Водителей нет.</div>
+{% endfor %}
