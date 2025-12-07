@@ -1,12 +1,6 @@
-{% extends 'site/useraccount/base.html' %}
 {% load static user_tags i18n %}
-{% block title %}{{ seo_title }}{% endblock title %}
-{% block description %}{{ seo_description }}{% endblock description %}
-{% block propertytitle %}{% if seo_previev %}{{ seo_previev.url }} {% endif %} {% endblock propertytitle %}
-{% block propertydescription %}{{ seo_propertytitle }}{% endblock propertydescription %}
-{% block propertyimage %}{{ seo_propertydescription }}{% endblock propertyimage %}
 
-{% block head %}
+{% block content %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
@@ -381,9 +375,6 @@
         to { opacity: 1; }
     }
 </style>
-{% endblock head %}
-
-{% block content %}
 <div class="main-container">
     <!-- Заголовок страницы -->
     <div class="page-header fade-in">
