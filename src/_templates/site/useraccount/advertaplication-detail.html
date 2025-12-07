@@ -554,15 +554,15 @@ document.addEventListener("DOMContentLoaded", function () {
             <div class="driver-popup-body small">
                 <div class="driver-popup-row">
                     <span class="driver-label">Имя:</span>
-                    <span class="driver-value">${driverName}</span>
+                    <span class="driver-value">€{driverName}</span>
                 </div>
                 <div class="driver-popup-row">
                     <span class="driver-label">Email:</span>
-                    <span class="driver-value">${driverEmail}</span>
+                    <span class="driver-value">€{driverEmail}</span>
                 </div>
                 <div class="driver-popup-row">
                     <span class="driver-label">Статус этапа:</span>
-                    <span class="driver-value text-primary">${driverStatusText}</span>
+                    <span class="driver-value text-primary">€{driverStatusText}</span>
                 </div>
 
             </div>
@@ -721,7 +721,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div class="d-flex justify-content-between align-items-start mb-2">
                     <div>
                         <h4 class="mb-1">{{ advert.name }}</h4>
-                        <div class="text-primary fw-semibold">Стоимость {{ advert.price }} {{ advert.currency }}</div>
+                        <div class="text-primary fw-semibold">Стоимость {{ advert.price }} € </div>
                     </div>
                 </div>
 
@@ -1738,7 +1738,7 @@ document.getElementById('add-expense-form').addEventListener('submit', function(
         const userName      = document.getElementById('user-name').value;
 
         const protocol  = location.protocol === 'https:' ? 'wss' : 'ws';
-        const chatSocket = new WebSocket(`${protocol}://${location.host}/ws/chat/${applicationId}/`);
+        const chatSocket = new WebSocket(`€{protocol}://€{location.host}/ws/chat/€{applicationId}/`);
 
         chatSocket.onopen = () => console.log("WebSocket соединение установлено");
 
@@ -1784,16 +1784,16 @@ document.getElementById('add-expense-form').addEventListener('submit', function(
         function displayMessage(m) {
             const isOwn = String(userId) === String(m.author_id);
             const div = document.createElement("div");
-            div.className = `d-flex mb-2 ${isOwn ? "justify-content-end" : ""}`;
+            div.className = `d-flex mb-2 €{isOwn ? "justify-content-end" : ""}`;
             div.dataset.messageId = m.message_id;
 
             const bubble = document.createElement("div");
             bubble.className = isOwn ? "bg-light p-2 rounded" : "bg-primary text-white p-2 rounded";
             bubble.style.maxWidth = "75%";
             bubble.innerHTML = `
-                <div class="fw-bold small">${escapeHtml(m.author || "")}</div>
-                <div>${escapeHtml(m.content || "")}</div>
-                <div class="small chat_date text-end text-muted">${m.date || ""}</div>
+                <div class="fw-bold small">€{escapeHtml(m.author || "")}</div>
+                <div>€{escapeHtml(m.content || "")}</div>
+                <div class="small chat_date text-end text-muted">€{m.date || ""}</div>
             `;
 
             div.appendChild(bubble);
@@ -1874,14 +1874,14 @@ document.getElementById('add-expense-form').addEventListener('submit', function(
 
       if (address && iframe) {
         // Используем API Nominatim для геокодирования
-        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`)
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=€{encodeURIComponent(address)}&limit=1`)
           .then(response => response.json())
           .then(data => {
             if (data && data.length > 0) {
               const lat = data[0].lat;
               const lon = data[0].lon;
               // Обновляем src iframe с новыми координатами
-              iframe.src = `https://www.openstreetmap.org/export/embed.html?bbox=${lon},${lat},${lon},${lat}&layer=mapnik&marker=${lat},${lon}`;
+              iframe.src = `https://www.openstreetmap.org/export/embed.html?bbox=€{lon},€{lat},€{lon},€{lat}&layer=mapnik&marker=€{lat},€{lon}`;
 
               // Также можно обновить подпись
               document.querySelector('.card-body .small.text-muted').innerText = address;
@@ -1917,7 +1917,7 @@ document.getElementById('add-expense-form').addEventListener('submit', function(
 
             try {
                 // Отправляем GET-запрос для генерации контракта
-                const res = await fetch(`/generate_contract/${currentApplicationId}`, {
+                const res = await fetch(`/generate_contract/€{currentApplicationId}`, {
                     method: 'GET',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'
@@ -1926,7 +1926,7 @@ document.getElementById('add-expense-form').addEventListener('submit', function(
 
                 // Проверка успешности запроса
                 if (!res.ok) {
-                    throw new Error(`Ошибка загрузки контракта: ${res.status} ${res.statusText}`);
+                    throw new Error(`Ошибка загрузки контракта: €{res.status} €{res.statusText}`);
                 }
 
                 // Получаем данные в формате blob
@@ -1938,7 +1938,7 @@ document.getElementById('add-expense-form').addEventListener('submit', function(
                 // Создаем элемент для скачивания
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `contract_${appId}.docx`;
+                a.download = `contract_€{appId}.docx`;
 
                 // Добавляем элемент в DOM
                 document.body.appendChild(a);
@@ -2063,7 +2063,7 @@ function addNewPhase() {
        <div class="col-md-4 mb-4">
            <div class="phase-card">
                <div class="edit-panel">
-                   <div class="edit-btn" data-bs-toggle="modal" data-bs-target="#editPhaseModal" data-phase="${phaseCounter}">
+                   <div class="edit-btn" data-bs-toggle="modal" data-bs-target="#editPhaseModal" data-phase="€{phaseCounter}">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil" viewBox="0 0 16 16">
                       <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325"/>
                     </svg>
@@ -2076,12 +2076,12 @@ function addNewPhase() {
                    </div>
                </div>
 
-               <h5 class="phase-title"><strong>${title}</strong></h5>
-               <p>${description || 'Описание этапа'}</p>
+               <h5 class="phase-title"><strong>€{title}</strong></h5>
+               <p>€{description || 'Описание этапа'}</p>
 
                <div class="users-container">
                    <h6><i class="fas fa-users me-2"></i>Участники в данном пути</h6>
-                   <div id="users-${phaseCounter}">
+                   <div id="users-€{phaseCounter}">
                        <!-- Участники будут добавлены здесь -->
                    </div>
                </div>
@@ -2099,8 +2099,8 @@ function addNewPhase() {
    const newStepHTML = `
        <div class="col-md-4 mb-4">
            <div class="step-card">
-               <h5 class="step-title"><strong>${stepTitle}</strong></h5>
-               <p>${stepDescription || 'Описание пути'}</p>
+               <h5 class="step-title"><strong>€{stepTitle}</strong></h5>
+               <p>€{stepDescription || 'Описание пути'}</p>
                <div class="text-primary step-icon">
                    <i class="bi bi-geo-alt-fill"></i>
                </div>
@@ -2114,7 +2114,7 @@ function addNewPhase() {
    // Добавляем участников, если они есть
    const usersList = document.getElementById('usersList').querySelectorAll('.user-item');
    if (usersList.length > 0) {
-       const usersContainer = document.getElementById(`users-${phaseCounter}`);
+       const usersContainer = document.getElementById(`users-€{phaseCounter}`);
        usersList.forEach(user => {
            usersContainer.innerHTML += user.outerHTML;
        });
@@ -2187,7 +2187,7 @@ function addNewPhase() {
                 if (result.errors) {
                     let errorMessage = 'Ошибки при сохранении:\n';
                     for (const field in result.errors) {
-                        errorMessage += `${field}: ${result.errors[field].join(', ')}\n`;
+                        errorMessage += `€{field}: €{result.errors[field].join(', ')}\n`;
                     }
                     alert(errorMessage);
                 } else {
@@ -2230,20 +2230,20 @@ function addNewPhase() {
                 newCard.className = 'col-md-4 mb-4';
                 newCard.innerHTML = `
                     <div class="phase-card">
-                        <h5 class="phase-title"><strong>Этап ${phasesRow.children.length + 1}</strong></h5>
-                        <p>${r.additional}</p>
+                        <h5 class="phase-title"><strong>Этап €{phasesRow.children.length + 1}</strong></h5>
+                        <p>€{r.additional}</p>
                         <div class="users-container">
                             <h6><i class="fas fa-users me-2"></i>Участники этапа</h6>
                             <div class="user">
                                 <div class="avatar-placeholder bg-primary text-white">
-                                    ${r.responsible.name[0]}
+                                    €{r.responsible.name[0]}
                                 </div>
                                 <div class="user-info">
-                                    <div class="user-name">${r.responsible.name}</div>
+                                    <div class="user-name">€{r.responsible.name}</div>
                                     <div class="user-role">назначен автоматически</div>
                                 </div>
                             </div>
-                            <p>статус – ${r.status}</p>
+                            <p>статус – €{r.status}</p>
                         </div>
                     </div>`;
 
@@ -2344,7 +2344,7 @@ function addNewPhase() {
         };
 
         try {
-            const response = await fetch(`/update-path/${pathId}/`, {
+            const response = await fetch(`/update-path/€{pathId}/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -2452,9 +2452,9 @@ function addNewPhase() {
               const url = URL.createObjectURL(file);
 
               col.innerHTML = `
-                  ${file.type.startsWith("image")
-                      ? `<img src="${url}" alt="">`
-                      : `<video src="${url}"></video>`}
+                  €{file.type.startsWith("image")
+                      ? `<img src="€{url}" alt="">`
+                      : `<video src="€{url}"></video>`}
                   <div class="status-label">Загружается…</div>
                   <button class="preview-remove">&times;</button>
               `;
@@ -2534,9 +2534,9 @@ function addNewPhase() {
           const div = document.createElement("div");
           div.className = "carousel-item";
           div.innerHTML = item.is_image
-              ? `<img src="${item.url}" class="d-block w-100 rounded gallery-media">`
+              ? `<img src="€{item.url}" class="d-block w-100 rounded gallery-media">`
               : `<video class="d-block w-100 rounded gallery-media" controls>
-                     <source src="${item.url}">
+                     <source src="€{item.url}">
                  </video>`;
           if(!carouselInner.querySelector(".carousel-item")) div.classList.add("active");
           carouselInner.appendChild(div);
@@ -2559,7 +2559,7 @@ function addNewPhase() {
       // Автопоиск при вводе
       inputTitle.addEventListener("input", async () => {
           const q = inputTitle.value.trim();
-          const res = await fetch(`/ajax/expense-masks/?q=${encodeURIComponent(q)}`);
+          const res = await fetch(`/ajax/expense-masks/?q=€{encodeURIComponent(q)}`);
           const data = await res.json();
 
           // Очищаем селект и наполняем новыми масками
@@ -2631,7 +2631,7 @@ function addNewPhase() {
 
         connectWebSocket() {
             const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-            const wsUrl = `${protocol}://${location.host}/ws/tracking/${this.applicationId}/`;
+            const wsUrl = `€{protocol}://€{location.host}/ws/tracking/€{this.applicationId}/`;
 
             console.log('Connecting to WebSocket:', wsUrl);
 
@@ -2675,7 +2675,7 @@ function addNewPhase() {
                     // Попытка переподключения
                     if (this.reconnectAttempts < this.maxReconnectAttempts) {
                         this.reconnectAttempts++;
-                        console.log(`Attempting reconnect ${this.reconnectAttempts}/${this.maxReconnectAttempts}`);
+                        console.log(`Attempting reconnect €{this.reconnectAttempts}/€{this.maxReconnectAttempts}`);
                         setTimeout(() => this.connectWebSocket(), 3000);
                     } else {
                         console.log('Соединение с сервером отслеживания потеряно', 'error');
@@ -2788,10 +2788,10 @@ function addNewPhase() {
             this.trackingMap.setView([latitude, longitude], 13);
 
             // Обновляем всплывающую подсказку
-            let popupContent = `<strong>${driver_name}</strong><br>`;
-            popupContent += `Обновлено: ${new Date(timestamp).toLocaleTimeString()}`;
+            let popupContent = `<strong>€{driver_name}</strong><br>`;
+            popupContent += `Обновлено: €{new Date(timestamp).toLocaleTimeString()}`;
             if (speed && speed > 0) {
-                popupContent += `<br>Скорость: ${Math.round(speed)} км/ч`;
+                popupContent += `<br>Скорость: €{Math.round(speed)} км/ч`;
             }
 
             this.driverMarker.bindPopup(popupContent).openPopup();
@@ -2805,13 +2805,13 @@ function addNewPhase() {
             if (driverInfoEl) {
                 driverInfoEl.innerHTML = `
                     <div class="driver-status">
-                        <h6>🚗 ${locationData.driver_name}</h6>
+                        <h6>🚗 €{locationData.driver_name}</h6>
                         <div class="small text-muted">
-                            Обновлено: ${new Date(locationData.timestamp).toLocaleString()}
-                            ${locationData.speed && locationData.speed > 0 ?
-                              `• Скорость: ${Math.round(locationData.speed)} км/ч` : ''}
-                            ${locationData.accuracy ?
-                              `• Точность: ${Math.round(locationData.accuracy)}м` : ''}
+                            Обновлено: €{new Date(locationData.timestamp).toLocaleString()}
+                            €{locationData.speed && locationData.speed > 0 ?
+                              `• Скорость: €{Math.round(locationData.speed)} км/ч` : ''}
+                            €{locationData.accuracy ?
+                              `• Точность: €{Math.round(locationData.accuracy)}м` : ''}
                         </div>
                     </div>
                 `;
@@ -2841,7 +2841,7 @@ function addNewPhase() {
 
                 const config = statusConfig[status] || statusConfig.disconnected;
                 statusEl.textContent = config.text;
-                statusEl.className = `badge ${config.class}`;
+                statusEl.className = `badge €{config.class}`;
             }
         }
 
@@ -2858,7 +2858,7 @@ function addNewPhase() {
         showNotification(message, type = 'info') {
             // Создаем уведомление
             const notification = document.createElement('div');
-            notification.className = `alert alert-${type === 'error' ? 'danger' : 'info'} alert-dismissible fade show`;
+            notification.className = `alert alert-€{type === 'error' ? 'danger' : 'info'} alert-dismissible fade show`;
             notification.style.cssText = `
                 position: fixed;
                 top: 20px;
@@ -2867,8 +2867,8 @@ function addNewPhase() {
                 min-width: 300px;
             `;
             notification.innerHTML = `
-                <strong>${type === 'error' ? '⚠️ Ошибка' : 'ℹ️ Информация'}</strong>
-                <div>${message}</div>
+                <strong>€{type === 'error' ? '⚠️ Ошибка' : 'ℹ️ Информация'}</strong>
+                <div>€{message}</div>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             `;
 
@@ -3023,9 +3023,9 @@ function addNewPhase() {
           const url = URL.createObjectURL(file);
 
           col.innerHTML = `
-            ${file.type.startsWith("image")
-              ? `<img src="${url}" class="img-fluid rounded">`
-              : `<video src="${url}" class="img-fluid rounded"></video>`}
+            €{file.type.startsWith("image")
+              ? `<img src="€{url}" class="img-fluid rounded">`
+              : `<video src="€{url}" class="img-fluid rounded"></video>`}
             <div class="status-label">⏳ Ожидание</div>
           `;
           preview.appendChild(col);
@@ -3069,7 +3069,7 @@ function addNewPhase() {
 
             // обновляем галерею
             const item = json.item;
-           const inner = document.getElementById(`carousel-inner-${item.group_id}`);
+           const inner = document.getElementById(`carousel-inner-€{item.group_id}`);
 
             // убираем active только у текущего активного
             const activeNow = inner.querySelector(".carousel-item.active");
@@ -3079,8 +3079,8 @@ function addNewPhase() {
             const div = document.createElement("div");
             div.className = "carousel-item active";
             div.innerHTML = item.is_image
-              ? `<img src="${item.url}" class="d-block w-100 gallery-media">`
-              : `<video class="d-block w-100 gallery-media" controls><source src="${item.url}"></video>`;
+              ? `<img src="€{item.url}" class="d-block w-100 gallery-media">`
+              : `<video class="d-block w-100 gallery-media" controls><source src="€{item.url}"></video>`;
             inner.appendChild(div);
 
 
@@ -3124,10 +3124,10 @@ function addNewPhase() {
               col.className = "col-4 mb-2";
 
               if (f.type.startsWith("image")) {
-                col.innerHTML = `<img src="${url}" class="img-fluid rounded border">`;
+                col.innerHTML = `<img src="€{url}" class="img-fluid rounded border">`;
               } else {
                 col.innerHTML = `
-                  <video src="${url}" class="w-100 rounded border" controls muted></video>
+                  <video src="€{url}" class="w-100 rounded border" controls muted></video>
                 `;
               }
               preview.appendChild(col);
@@ -3172,14 +3172,14 @@ function addNewPhase() {
       }
 
       function htmlError(msg = 'Ошибка') {
-        return `<p class="text-danger">${msg}</p>`;
+        return `<p class="text-danger">€{msg}</p>`;
       }
 
       function updateResponsibilityUI(r) {
-        let el = document.querySelector(`#responsibility-${r.id}`);
+        let el = document.querySelector(`#responsibility-€{r.id}`);
         if (!el) {
           el = document.createElement("div");
-          el.id = `responsibility-${r.id}`;
+          el.id = `responsibility-€{r.id}`;
           const container = document.querySelector("#phasesRow");
           if (!container) return;
           container.appendChild(el);
@@ -3187,10 +3187,10 @@ function addNewPhase() {
         el.innerHTML = `
           <div class="phase-card">
             <h5>Этап</h5>
-            <p>${r.additional ?? ''}</p>
-            <p>Статус: ${r.status ?? ''}</p>
-            <p>Ответственный: ${r.responsible ?? ''}</p>
-            <button class="btn btn-sm btn-outline-primary" onclick="openResponsibilityModal(${r.id})">
+            <p>€{r.additional ?? ''}</p>
+            <p>Статус: €{r.status ?? ''}</p>
+            <p>Ответственный: €{r.responsible ?? ''}</p>
+            <button class="btn btn-sm btn-outline-primary" onclick="openResponsibilityModal(€{r.id})">
               Редактировать
             </button>
           </div>
@@ -3224,7 +3224,7 @@ function addNewPhase() {
               e.preventDefault();
               const formData = new FormData(this.formOuter);
               const id = formData.get('id');
-              const url = id ? `/responsibility/${id}/form/` : `/responsibility/form/`;
+              const url = id ? `/responsibility/€{id}/form/` : `/responsibility/form/`;
 
               const res = await fetch(url, { method: 'POST', body: formData });
 
@@ -3261,7 +3261,7 @@ function addNewPhase() {
         async open(id = null) {
           this.currentEditingId = id;
 
-          const url = id ? `/responsibility/${id}/form/` : `/responsibility/form/`;
+          const url = id ? `/responsibility/€{id}/form/` : `/responsibility/form/`;
           const res = await fetch(url);
           const json = await res.json();
 
@@ -3298,7 +3298,7 @@ function addNewPhase() {
 
           const formData = new FormData(innerForm);
           const id = this.currentEditingId || formData.get('id');
-          const url = id ? `/responsibility/${id}/form/` : `/responsibility/form/`;
+          const url = id ? `/responsibility/€{id}/form/` : `/responsibility/form/`;
 
           try {
             const res = await fetch(url, {
@@ -3406,7 +3406,7 @@ function addNewPhase() {
             this.currentDriverName = driverName;
 
             // Обновляем заголовок
-            document.getElementById('walletModalTitle').textContent = `💰 Кошелек: ${driverName}`;
+            document.getElementById('walletModalTitle').textContent = `💰 Кошелек: €{driverName}`;
             document.getElementById('walletDriverName').textContent = driverName;
 
             // Сбрасываем поле ввода
@@ -3429,17 +3429,17 @@ function addNewPhase() {
             const applicationId = document.getElementById('application-id').value;
 
             try {
-                const response = await fetch(`/application/${applicationId}/driver/${this.currentDriverId}/wallet/`);
+                const response = await fetch(`/application/€{applicationId}/driver/€{this.currentDriverId}/wallet/`);
 
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    throw new Error(`HTTP error! status: €{response.status}`);
                 }
 
                 const data = await response.json();
 
                 if (data.success) {
                     document.getElementById('walletAmountDisplay').innerHTML =
-                        `<span class="fs-4 text-success fw-bold">${data.formatted_amount}</span>`;
+                        `<span class="fs-4 text-success fw-bold">€{data.formatted_amount}</span>`;
 
                     // Устанавливаем текущее значение в поле ввода
                     const amountInput = document.getElementById('walletAmountInput');
@@ -3474,7 +3474,7 @@ function addNewPhase() {
                 formData.append('amount', newAmount);
                 formData.append('csrfmiddlewaretoken', this.getCsrfToken());
 
-                const response = await fetch(`/application/${applicationId}/driver/${this.currentDriverId}/wallet/`, {
+                const response = await fetch(`/application/€{applicationId}/driver/€{this.currentDriverId}/wallet/`, {
                     method: 'POST',
                     body: formData,
                     headers: {
@@ -3487,7 +3487,7 @@ function addNewPhase() {
                 if (data.success) {
                     // Обновляем отображение
                     document.getElementById('walletAmountDisplay').innerHTML =
-                        `<span class="fs-4 text-success fw-bold">${data.formatted_amount}</span>`;
+                        `<span class="fs-4 text-success fw-bold">€{data.formatted_amount}</span>`;
 
                     this.showAlert('Сумма успешно обновлена', 'success');
 
@@ -3523,7 +3523,7 @@ function addNewPhase() {
             existingAlerts.forEach(alert => alert.remove());
 
             const alert = document.createElement('div');
-            alert.className = `alert alert-${type === 'success' ? 'success' : type === 'warning' ? 'warning' : 'danger'} alert-dismissible fade show wallet-alert`;
+            alert.className = `alert alert-€{type === 'success' ? 'success' : type === 'warning' ? 'warning' : 'danger'} alert-dismissible fade show wallet-alert`;
             alert.style.cssText = `
                 position: fixed;
                 top: 20px;
@@ -3532,7 +3532,7 @@ function addNewPhase() {
                 min-width: 300px;
             `;
             alert.innerHTML = `
-                ${type === 'success' ? '✅' : type === 'warning' ? '⚠️' : '❌'} ${message}
+                €{type === 'success' ? '✅' : type === 'warning' ? '⚠️' : '❌'} €{message}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             `;
 
@@ -3696,7 +3696,7 @@ function addNewPhase() {
         }
 
         console.log('Opening wallet modal for driver:', driverId);
-        const modalElement = document.getElementById(`modalWallet${driverId}`);
+        const modalElement = document.getElementById(`modalWallet€{driverId}`);
 
         if (modalElement) {
             // Загружаем текущие данные
@@ -3717,7 +3717,7 @@ function addNewPhase() {
             return;
         }
 
-        const modalElement = document.getElementById(`modalWallet${driverId}`);
+        const modalElement = document.getElementById(`modalWallet€{driverId}`);
         if (modalElement) {
             const modal = bootstrap.Modal.getInstance(modalElement);
             if (modal) {
@@ -3739,7 +3739,7 @@ function addNewPhase() {
             return;
         }
 
-        const amountDisplay = document.getElementById(`amount-display-${driverId}`);
+        const amountDisplay = document.getElementById(`amount-display-€{driverId}`);
         if (!amountDisplay) {
             console.error('Amount display element not found for driver:', driverId);
             return;
@@ -3748,10 +3748,10 @@ function addNewPhase() {
         console.log('Loading wallet data for driver:', driverId, 'application:', applicationId.value);
 
         try {
-            const response = await fetch(`/application/${applicationId.value}/driver/${driverId}/wallet/`);
+            const response = await fetch(`/application/€{applicationId.value}/driver/€{driverId}/wallet/`);
 
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                throw new Error(`HTTP error! status: €{response.status}`);
             }
 
             const data = await response.json();
@@ -3759,10 +3759,10 @@ function addNewPhase() {
 
             if (data.success) {
                 amountDisplay.innerHTML = `
-                    <span class="fs-4 text-success fw-bold">${data.formatted_amount}</span>
+                    <span class="fs-4 text-success fw-bold">€{data.formatted_amount}</span>
                 `;
                 // Устанавливаем текущее значение в поле ввода
-                const amountInput = document.getElementById(`amount-input-${driverId}`);
+                const amountInput = document.getElementById(`amount-input-€{driverId}`);
                 if (amountInput) {
                     amountInput.value = data.current_amount;
                 }
@@ -3790,7 +3790,7 @@ function addNewPhase() {
             return;
         }
 
-        const amountInput = document.getElementById(`amount-input-${driverId}`);
+        const amountInput = document.getElementById(`amount-input-€{driverId}`);
         if (!amountInput) {
             alert('Ошибка: поле ввода суммы не найдено');
             return;
@@ -3814,7 +3814,7 @@ function addNewPhase() {
                 formData.append('csrfmiddlewaretoken', csrfToken);
             }
 
-            const response = await fetch(`/application/${applicationId.value}/driver/${driverId}/wallet/`, {
+            const response = await fetch(`/application/€{applicationId.value}/driver/€{driverId}/wallet/`, {
                 method: 'POST',
                 body: formData,
                 headers: {
@@ -3823,7 +3823,7 @@ function addNewPhase() {
             });
 
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                throw new Error(`HTTP error! status: €{response.status}`);
             }
 
             const data = await response.json();
@@ -3831,9 +3831,9 @@ function addNewPhase() {
 
             if (data.success) {
                 // Обновляем отображение
-                const amountDisplay = document.getElementById(`amount-display-${driverId}`);
+                const amountDisplay = document.getElementById(`amount-display-€{driverId}`);
                 if (amountDisplay) {
-                    amountDisplay.innerHTML = `<span class="fs-4 text-success fw-bold">${data.formatted_amount}</span>`;
+                    amountDisplay.innerHTML = `<span class="fs-4 text-success fw-bold">€{data.formatted_amount}</span>`;
                 }
 
                 // Показываем уведомление
@@ -3867,7 +3867,7 @@ function addNewPhase() {
     function showNotification(message, type = 'info') {
         // Создаем уведомление Bootstrap
         const notification = document.createElement('div');
-        notification.className = `alert alert-${type} alert-dismissible fade show`;
+        notification.className = `alert alert-€{type} alert-dismissible fade show`;
         notification.style.cssText = `
             position: fixed;
             top: 20px;
@@ -3876,8 +3876,8 @@ function addNewPhase() {
             min-width: 300px;
         `;
         notification.innerHTML = `
-            <strong>${type === 'success' ? '✅ Успех' : 'ℹ️ Информация'}</strong>
-            ${message}
+            <strong>€{type === 'success' ? '✅ Успех' : 'ℹ️ Информация'}</strong>
+            €{message}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         `;
 

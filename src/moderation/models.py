@@ -1002,8 +1002,8 @@ class Path(models.Model):
     ]
     status = models.SmallIntegerField(verbose_name="Статус", choices=STATUS_CHOICES, default=0,  editable=False)
     aplication = models.ForeignKey(AdvertAplication,blank=True,null=True, on_delete=models.CASCADE)
-    longitude = models.FloatField(verbose_name='Долгота')
-    latitude = models.FloatField(verbose_name='Широта')
+    longitude = models.FloatField(verbose_name='Долгота', blank=True, null=True)
+    latitude = models.FloatField(verbose_name='Широта', blank=True, null=True)
     name = models.CharField(max_length=100,verbose_name='Название этапа')
     description = models.TextField("Описание", blank=True, null=True)
     request = models.CharField(max_length=255, verbose_name='Заявка')
