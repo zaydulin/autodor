@@ -1737,7 +1737,7 @@ document.getElementById('add-expense-form').addEventListener('submit', function(
         const userName      = document.getElementById('user-name').value;
 
         const protocol  = location.protocol === 'https:' ? 'wss' : 'ws';
-        const chatSocket = new WebSocket(`€{protocol}://€{location.host}/ws/chat/€{applicationId}/`);
+        const chatSocket = new WebSocket(`${protocol}://${location.host}/ws/chat/${applicationId}/`);
 
         chatSocket.onopen = () => console.log("WebSocket соединение установлено");
 
