@@ -1,30 +1,37 @@
 {% load static user_tags i18n %}
 
 {% block content %}
+<link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+<script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const players = Array.from(document.querySelectorAll('.plyr-video')).map(p => new Plyr(p));
+});
+</script>
+
+<!-- FAQ Section -->
 <section class="container my-5">
     <div class="accordion" id="faqAccordion">
         {% for faq in faqs %}
+        <!-- Question {{ forloop.counter }} -->
         <div class="accordion-item">
             <h2 class="accordion-header" id="faqHeading{{ forloop.counter }}">
                 <button
-                    class="accordion-button {% if not forloop.first %}collapsed{% endif %}"
-                    type="button"
-                    data-bs-toggle="collapse"
-                    data-bs-target="#faqCollapse{{ forloop.counter }}"
-                    aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}"
-                    aria-controls="faqCollapse{{ forloop.counter }}">
+                        class="accordion-button {% if not forloop.first %}collapsed{% endif %}"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#faqCollapse{{ forloop.counter }}"
+                        aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}"
+                        aria-controls="faqCollapse{{ forloop.counter }}">
                     {{ faq.question }}
                 </button>
             </h2>
-
             <div
-                id="faqCollapse{{ forloop.counter }}"
-                class="accordion-collapse collapse {% if forloop.first %}show{% endif %}"
-                aria-labelledby="faqHeading{{ forloop.counter }}"
-                data-bs-parent="#faqAccordion">
-
+                    id="faqCollapse{{ forloop.counter }}"
+                    class="accordion-collapse collapse {% if forloop.first %}show{% endif %}"
+                    aria-labelledby="faqHeading{{ forloop.counter }}"
+                    data-bs-parent="#faqAccordion">
                 <div class="accordion-body">
-
                     <!-- Текстовый ответ -->
                     {% if faq.answer %}
                     <div class="mb-3">
@@ -35,40 +42,98 @@
                     <!-- Файл -->
                     {% if faq.file %}
                         {% if faq.is_image %}
-                            <div class="faq-image mt-3 text-center">
-                                <img src="{{ faq.file.url }}"
-                                     alt="{{ faq.question }}"
-                                     class="img-fluid rounded"
-                                     style="max-height: 400px;">
+                            <!-- Изображение -->
+                            <div class="faq-image mt-3">
+                                <img
+                                    src="{{ faq.file.url }}"
+                                    alt="Изображение для вопроса: {{ faq.question }}"
+                                    class="img-fluid rounded"
+                                    style="max-height: 400px;"
+                                >
                                 <p class="text-muted small mt-2">
-                                    <i class="fas fa-image"></i> Изображение ({{ faq.get_file_extension|upper }})
+                                    <i class="fas fa-image"></i> Изображение: {{ faq.get_file_extension|upper }}
                                 </p>
                             </div>
                         {% elif faq.is_video %}
+                            <!-- Видео -->
                             <div class="faq-video mt-3">
-                                <video controls class="w-100 rounded" style="max-height: 400px;">
-                                    <source src="{{ faq.file.url }}" type="video/{{ faq.get_file_extension }}">
-                                    Ваш браузер не поддерживает видео.
-                                </video>
-                                <p class="text-muted small mt-2">
-                                    <i class="fas fa-video"></i> Видео ({{ faq.get_file_extension|upper }})
-                                </p>
+                                <div class="video-wrapper">
+                                    <video
+                                        controls
+                                        preload="metadata"
+                                        class="w-100 rounded"
+                                        style="max-height: 400px; background: #000;"
+                                        poster="{% if faq.video_poster %}{{ faq.video_poster.url }}{% else %}{% static 'img/video-poster.png' %}{% endif %}"
+                                    >
+                                        <!-- Несколько источников для разных форматов -->
+                                       <source src="{{ faq.file.url }}" type="video/mp4">
+
+                                        <!-- Альтернативные форматы, если есть -->
+                                        {% if faq.alternative_formats %}
+                                            {% for format in faq.alternative_formats %}
+                                            <source src="{{ format.file.url }}" type="{{ format.mime_type }}">
+                                            {% endfor %}
+                                        {% endif %}
+                                        Ваш браузер не поддерживает тег video.
+                                        <a href="{{ faq.file.url }}" download>Скачайте видео</a>
+                                    </video>
+                                    <div class="video-controls-overlay d-none">
+                                        <button class="btn btn-play-pause">
+                                            <i class="fas fa-play"></i>
+                                        </button>
+                                        <input type="range" class="video-progress" min="0" max="100" value="0">
+                                        <span class="video-time">0:00 / 0:00</span>
+                                    </div>
+                                </div>
+                                <div class="video-info mt-2">
+                                    <p class="text-muted small mb-1">
+                                        <i class="fas fa-video"></i>
+                                        Видео: {{ faq.get_file_extension|upper }} |
+                                        Размер: {{ faq.file.size|filesizeformat }}
+                                    </p>
+                                    <div class="video-actions">
+                                        <a href="{{ faq.file.url }}"
+                                           class="btn btn-sm btn-outline-secondary"
+                                           target="_blank"
+                                           title="Открыть в новой вкладке">
+                                            <i class="fas fa-external-link-alt"></i>
+                                        </a>
+                                        <a href="{{ faq.file.url }}"
+                                           class="btn btn-sm btn-outline-primary ms-1"
+                                           download
+                                           title="Скачать видео">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                        <button class="btn btn-sm btn-outline-info ms-1 video-fullscreen"
+                                                title="Полный экран">
+                                            <i class="fas fa-expand"></i>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         {% else %}
+                            <!-- Документ или другой файл -->
                             <div class="faq-document mt-3">
                                 <div class="card">
                                     <div class="card-body">
-                                        <h6 class="card-title"><i class="fas fa-file"></i> Прикрепленный файл</h6>
+                                        <h6 class="card-title">
+                                            <i class="fas fa-file"></i> Прикрепленный файл
+                                        </h6>
                                         <p class="card-text small text-muted">
                                             {{ faq.file.name|split:"/"|last }}
                                             ({{ faq.get_file_extension|upper }},
                                              {{ faq.file.size|filesizeformat }})
                                         </p>
-                                        <a href="{{ faq.file.url }}" class="btn btn-outline-primary btn-sm" target="_blank" download>
+                                        <a href="{{ faq.file.url }}"
+                                           class="btn btn-outline-primary btn-sm"
+                                           target="_blank"
+                                           download>
                                             <i class="fas fa-download"></i> Скачать
                                         </a>
                                         {% if faq.is_document %}
-                                        <a href="{{ faq.file.url }}" class="btn btn-outline-info btn-sm ms-2" target="_blank">
+                                        <a href="{{ faq.file.url }}"
+                                           class="btn btn-outline-info btn-sm ms-2"
+                                           target="_blank">
                                             <i class="fas fa-eye"></i> Просмотреть
                                         </a>
                                         {% endif %}
@@ -76,21 +141,191 @@
                                 </div>
                             </div>
                         {% endif %}
-
-                        <!-- Информация о загрузке файла -->
-                        <div class="mt-2 small text-muted">
-                            <i class="fas fa-info-circle"></i> Файл загружен: {{ faq.create|date:"d.m.Y H:i" }}
-                        </div>
                     {% endif %}
-
                 </div>
             </div>
         </div>
         {% empty %}
+        <!-- Если нет вопросов -->
         <div class="alert alert-info">
             <i class="fas fa-info-circle"></i> Часто задаваемые вопросы пока не добавлены.
         </div>
         {% endfor %}
     </div>
 </section>
+
 {% endblock content %}
+
+{% block extra_css %}
+<style>
+    /* Стили для видео-плеера */
+    .video-wrapper {
+        position: relative;
+        overflow: hidden;
+        border-radius: 8px;
+        background: #000;
+    }
+
+    .video-wrapper video {
+        display: block;
+        width: 100%;
+        height: auto;
+    }
+
+    .video-controls-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(transparent, rgba(0,0,0,0.7));
+        padding: 10px;
+        transition: opacity 0.3s;
+    }
+
+    .video-wrapper:hover .video-controls-overlay {
+        opacity: 1;
+    }
+
+    .video-info {
+        background: #f8f9fa;
+        border-radius: 4px;
+        padding: 8px;
+        border-left: 3px solid #007bff;
+    }
+
+    .video-actions {
+        display: flex;
+        gap: 5px;
+        margin-top: 5px;
+    }
+
+    /* Для мобильных устройств */
+    @media (max-width: 768px) {
+        .video-wrapper video {
+            max-height: 250px !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Инициализация всех видео-плееров
+    const videoWrappers = document.querySelectorAll('.video-wrapper');
+
+    videoWrappers.forEach(wrapper => {
+        const video = wrapper.querySelector('video');
+        const playPauseBtn = wrapper.querySelector('.btn-play-pause');
+        const progressBar = wrapper.querySelector('.video-progress');
+        const timeDisplay = wrapper.querySelector('.video-time');
+        const fullscreenBtn = wrapper.querySelector('.video-fullscreen');
+
+        if (video) {
+            // Обновление времени
+            video.addEventListener('timeupdate', function() {
+                if (progressBar && timeDisplay) {
+                    const currentTime = video.currentTime;
+                    const duration = video.duration;
+
+                    // Обновление прогресс-бара
+                    progressBar.value = (currentTime / duration) * 100;
+
+                    // Форматирование времени
+                    const formatTime = (seconds) => {
+                        const mins = Math.floor(seconds / 60);
+                        const secs = Math.floor(seconds % 60);
+                        return `${mins}:${secs.toString().padStart(2, '0')}`;
+                    };
+
+                    timeDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(duration)}`;
+                }
+            });
+
+            // Управление воспроизведением
+            if (playPauseBtn) {
+                playPauseBtn.addEventListener('click', function() {
+                    if (video.paused) {
+                        video.play();
+                        this.innerHTML = '<i class="fas fa-pause"></i>';
+                    } else {
+                        video.pause();
+                        this.innerHTML = '<i class="fas fa-play"></i>';
+                    }
+                });
+
+                video.addEventListener('play', function() {
+                    playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                });
+
+                video.addEventListener('pause', function() {
+                    playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+                });
+            }
+
+            // Прогресс-бар
+            if (progressBar) {
+                progressBar.addEventListener('input', function() {
+                    const seekTime = (this.value / 100) * video.duration;
+                    video.currentTime = seekTime;
+                });
+            }
+
+            // Полноэкранный режим
+            if (fullscreenBtn) {
+                fullscreenBtn.addEventListener('click', function() {
+                    if (video.requestFullscreen) {
+                        video.requestFullscreen();
+                    } else if (video.webkitRequestFullscreen) {
+                        video.webkitRequestFullscreen();
+                    } else if (video.msRequestFullscreen) {
+                        video.msRequestFullscreen();
+                    }
+                });
+            }
+
+            // Автоподготовка видео при открытии аккордеона
+            const accordionButton = wrapper.closest('.accordion-item').querySelector('.accordion-button');
+            if (accordionButton) {
+                accordionButton.addEventListener('click', function() {
+                    setTimeout(() => {
+                        // Предзагрузка метаданных при открытии
+                        video.load();
+                    }, 100);
+                });
+            }
+        }
+    });
+
+    // Обработка ошибок видео
+    const videos = document.querySelectorAll('video');
+    videos.forEach(video => {
+        video.addEventListener('error', function(e) {
+            console.error('Ошибка загрузки видео:', video.src);
+
+            // Показать сообщение об ошибке
+            const wrapper = video.closest('.video-wrapper');
+            if (wrapper) {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'alert alert-danger mt-2';
+                errorDiv.innerHTML = `
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Не удалось загрузить видео.
+                    <a href="${video.querySelector('source').src}" download class="alert-link">
+                        Скачайте файл
+                    </a>
+                `;
+                wrapper.appendChild(errorDiv);
+            }
+        });
+
+        // Предзагрузка при наведении
+        video.addEventListener('mouseenter', function() {
+            if (this.readyState < 3) {
+                this.load();
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
