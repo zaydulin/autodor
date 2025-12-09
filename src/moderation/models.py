@@ -1027,7 +1027,9 @@ class PathResponsibility(models.Model):
         return f"Responsibility for {self.path_choice} assigned to {self.responsible}"
 
 
-
+    class Meta:
+        verbose_name = "Этап"
+        verbose_name_plural = "Этапы"
 
 
 

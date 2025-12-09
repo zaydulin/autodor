@@ -30,4 +30,6 @@ urlpatterns = [
         views.UpdateLocationView.as_view(),
         name="update_location",
     ),
+    path("notifications/", views.NotificationListView.as_view(), name="notifications_list"),
+
 ]

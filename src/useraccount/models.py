@@ -139,13 +139,6 @@ class Profile(AbstractUser):
 
 class Notification(models.Model):
     """Персона"""
-    TYPE = [
-        (1, 'Регистрация'),
-        (2, 'Покупка'),
-        (3, 'Сбросить пароль'),
-        (4, 'Поддержка'),
-    ]
-    type = models.PositiveSmallIntegerField('Тип', unique=True, choices=TYPE, blank=False, default=1)
     STATUS = [
         (1, 'Не прочитан'),
         (2, 'Прочитан'),

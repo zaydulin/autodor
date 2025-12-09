@@ -20,7 +20,7 @@
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="{% static 'site/website/admin/assets/css/core/libs.min.css' %}" />
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 
     <!-- Vrooom Design System Css -->
     <link rel="stylesheet" href="{% static 'site/website/admin/assets/css/vrooom.min.css' %}?v=1.1.01" />
@@ -393,8 +393,18 @@
                             data-bs-toggle="offcanvas"
                             data-bs-target="#notificationOffcanvas"
                             aria-controls="notificationOffcanvas">
+                        {% unread_notifications_count as unread_count %}
+                        {% if unread_count > 0 %}
+                        <i class="bi bi-bell" style="color:red;"></i>
+                        <span class="activity-badge" style="color: #fff; background-color: red; border-radius: 50%; padding: 2px 6px; font-size: 12px;">
+                            {{ unread_count }}
+                        </span>
+                        {% else %}
                         <i class="bi bi-bell"></i>
-                        <span class="activity-badge">5</span>
+                        <span class="activity-badge" style=" border-radius: 50%; padding: 2px 6px; font-size: 12px;">
+                            0
+                        </span>
+                        {% endif %}
                     </button>
                     <li class="nav-item dropdown">
                         <a class="nav-link py-0 d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -434,51 +444,69 @@
         </div>
         <div class="offcanvas-body">
 
-            <div class="small text-muted mb-2">
-                Последние действия по заявке и водителю
-            </div>
 
             <ul class="list-unstyled activity-list mb-0">
-                <li class="activity-item">
-                    <div class="activity-time">10:24</div>
+                {% unread_notifications as notifications %}
+                {% for item in notifications %}
+                {% with p=item.payload %}
+                <li class="activity-item mb-3">
+                    <div class="activity-time">{{ item.created_at|date:"H:i" }}</div>
                     <div class="activity-content">
-                        <div class="activity-title">Статус заявки изменён на <span class="text-primary">"В пути"</span></div>
-                        <div class="activity-meta text-muted small">Системное действие • Менеджер: Георгий Менеджеров</div>
-                    </div>
-                </li>
+                        <div class="activity-title">
+                            {% if p.action == "create" %}
+                            Создан: <span class="text-primary">{{ p.related_model|capfirst }}</span>
+                            {% elif p.action == "delete" %}
+                            Удалён: <span class="text-primary">{{ p.related_model|capfirst }}</span>
+                            {% elif p.action == "update" %}
+                            Обновлён: <span class="text-primary">{{ p.related_model|capfirst }}</span>
+                            {% else %}
+                            {{ p.related_model|capfirst }} — {{ p.action|capfirst }}
+                            {% endif %}
+                        </div>
 
-                <li class="activity-item">
-                    <div class="activity-time">09:58</div>
-                    <div class="activity-content">
-                        <div class="activity-title">Водитель подтвердил получение авто</div>
-                        <div class="activity-meta text-muted small">Водитель: Георгий Водителевич</div>
-                    </div>
-                </li>
+                        <div class="activity-meta text-muted small mt-1">
+                            <span>{{ p.user_who }}</span>
+                            {% if p.application.order_number %} | Заявка: {{ p.application.order_number }}{% endif %}
+                        </div>
 
-                <li class="activity-item">
-                    <div class="activity-time">09:15</div>
-                    <div class="activity-content">
-                        <div class="activity-title">Добавлен фото-отчёт: <span class="text-danger">Поломка</span></div>
-                        <div class="activity-meta text-muted small">Файлы: 3 фото • Добавил: Георгий Водителевич</div>
+                        {% if p.changes %}
+                        <div class="activity-details mt-2 small">
+                            {% for field, info in p.changes.items %}
+                            <div class="mb-2 pb-1 border-bottom">
+                                <strong>{{ field }}:</strong>
+                                <div>
+                                    {% if info.action == "добавил" %}
+                                    <span class="text-muted">добавил — </span>
+                                    <span class="text-primary">{{ info.new }}</span>
+                                    {% elif info.action == "изменил" %}
+                                    <div><span class="text-muted">было:</span> <span>{{ info.old }}</span></div>
+                                    <div><span class="text-muted">стало:</span> <span class="text-primary">{{ info.new }}</span></div>
+                                    {% else %}
+                                    <span>{{ info }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
                     </div>
                 </li>
-
-                <li class="activity-item">
-                    <div class="activity-time">08:40</div>
-                    <div class="activity-content">
-                        <div class="activity-title">Создан отчёт по расходам</div>
-                        <div class="activity-meta text-muted small">Сумма: 1 000 PLN • Категория: Доставка</div>
-                    </div>
-                </li>
-
-                <li class="activity-item">
-                    <div class="activity-time">Вчера</div>
-                    <div class="activity-content">
-                        <div class="activity-title">Создана заявка #0000063</div>
-                        <div class="activity-meta text-muted small">Заказчик: Николай Климентович</div>
-                    </div>
-                </li>
+                {% endwith %}
+                {% empty %}
+                <li class="text-muted small">Нет новых уведомлений</li>
+                {% endfor %}
             </ul>
+
+            <a href="{% url 'useraccount:notifications_list' %}"
+   hx-get="{% url 'useraccount:notifications_list'  %}"
+   hx-target="#content-body"
+   hx-push-url="true"
+   hx-on="click: bootstrap.Offcanvas.getInstance(document.getElementById('notificationOffcanvas')).hide()"
+   class="position-relative"
+   style="position: fixed!important; bottom: 0; padding: 20px;">
+   Уведомления
+</a>
+
 
         </div>
     </div>

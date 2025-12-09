@@ -1,0 +1,56 @@
+
+{% block content %}
+<h2>Уведомления</h2>
+
+<ul class="list-unstyled activity-list mb-0">
+    {% for item in notifications %}
+    {% with p=item.payload %}
+    <li class="activity-item mb-3">
+        <div class="activity-time">{{ item.created_at|date:"H:i" }}</div>
+        <div class="activity-content">
+            <div class="activity-title">
+                {% if p.action == "create" %}
+                    Создан: <span class="text-primary">{{ p.related_model|capfirst }}</span>
+                {% elif p.action == "delete" %}
+                    Удалён: <span class="text-primary">{{ p.related_model|capfirst }}</span>
+                {% elif p.action == "update" %}
+                    Обновлён: <span class="text-primary">{{ p.related_model|capfirst }}</span>
+                {% else %}
+                    {{ p.related_model|capfirst }} — {{ p.action|capfirst }}
+                {% endif %}
+            </div>
+
+            <div class="activity-meta text-muted small mt-1">
+                <span>{{ p.user_who }}</span>
+                {% if p.application.order_number %} | Заявка: {{ p.application.order_number }}{% endif %}
+            </div>
+
+            {% if p.changes %}
+            <div class="activity-details mt-2 small">
+                {% for field, info in p.changes.items %}
+                <div class="mb-2 pb-1 border-bottom">
+                    <strong>{{ field }}:</strong>
+                    <div>
+                        {% if info.action == "добавил" %}
+                        <span class="text-muted">добавил — </span>
+                        <span class="text-primary">{{ info.new }}</span>
+                        {% elif info.action == "изменил" %}
+                        <div><span class="text-muted">было:</span> <span>{{ info.old }}</span></div>
+                        <div><span class="text-muted">стало:</span> <span class="text-primary">{{ info.new }}</span></div>
+                        {% else %}
+                        <span>{{ info }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </li>
+    {% endwith %}
+    {% empty %}
+    <li class="text-muted small">Нет уведомлений</li>
+    {% endfor %}
+</ul>
+
+{% endblock %}

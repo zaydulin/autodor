@@ -5,6 +5,7 @@ from django.utils.timezone import now
 from django.utils import timezone
 from django.db.models import Q, Max, Subquery, OuterRef
 from useraccount.models import Notification
+import json
 
 
 register = template.Library()
@@ -35,6 +36,43 @@ def split(value, key):
     Делит строку по key и возвращает список
     """
     return value.split(key)
+
+@register.simple_tag(takes_context=True)
+def unread_notifications(context, limit=5):
+    """
+    Возвращает последние `limit` непрочитанных уведомлений для текущего пользователя.
+    """
+    user = context.get("request").user
+    if not user or user.is_anonymous:
+        return []
+
+    qs = Notification.objects.filter(user=user, status=1).order_by("-created_at")[:limit]
+    notifications = []
+
+    for n in qs:
+        try:
+            payload = json.loads(n.message)
+        except Exception:
+            payload = {"text": n.message}
+
+        notifications.append({
+            "raw": n,
+            "payload": payload,
+            "created_at": n.created_at,
+        })
+
+    return notifications
+
+@register.simple_tag(takes_context=True)
+def unread_notifications_count(context):
+    """
+    Возвращает количество непрочитанных уведомлений для текущего пользователя.
+    """
+    user = context.get("request").user
+    if not user or user.is_anonymous:
+        return 0
+
+    return Notification.objects.filter(user=user, status=1).count()
 
 
 @register.filter

@@ -1020,70 +1020,102 @@ document.addEventListener('DOMContentLoaded', function () {
         </div>
 
         <!-- Offcanvas: Активность по заявке/водителю -->
-        <div class="offcanvas offcanvas-end activity-offcanvas" tabindex="-1" id="activityOffcanvas" aria-labelledby="activityOffcanvasLabel">
-            <div class="offcanvas-header">
-                <h5 class="offcanvas-title" id="activityOffcanvasLabel">Активность</h5>
-                <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Закрыть"></button>
-            </div>
-            <div class="offcanvas-body">
-
-                <div class="small text-muted mb-2">
-                    Последние действия по заявке
-                </div>
-
-                <ul class="list-unstyled activity-list mb-0">
-                    {% for log in application.logs.all|dictsortreversed:"created_at" %}
-<li class="activity-item">
-    <div class="activity-time">{{ log.created_at|time:"H:i" }}</div>
-
-    <div class="activity-content">
-        {# Заголовок: если в changes есть поле status — показываем изменение статуса #}
-        {% if log.action == "update" and log.changes and log.changes.status %}
-            <div class="activity-title">
-                Статус заявки изменён на <span class="text-primary">"{{ log.changes.status }}"</span>
-            </div>
-        {% elif log.action == "create" %}
-            <div class="activity-title">
-                Создан связанный объект <span class="text-primary">{{ log.related_model|capfirst }}</span>
-            </div>
-        {% elif log.action == "delete" %}
-            <div class="activity-title">
-                Удалён связанный объект <span class="text-primary">{{ log.related_model|capfirst }}</span>
-            </div>
-        {% else %}
-            <div class="activity-title">
-                {{ log.related_model|capfirst }} — {{ log.action }}
-            </div>
-        {% endif %}
-
-        {# Мета: если есть пользователь — выводим роль и имя, иначе «Системное действие» #}
-        <div class="activity-meta text-muted small">
-            {% if log.user %}
-                {% if log.user in application.user_menager.all %}
-                    Системное действие • Менеджер:
-                {% elif log.user in application.user_drivers.all %}
-                    Системное действие • Водитель:
-                {% elif log.user in application.user.all %}
-                    Системное действие • Пользователь:
-                {% else %}
-                    Пользователь:
-                {% endif %}
-                {{ log.user.get_full_name|default:log.user.username }}
-            {% else %}
-                Системное действие
-            {% endif %}
-        </div>
+<!-- Offcanvas: Активность по заявке/водителю -->
+<div class="offcanvas offcanvas-end activity-offcanvas" tabindex="-1" id="activityOffcanvas" aria-labelledby="activityOffcanvasLabel">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="activityOffcanvasLabel">Активность</h5>
+        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Закрыть"></button>
     </div>
-</li>
-{% empty %}
-<li class="text-muted small">Действий в логе пока нет.</li>
-{% endfor %}
 
+    <div class="offcanvas-body">
+        <div class="small text-muted mb-2">Последние действия по заявке</div>
 
-                </ul>
+        <ul class="list-unstyled activity-list mb-0">
+            {% comment %} Берём последние логи по дате (лучше в view сделать .order_by('-created_at') ) {% endcomment %}
+            {% for log in application.logs.all|dictsortreversed:"created_at" %}
+                <li class="activity-item mb-3">
+                    <div class="activity-time">{{ log.created_at|date:"H:i" }}</div>
 
-            </div>
-        </div>
+                    <div class="activity-content">
+                        {# Заголовок #}
+                        <div class="activity-title">
+                            {% if log.action == "create" %}
+                                Создан: <span class="text-primary">{{ log.related_model|capfirst }}</span>
+                            {% elif log.action == "delete" %}
+                                Удалён: <span class="text-primary">{{ log.related_model|capfirst }}</span>
+                            {% elif log.action == "update" %}
+                                Обновлён: <span class="text-primary">{{ log.related_model|capfirst }}</span>
+                            {% else %}
+                                {{ log.related_model|capfirst }} — {{ log.action|capfirst }}
+                            {% endif %}
+                        </div>
+
+                        {# Пользователь #}
+                        <div class="activity-meta text-muted small mt-1">
+                            {% if log.user %}
+                                {% if log.user in application.user_menager.all %}
+                                    Менеджер:
+                                {% elif log.user in application.user_drivers.all %}
+                                    Водитель:
+                                {% else %}
+                                    Пользователь:
+                                {% endif %}
+                                <span>{{ log.user.get_full_name|default:log.user.username }}</span>
+                            {% else %}
+                                <span class="text-muted">Системное действие</span>
+                            {% endif %}
+                        </div>
+
+                        {# Отображение изменений: log.changes в формате {field: {action, new}} или {field: {action, old, new}} #}
+                        {% if log.changes %}
+                            <div class="activity-details mt-2 small">
+                                {% for field, info in log.changes.items %}
+                                    <div class="mb-2 pb-1 border-bottom">
+                                        <strong>{{ field }}:</strong>
+                                        <div>
+                                            {% if info.action == "добавил" %}
+                                                <span class="text-muted">добавил — </span>
+                                                <span class="text-primary">
+                                                    {% if info.new is iterable and info.new|stringformat:"s" != info.new %}
+                                                        {# если это список/iterable показываем через запятую #}
+                                                        {{ info.new|join:", " }}
+                                                    {% else %}
+                                                        {{ info.new }}
+                                                    {% endif %}
+                                                </span>
+                                            {% elif info.action == "изменил" %}
+                                                <div>
+                                                    <span class="text-muted">было:</span>
+                                                    <span>{{ info.old }}</span>
+                                                </div>
+                                                <div>
+                                                    <span class="text-muted">стало:</span>
+                                                    <span class="text-primary">
+                                                        {% if info.new is iterable and info.new|stringformat:"s" != info.new %}
+                                                            {{ info.new|join:", " }}
+                                                        {% else %}
+                                                            {{ info.new }}
+                                                        {% endif %}
+                                                    </span>
+                                                </div>
+                                            {% else %}
+                                                {# на случай других action #}
+                                                <span>{{ info }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </li>
+            {% empty %}
+                <li class="text-muted small">Действий в логе пока нет.</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+
 
         <!-- Основная информация по заявке -->
         <div class="card card-shadow mb-3" id="application-sidebar">
@@ -1333,11 +1365,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     <tr><th>Статья</th><th class="text-end">Сумма</th><th>Дата</th></tr>
                     </thead>
                     <tbody id="expensesList">
-                          {% for expense in application.expenses.all %}
-                        {% include "moderation/partials/_expense_item.html" with expense=expense %}
-                        {% empty %}
-                        <div class="text-muted small">Расходы ещё не добавлены.</div>
-                        {% endfor %}
+                    {% for expense in application.expenses.all %}
+                    {% include "moderation/partials/_expense_item.html" with expense=expense %}
+                    {% empty %}
+                    <div class="text-muted small">Расходы ещё не добавлены.</div>
+                    {% endfor %}
                     </tbody>
                 </table>
 
@@ -1345,10 +1377,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 
+            </div>
         </div>
-    </div>
 
-</div>
+    </div>
 </div>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
@@ -1464,11 +1496,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
             </div>
             <div class="modal-body">
-               <form id="add-expense-form"
-      hx-post="{% url 'moderation:create_expense' %}"
-      hx-target="#content-body"
-      hx-swap="afterbegin"
-      hx-on="htmx:afterRequest:
+                <form id="add-expense-form"
+                      hx-post="{% url 'moderation:create_expense' %}"
+                      hx-target="#content-body"
+                      hx-swap="afterbegin"
+                      hx-on="htmx:afterRequest:
         const modalEl = document.getElementById('addExpenseModal');
         const modalInstance = bootstrap.Modal.getInstance(modalEl);
         if (modalInstance) modalInstance.hide();
@@ -1482,7 +1514,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         <select id="expenseMaskSelect" class="form-select mb-2">
                             <option value="">— выбрать из списка —</option>
                             {% for mask in expense_masks %}
-                                <option value="{{ mask.name }}">{{ mask.name }}</option>
+                            <option value="{{ mask.name }}">{{ mask.name }}</option>
                             {% endfor %}
                         </select>
 
@@ -1501,33 +1533,33 @@ document.addEventListener('DOMContentLoaded', function () {
     </div>
 </div>
 <script>
-document.getElementById('add-expense-form').addEventListener('submit', function(e) {
-    const select = document.getElementById('expenseMaskSelect');
-    const input = document.getElementById('expenseTitleManual');
+    document.getElementById('add-expense-form').addEventListener('submit', function(e) {
+        const select = document.getElementById('expenseMaskSelect');
+        const input = document.getElementById('expenseTitleManual');
 
-    // Убираем name у обоих полей
-    select.removeAttribute('name');
-    input.removeAttribute('name');
+        // Убираем name у обоих полей
+        select.removeAttribute('name');
+        input.removeAttribute('name');
 
-    // Выбираем, какое поле отправлять
-    if (input.value.trim()) {
-        input.name = 'title';
-    } else if (select.value) {
-        select.name = 'title';
-    } else {
-        e.preventDefault();
-        alert("Выберите маску или введите вручную название расхода");
-        return;
-    }
+        // Выбираем, какое поле отправлять
+        if (input.value.trim()) {
+            input.name = 'title';
+        } else if (select.value) {
+            select.name = 'title';
+        } else {
+            e.preventDefault();
+            alert("Выберите маску или введите вручную название расхода");
+            return;
+        }
 
-    // Закрытие модалки после успешного htmx-запроса
-    this.addEventListener('htmx:afterRequest', function(evt) {
-        const modalEl = document.getElementById('addExpenseModal');
-        const modalInstance = bootstrap.Modal.getInstance(modalEl);
-        if (modalInstance) modalInstance.hide();
-        e.target.reset();
-    }, {once: true}); // сработает один раз после этого submit
-});
+        // Закрытие модалки после успешного htmx-запроса
+        this.addEventListener('htmx:afterRequest', function(evt) {
+            const modalEl = document.getElementById('addExpenseModal');
+            const modalInstance = bootstrap.Modal.getInstance(modalEl);
+            if (modalInstance) modalInstance.hide();
+            e.target.reset();
+        }, {once: true}); // сработает один раз после этого submit
+    });
 </script>
 
 

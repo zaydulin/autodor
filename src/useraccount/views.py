@@ -578,6 +578,43 @@ class UpdateLocationView(LoginRequiredMixin, View):
 
         return JsonResponse({"success": True})
 
+class NotificationListView(CustomHtmxMixin, LoginRequiredMixin, ListView):
+    model = Notification
+    template_name = "site/useraccount/notifications_list.html"
+    context_object_name = "notifications"
+    paginate_by = 20
+
+    def get_queryset(self):
+        # все уведомления текущего пользователя
+        return Notification.objects.filter(user=self.request.user).order_by('-created_at')
+
+    def get(self, request, *args, **kwargs):
+        # помечаем все непрочитанные как прочитанные
+        with transaction.atomic():
+            Notification.objects.filter(user=request.user, status=1).update(status=2)
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        notifications = context['notifications']
+
+        payload_list = []
+        for n in notifications:
+            try:
+                # если в message хранится JSON (как у тебя в templatetag)
+                payload = json.loads(n.message)
+            except Exception:
+                payload = {"text": n.message}
+
+            payload_list.append({
+                "raw": n,  # сам объект Notification
+                "payload": payload,
+                "created_at": n.created_at
+            })
+
+        context['notifications'] = payload_list
+        return context
+
 
 @method_decorator(login_required(login_url='useraccount:login'), name='dispatch')
 class WithdrawPage(CustomHtmxMixin, LoginRequiredMixin, TemplateView):
