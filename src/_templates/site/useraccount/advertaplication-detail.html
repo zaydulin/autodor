@@ -1,11 +1,5 @@
-    {% extends 'site/useraccount/base.html' %}
     {% load static %}
-    {% block title %}{{ seo_title }}{% endblock title %}
-    {% block description %}{{ seo_description }}{% endblock description %}
-    {% block propertytitle %}{% if seo_previev %}{{ seo_previev.url }} {% endif %} {% endblock propertytitle %}
-    {% block propertydescription %}{{ seo_propertytitle }}{% endblock propertydescription %}
-    {% block propertyimage %}{{ seo_propertydescription }}{% endblock propertyimage %}
-    {% block head %}
+    {% block content %}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -15,9 +9,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.theme.default.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
-    {% endblock head %}
-
-    {% block content %}
     <style>
         #phasesRow {
     display: flex !important;
