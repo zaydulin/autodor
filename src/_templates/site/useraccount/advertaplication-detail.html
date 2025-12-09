@@ -1758,166 +1758,86 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 </script>
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    const chatContainer = document.getElementById('group-chat-messages');
-    const messageInput  = document.getElementById('group-chat-input');
-    const messageForm   = document.getElementById('group-chat-form');
-    const applicationEl = document.getElementById('application-id');
-    const userIdEl      = document.getElementById('user-id');
-    const userNameEl    = document.getElementById('user-name');
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const chatContainer = document.getElementById('group-chat-messages');
+            const messageInput  = document.getElementById('group-chat-input');
+            const messageForm   = document.getElementById('group-chat-form');
+            const applicationId = document.getElementById('application-id').value;
+            const userId        = document.getElementById('user-id').value;
+            const userName      = document.getElementById('user-name').value;
 
-    // Проверки DOM
-    if (!chatContainer || !messageInput || !messageForm || !applicationEl || !userIdEl || !userNameEl) {
-        console.error("Чат: не найдены необходимые элементы DOM. Проверьте наличие #group-chat-messages, #group-chat-input, #group-chat-form, #application-id, #user-id, #user-name");
-        return;
-    }
+            const protocol  = location.protocol === 'https:' ? 'wss' : 'ws';
+            const chatSocket = new WebSocket(`${protocol}://${location.host}/ws/chat/${applicationId}/`);
 
-    const applicationId = applicationEl.value;
-    const userId = userIdEl.value;
-    const userName = userNameEl.value;
+            chatSocket.onopen = () => console.log("WebSocket соединение установлено");
 
-    if (!applicationId) {
-        console.error("Чат: пустой application-id");
-        return;
-    }
+            chatSocket.onmessage = (e) => {
+                const data = JSON.parse(e.data);
+                console.log("Получено:", data);
 
-    const protocol  = (location.protocol === 'https:') ? 'wss' : 'ws';
-    // Если ваш WS на другом пути/порте - исправьте ниже
-    const wsUrl = `${protocol}://${location.host}/ws/chat/${applicationId}/`;
-    let chatSocket;
-
-    try {
-        chatSocket = new WebSocket(wsUrl);
-    } catch (err) {
-        console.error("Чат: ошибка при создании WebSocket:", err);
-        return;
-    }
-
-    chatSocket.onopen = () => console.log("WebSocket соединение установлено:", wsUrl);
-    chatSocket.onclose = (e) => console.warn("WebSocket закрыт:", e);
-    chatSocket.onerror = (e) => console.error("WebSocket ошибка:", e);
-
-    chatSocket.onmessage = (e) => {
-        let data;
-        try {
-            data = JSON.parse(e.data);
-        } catch (err) {
-            console.error("Чат: не удалось распарсить JSON:", e.data, err);
-            return;
-        }
-        console.log("Получено по WS:", data);
-
-        // Поддерживаем несколько форматов: {type:"chat_message", message: {...}}, {message: {...}}, или сам объект сообщения
-        const payload = data.message ?? data.payload ?? data;
-        // если сервер оборачивает сам event: {type: 'chat_message', ...}
-        if (data.type && data.type !== "chat_message" && payload === data) {
-            // ничего не делаем - возможно служебное сообщение
-            console.log("Чат: получено служебное сообщение:", data.type);
-        }
-
-        // Если это ошибка от сервера
-        if (data.error) {
-            console.error("Чат сервер: ошибка:", data.error);
-            return;
-        }
-
-        // Отрисовать только если есть content
-        if (payload && (payload.content || payload.text)) {
-            // Унифицируем поля
-            const msg = {
-                message_id: payload.id ?? payload.message_id ?? payload.pk ?? null,
-                author_id: payload.author_id ?? payload.user_id ?? payload.author?.id ?? payload.user?.id ?? null,
-                author: payload.author_name ?? payload.author ?? payload.user_name ?? payload.user ?? userName,
-                content: payload.content ?? payload.text ?? "",
-                date: payload.date ?? payload.created_at ?? ""
-            };
-            displayMessage(msg);
-        } else {
-            console.warn("Чат: непонятная полезная нагрузка:", payload);
-        }
-    };
-
-    // Отправка сообщения
-    messageForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-        const text = messageInput.value.trim();
-        if (!text) return;
-
-        if (chatSocket.readyState === WebSocket.OPEN) {
-            // Отправляем обеими часто используемыми схемами — сервер должен понять одну из них.
-            const payload1 = {
-                type: "chat_message",      // иногда Channels internal dispatch требует другое поле, но клиент может так отправлять
-                content: text,
-                author_id: userId,
-                author_name: userName,
-                application_id: applicationId
-            };
-
-            const payload2 = {
-                message: {
-                    content: text,
-                    author_id: userId,
-                    author_name: userName,
-                    application_id: applicationId
+                if (data.type === "chat_message") {
+                    displayMessage(data);           // теперь рендерим сам event
+                } else if (data.error) {
+                    console.error("Ошибка:", data.error);
                 }
             };
 
-            try {
-                // Попробуем сначала общий формат с message (более универсален)
-                chatSocket.send(JSON.stringify(payload2));
-                // также можно отправлять payload1 если сервер ожидает type=
-                // chatSocket.send(JSON.stringify(payload1));
-            } catch (err) {
-                console.error("Чат: ошибка при отправке:", err);
-                alert("Ошибка отправки сообщения");
-                return;
+            chatSocket.onclose = (e) => console.log("WebSocket закрыт:", e);
+            chatSocket.onerror = (e) => console.error("WebSocket ошибка:", e);
+
+            // Отправка
+            messageForm.addEventListener("submit", (e) => {
+                e.preventDefault();
+                const text = messageInput.value.trim();
+                if (!text) return;
+
+                if (chatSocket.readyState === WebSocket.OPEN) {
+                    chatSocket.send(JSON.stringify({
+                        type: "chat_message",
+                        content: text,          // <-- content
+                        author_id: userId       // <-- author_id
+                    }));
+                    messageInput.value = "";
+                } else {
+                    alert("Нет соединения с чатом");
+                }
+            });
+
+            messageInput.addEventListener("keydown", (e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    messageForm.dispatchEvent(new Event("submit"));
+                }
+            });
+
+            function displayMessage(m) {
+                const isOwn = String(userId) === String(m.author_id);
+                const div = document.createElement("div");
+                div.className = `d-flex mb-2 ${isOwn ? "justify-content-end" : ""}`;
+                div.dataset.messageId = m.message_id;
+
+                const bubble = document.createElement("div");
+                bubble.className = isOwn ? "bg-light p-2 rounded" : "bg-primary text-white p-2 rounded";
+                bubble.style.maxWidth = "75%";
+                bubble.innerHTML = `
+                    <div class="fw-bold small">${escapeHtml(m.author || "")}</div>
+                    <div>${escapeHtml(m.content || "")}</div>
+                    <div class="small chat_date text-end text-muted">${m.date || ""}</div>
+                `;
+
+                div.appendChild(bubble);
+                chatContainer.appendChild(div);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
             }
 
-            messageInput.value = "";
-        } else {
-            alert("Нет соединения с чатом");
-            console.warn("Чат: попытка отправки при readyState =", chatSocket.readyState);
-        }
-    });
-
-    // Enter — отправка, Shift+Enter — новая строка
-    messageInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            // триггерим сабмит напрямую
-            messageForm.requestSubmit ? messageForm.requestSubmit() : messageForm.dispatchEvent(new Event("submit", {cancelable: true}));
-        }
-    });
-
-    function displayMessage(m) {
-        const isOwn = String(userId) === String(m.author_id);
-        const container = document.createElement("div");
-        container.className = "d-flex mb-2 " + (isOwn ? "justify-content-end" : "justify-content-start");
-        if (m.message_id) container.dataset.messageId = m.message_id;
-
-        const bubble = document.createElement("div");
-        bubble.className = (isOwn ? "bg-light text-dark p-2 rounded" : "bg-primary text-white p-2 rounded");
-        bubble.style.maxWidth = "75%";
-        bubble.style.wordWrap = "break-word";
-        bubble.innerHTML = `
-            <div class="fw-bold small">${escapeHtml(m.author || "")}</div>
-            <div>${escapeHtml(m.content || "")}</div>
-            <div class="small chat_date text-end text-muted">${escapeHtml(m.date || "")}</div>
-        `;
-        container.appendChild(bubble);
-        chatContainer.appendChild(container);
-        // прокрутка вниз
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-    }
-
-    function escapeHtml(t) {
-        const div = document.createElement("div");
-        div.textContent = t ?? "";
-        return div.innerHTML;
-    }
-});
-</script>
+            function escapeHtml(t) {
+                const div = document.createElement("div");
+                div.textContent = t ?? "";
+                return div.innerHTML;
+            }
+        });
+    </script>
 
 
 <script>
