@@ -1768,43 +1768,78 @@ document.addEventListener('DOMContentLoaded', function () {
         const userId        = document.getElementById('user-id').value;
         const userName      = document.getElementById('user-name').value;
 
-        const protocol  = location.protocol === 'https:' ? 'wss' : 'ws';
-        const chatSocket = new WebSocket(`${protocol}://${location.host}/ws/chat/${applicationId}/`);
+        console.log("Настройки:", { applicationId, userId, userName });
+        console.log("Элементы:", { chatContainer, messageInput, messageForm });
 
-        chatSocket.onopen = () => console.log("WebSocket соединение установлено");
+        const protocol  = location.protocol === 'https:' ? 'wss' : 'ws';
+        const wsUrl = `${protocol}://${location.host}/ws/chat/${applicationId}/`;
+        console.log("Подключаемся к WebSocket:", wsUrl);
+
+        const chatSocket = new WebSocket(wsUrl);
+
+        chatSocket.onopen = () => {
+            console.log("✅ WebSocket соединение установлено");
+            console.log("readyState:", chatSocket.readyState);
+        };
 
         chatSocket.onmessage = (e) => {
-            const data = JSON.parse(e.data);
-            console.log("Получено:", data);
+            console.log("📨 Получено сырое сообщение:", e.data);
+            try {
+                const data = JSON.parse(e.data);
+                console.log("📦 Парсинг JSON успешен:", data);
 
-            if (data.type === "chat_message") {
-                displayMessage(data);           // теперь рендерим сам event
-            } else if (data.error) {
-                console.error("Ошибка:", data.error);
+                if (data.type === "chat_message") {
+                    console.log("💬 Чат сообщение:", data);
+                    displayMessage(data);
+                } else if (data.error) {
+                    console.error("❌ Ошибка от сервера:", data.error);
+                } else {
+                    console.log("ℹ️ Другой тип сообщения:", data.type);
+                }
+            } catch (error) {
+                console.error("❌ Ошибка парсинга JSON:", error, e.data);
             }
         };
 
-        chatSocket.onclose = (e) => console.log("WebSocket закрыт:", e);
-        chatSocket.onerror = (e) => console.error("WebSocket ошибка:", e);
+        chatSocket.onclose = (e) => {
+            console.log("🔴 WebSocket закрыт:", e.code, e.reason, e.wasClean);
+            console.log("Переподключение через 3 секунды...");
+            setTimeout(() => location.reload(), 3000);
+        };
+
+        chatSocket.onerror = (e) => {
+            console.error("🔴 WebSocket ошибка:", e);
+        };
 
         // Отправка
         messageForm.addEventListener("submit", (e) => {
             e.preventDefault();
             const text = messageInput.value.trim();
-            if (!text) return;
+            console.log("Отправка сообщения:", text);
+
+            if (!text) {
+                console.log("Пустое сообщение, игнорируем");
+                return;
+            }
+
+            console.log("Состояние WebSocket:", chatSocket.readyState);
 
             if (chatSocket.readyState === WebSocket.OPEN) {
-                chatSocket.send(JSON.stringify({
+                const message = {
                     type: "chat_message",
-                    content: text,          // <-- content
-                    author_id: userId       // <-- author_id
-                }));
+                    content: text,
+                    author_id: userId
+                };
+                console.log("Отправляю JSON:", message);
+                chatSocket.send(JSON.stringify(message));
                 messageInput.value = "";
             } else {
-                alert("Нет соединения с чатом");
+                console.error("WebSocket не готов. Состояние:", chatSocket.readyState);
+                alert(`Нет соединения с чатом. Код состояния: ${chatSocket.readyState}`);
             }
         });
 
+        // Остальной код без изменений...
         messageInput.addEventListener("keydown", (e) => {
             if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
@@ -1813,6 +1848,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         function displayMessage(m) {
+            console.log("Рендерим сообщение:", m);
             const isOwn = String(userId) === String(m.author_id);
             const div = document.createElement("div");
             div.className = `d-flex mb-2 ${isOwn ? "justify-content-end" : ""}`;
@@ -1822,9 +1858,9 @@ document.addEventListener('DOMContentLoaded', function () {
             bubble.className = isOwn ? "bg-light p-2 rounded" : "bg-primary text-white p-2 rounded";
             bubble.style.maxWidth = "75%";
             bubble.innerHTML = `
-                <div class="fw-bold small">${escapeHtml(m.author || "")}</div>
+                <div class="fw-bold small">${escapeHtml(m.author || userName || "Аноним")}</div>
                 <div>${escapeHtml(m.content || "")}</div>
-                <div class="small chat_date text-end text-muted">${m.date || ""}</div>
+                <div class="small chat_date text-end text-muted">${m.date || new Date().toLocaleTimeString()}</div>
             `;
 
             div.appendChild(bubble);
@@ -1833,13 +1869,13 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         function escapeHtml(t) {
+            if (t === null || t === undefined) return "";
             const div = document.createElement("div");
-            div.textContent = t ?? "";
+            div.textContent = t;
             return div.innerHTML;
         }
     });
 </script>
-
 <script>
     document.addEventListener("DOMContentLoaded", () => {
       let isEditing = false;
