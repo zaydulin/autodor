@@ -121,7 +121,7 @@ def change_car_model_type(request, model_id):
     return JsonResponse({'success': False, 'message': 'Неверный метод запроса'})
 
 
-class AdvertStatisticsView(UserPassesTestMixin, View):
+class AdvertStatisticsView(UserPassesTestMixin, CustomHtmxMixin, View):
     def test_func(self):
         return self.request.user.is_superuser
 

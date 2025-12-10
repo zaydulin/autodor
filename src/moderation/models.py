@@ -1000,7 +1000,7 @@ class Path(models.Model):
         (1, 'Принял'),
         (2, 'Закончил'),
     ]
-    status = models.SmallIntegerField(verbose_name="Статус", choices=STATUS_CHOICES, default=0,  editable=False)
+    status = models.SmallIntegerField(verbose_name="Статус", choices=STATUS_CHOICES, default=0)
     aplication = models.ForeignKey(AdvertAplication,blank=True,null=True, on_delete=models.CASCADE)
     longitude = models.FloatField(verbose_name='Долгота', blank=True, null=True)
     latitude = models.FloatField(verbose_name='Широта', blank=True, null=True)

@@ -301,6 +301,7 @@
      overflow: hidden;
  }
 </style>
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
     let stageMap = null;
@@ -467,47 +468,31 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
-document.addEventListener("DOMContentLoaded", function () {
-    // Глобальные переменные карты
-    window.stageMap = L.map('map').setView([52.0, 20.5], 4);
+//Метки на карте
 
+ document.addEventListener("DOMContentLoaded", function () {
+    // Инициализация карты (центр примерно на Польше)
+    var map = L.map('map').setView([52.0, 20.5], 4);
+
+    // Подложка OpenStreetMap
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 18,
         attribution: '&copy; OpenStreetMap'
-    }).addTo(window.stageMap);
+    }).addTo(map);
 
-    // Слой для маркеров этапов
-    window.stageMarkersLayer = L.layerGroup().addTo(window.stageMap);
-
-    // Функция перерисовки маркеров по DOM
-    function renderPathMarkersFromDom() {
-        if (!window.stageMap || !window.stageMarkersLayer) return;
-
-        window.stageMarkersLayer.clearLayers();
-        const cards = document.querySelectorAll('.stage-card[data-lat][data-lng]');
-        const bounds = [];
-
-        cards.forEach(card => {
-            const lat = parseFloat(card.dataset.lat);
-            const lng = parseFloat(card.dataset.lng);
-            if (isNaN(lat) || isNaN(lng)) return;
-
-            const label = card.dataset.title || card.querySelector('h5')?.textContent || 'Этап';
-
-            const marker = L.marker([lat, lng]).addTo(window.stageMarkersLayer)
-                            .bindPopup(label);
-            bounds.push([lat, lng]);
-        });
-
-        if (bounds.length > 0) {
-            window.stageMap.fitBounds(bounds, { padding: [20, 20] });
-        }
+    // Иконка для стран (стандартный маркер)
+    function addCountryMarker(lat, lng, label) {
+        L.marker([lat, lng])
+            .addTo(map)
+            .bindPopup(label);
     }
 
-    // сразу отрисуем маркеры при первой загрузке
-    renderPathMarkersFromDom();
+    // Метки стран
+          {% for path in paths %}
 
-    // Машинка-иконка
+    addCountryMarker({{ path.latitude|unlocalize }}, {{ path.longitude|unlocalize }}, '{{ path.name }}');
+{% endfor %}
+    // Кастомная иконка "машинка" между Польшей и Беларусью
     var carIcon = L.divIcon({
         className: 'car-marker',
         html: '🚗',
@@ -515,36 +500,13 @@ document.addEventListener("DOMContentLoaded", function () {
         iconAnchor: [12, 12]
     });
 
-    {% if current_driver and current_driver_lat is not None and current_driver_lng is not None %}
-        // Координаты берём из подготовленных полей во вьюхе
-        var carLat = {{ current_driver_lat|unlocalize }};
-        var carLng = {{ current_driver_lng|unlocalize }};
+    // Примерная точка между Польшей и Беларусью
+{% if current_driver and current_driver_lat is not None and current_driver_lng is not None %}
+  var carLat = {{ current_driver_lat|unlocalize }};
+  var carLng = {{ current_driver_lng|unlocalize }};
+{% endif %}
 
-        var driverName = "{{ current_driver.get_full_name|default:current_driver.username|escapejs }}";
-        var driverEmail = "{{ current_driver.email|escapejs }}";
-
-        {% if current_path %}
-            var driverStatusText = "{{ current_path.get_status_display|escapejs }}";
-        {% else %}
-            var driverStatusText = "Нет активного этапа";
-        {% endif %}
-
-        {% if current_driver_wallet %}
-            var driverBalance = "{{ current_driver_wallet.remainder|default_if_none:'0.00'|unlocalize }}";
-        {% else %}
-            var driverBalance = "0.00";
-        {% endif %}
-    {% else %}
-        // Фолбэк, если нет водителя со статусом "Принял" или координат
-        var carLat = 52.5;
-        var carLng = 23.0;
-
-        var driverName = "Водитель не выбран";
-        var driverEmail = "";
-        var driverStatusText = "Нет активного этапа";
-        var driverBalance = "0.00";
-    {% endif %}
-
+    // HTML с расширенной информацией о водителе
     var driverPopupHtml = `
         <div class="driver-popup">
             <div class="driver-popup-header mb-1">
@@ -553,38 +515,27 @@ document.addEventListener("DOMContentLoaded", function () {
             <div class="driver-popup-body small">
                 <div class="driver-popup-row">
                     <span class="driver-label">Имя:</span>
-                    <span class="driver-value">€{driverName}</span>
+                    <span class="driver-value">{{ current_driver.get_full_name|default:current_driver.username|escapejs }}</span>
                 </div>
                 <div class="driver-popup-row">
-                    <span class="driver-label">Email:</span>
-                    <span class="driver-value">€{driverEmail}</span>
+                    <span class="driver-label">Телефон:</span>
+                    <span class="driver-value">{{ current_driver.email|escapejs }}</span>
                 </div>
+
                 <div class="driver-popup-row">
-                    <span class="driver-label">Статус этапа:</span>
-                    <span class="driver-value text-primary">€{driverStatusText}</span>
+                    <span class="driver-label">Статус:</span>
+                    <span class="driver-value text-primary">{{ current_path.get_status_display|escapejs }}</span>
                 </div>
 
             </div>
+
         </div>
     `;
 
-    // Добавляем машинку только если координаты осмысленные
-    if (!isNaN(carLat) && !isNaN(carLng)) {
-        var carMarker = L.marker([carLat, carLng], { icon: carIcon })
-            .addTo(window.stageMap)
-            .bindPopup(driverPopupHtml);
-
-        // немного центрируем карту на водителе (можно подобрать зум)
-        window.stageMap.setView([carLat, carLng], 6);
-    }
-
-    document.body.addEventListener("htmx:afterSwap", function (event) {
-        if (event.target.id === "pathr") {
-            renderPathMarkersFromDom();
-        }
-    });
+    L.marker([carLat, carLng], { icon: carIcon })
+        .addTo(map)
+        .bindPopup(driverPopupHtml);
 });
-
 
 
 
