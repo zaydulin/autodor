@@ -121,27 +121,28 @@ def change_car_model_type(request, model_id):
     return JsonResponse({'success': False, 'message': 'Неверный метод запроса'})
 
 
-class AdvertStatisticsView(UserPassesTestMixin, CustomHtmxMixin, View):
+class AdvertStatisticsView(UserPassesTestMixin, CustomHtmxMixin, TemplateView):
+    template_name = 'advert_statistics.html'
+
     def test_func(self):
         return self.request.user.is_superuser
 
-    def get(self, request, *args, **kwargs):
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)  # теперь безопасно
         applications = AdvertAplication.objects.all().order_by('created_at')
 
         paginator = Paginator(applications, 5)
-        page_number = request.GET.get('page')
+        page_number = self.request.GET.get('page')
         page_obj = paginator.get_page(page_number)
 
         total_expenses_all = 0
         total_withdrawals_all = 0
-
         for application in applications:
             total_expenses = application.expenses.aggregate(Sum('amount'))['amount__sum'] or 0
             total_withdrawals = Withdrawal.objects.filter(application=application).aggregate(Sum('amount'))['amount__sum'] or 0
             total_expenses_all += total_expenses
             total_withdrawals_all += total_withdrawals
 
-        # --- данные для графика ---
         stats_qs = (
             AdvertAplication.objects
             .annotate(date=TruncDate('created_at'))
@@ -159,7 +160,7 @@ class AdvertStatisticsView(UserPassesTestMixin, CustomHtmxMixin, View):
         chart_expenses = [float(s['expenses_sum'] or 0) for s in stats_qs]
         chart_withdrawals = [float(s['withdrawals_sum'] or 0) for s in stats_qs]
 
-        context = {
+        context.update({
             'page_obj': page_obj,
             'total_expenses_all': total_expenses_all,
             'total_withdrawals_all': total_withdrawals_all,
@@ -167,8 +168,8 @@ class AdvertStatisticsView(UserPassesTestMixin, CustomHtmxMixin, View):
             'chart_prices': chart_prices,
             'chart_expenses': chart_expenses,
             'chart_withdrawals': chart_withdrawals,
-        }
-        return render(request, 'advert_statistics.html', context)
+        })
+        return context
 
 @csrf_exempt
 def add_gallery_group(request):
