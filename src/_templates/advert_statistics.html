@@ -154,7 +154,7 @@
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="tab-point-a" data-bs-toggle="tab" data-bs-target="#point-a" type="button" role="tab">Точка А Точка Б</button>
         </li>
-        <li class="nav-item" role="presentation">
+        <li class="nav-item d-none" role="presentation">
             <button class="nav-link" id="tab-point-b" data-bs-toggle="tab" data-bs-target="#point-b" type="button" role="tab">Название</button>
         </li>
         <li class="nav-item" role="presentation">
@@ -182,8 +182,77 @@
         <!-- Точка А -->
         <div class="tab-pane fade" id="point-a" role="tabpanel">
             <div class="card p-4 mb-4">
-                <h3 class="mb-3"> Точка А - Точка Б</h3>
-                <p>Здесь будет информация по Точке А, маршруты и статистика.</p>
+<!-- Вкладка Точка А -->
+    <div class="card p-4 mb-4">
+        <h3 class="mb-3">📍 Точка А</h3>
+        <div class="table-responsive">
+            <table class="table table-hover table-bordered">
+                <thead class="table-light">
+                    <tr>
+                        <th>№</th>
+                        <th>Название заявки</th>
+                        <th>Статус</th>
+                        <th>Дата создания</th>
+                        <th>Стоимость</th>
+                        <th>Расходы</th>
+                        <th>Остаток</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for i in "12345"|make_list %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>—</td>
+                        <td>—</td>
+                        <td>—</td>
+                        <td>—</td>
+                        <td>—</td>
+                        <td>—</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="text-center text-muted mt-3">
+            Данные будут загружены после добавления заявок
+        </div>
+    </div>
+    <div class="card p-4 mb-4">
+        <h3 class="mb-3">📍 Точка Б</h3>
+        <div class="table-responsive">
+            <table class="table table-hover table-bordered">
+                <thead class="table-light">
+                    <tr>
+                        <th>№</th>
+                        <th>Название заявки</th>
+                        <th>Статус</th>
+                        <th>Дата создания</th>
+                        <th>Стоимость</th>
+                        <th>Расходы</th>
+                        <th>Остаток</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for i in "12345"|make_list %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>—</td>
+                        <td>—</td>
+                        <td>—</td>
+                        <td>—</td>
+                        <td>—</td>
+                        <td>—</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="text-center text-muted mt-3">
+            Данные будут загружены после добавления заявок
+        </div>
+    </div>
+
+
             </div>
         </div>
 
