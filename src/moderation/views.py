@@ -2,6 +2,7 @@ import base64
 import io
 import json
 import os
+import traceback
 from audioop import reverse
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
@@ -32,7 +33,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_http_methods
 from django.views.generic import ListView, DetailView, TemplateView, FormView
-from django.db.models import Q, Prefetch
+from django.db.models import Q, Prefetch, Count
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 from .forms import PathForm, AdvertAplicationGalleryForm
@@ -128,13 +129,15 @@ class AdvertStatisticsView(UserPassesTestMixin, CustomHtmxMixin, TemplateView):
         return self.request.user.is_superuser
 
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)  # теперь безопасно
-        applications = AdvertAplication.objects.all().order_by('created_at')
+        context = super().get_context_data(**kwargs)
 
+        # ---- Приложения и пагинация ----
+        applications = AdvertAplication.objects.all().order_by('created_at')
         paginator = Paginator(applications, 5)
         page_number = self.request.GET.get('page')
         page_obj = paginator.get_page(page_number)
 
+        # ---- Суммы расходов и выводов (агрегируем по всем приложениям) ----
         total_expenses_all = 0
         total_withdrawals_all = 0
         for application in applications:
@@ -143,6 +146,7 @@ class AdvertStatisticsView(UserPassesTestMixin, CustomHtmxMixin, TemplateView):
             total_expenses_all += total_expenses
             total_withdrawals_all += total_withdrawals
 
+        # ---- Статистика по датам для графика ----
         stats_qs = (
             AdvertAplication.objects
             .annotate(date=TruncDate('created_at'))
@@ -160,6 +164,63 @@ class AdvertStatisticsView(UserPassesTestMixin, CustomHtmxMixin, TemplateView):
         chart_expenses = [float(s['expenses_sum'] or 0) for s in stats_qs]
         chart_withdrawals = [float(s['withdrawals_sum'] or 0) for s in stats_qs]
 
+        # ---- TOP-9 CarBrand из AdvertAplication -> advert_id -> Advert.car_brand ----
+        top_car_brands = []  # список словарей {'brand': CarBrand, 'count': int}
+
+        # Собираем уникальные advert_id из AdvertAplication
+        advert_ids_qs = AdvertAplication.objects.values_list('advert_id', flat=True).distinct()
+        advert_ids = [str(x) for x in advert_ids_qs if x not in (None, "", "None")]
+
+        adverts_qs = Advert.objects.none()
+        try:
+            if advert_ids:
+                # 1) Попытка по числовым id (advert_id как числа → pk Advert)
+                numeric_ids = [int(a) for a in advert_ids if a.isdigit()]
+                if numeric_ids:
+                    adverts_qs = Advert.objects.filter(id__in=numeric_ids, car_brand__isnull=False)
+
+                # 2) Если пусто и в модели Advert есть поле advert_id — пробуем по нему
+                if not adverts_qs.exists() and hasattr(Advert, 'advert_id'):
+                    adverts_qs = Advert.objects.filter(advert_id__in=advert_ids, car_brand__isnull=False)
+
+                # 3) Если всё ещё пусто — пробуем pk__in (на случай UUID в виде строки)
+                if not adverts_qs.exists():
+                    try:
+                        adverts_qs = Advert.objects.filter(pk__in=advert_ids, car_brand__isnull=False)
+                    except Exception:
+                        adverts_qs = adverts_qs.none()
+
+            # Агрегируем по car_brand
+            if adverts_qs.exists():
+                brand_counts = (
+                    adverts_qs
+                    .values('car_brand')
+                    .annotate(cnt=Count('id'))
+                    .order_by('-cnt')[:9]
+                )
+                brand_ids_ordered = [bc['car_brand'] for bc in brand_counts if bc['car_brand'] is not None]
+                brands = CarBrand.objects.filter(id__in=brand_ids_ordered)
+                brand_map = {b.id: b for b in brands}
+                for bc in brand_counts:
+                    bid = bc.get('car_brand')
+                    if bid and bid in brand_map:
+                        top_car_brands.append({'brand': brand_map[bid], 'count': bc.get('cnt', 0)})
+        except Exception:
+            traceback.print_exc()
+
+        # Заполняем ровно 9 контекстных переменных top_car_brand_1 ... top_car_brand_9
+        for idx in range(9):
+            key = f"top_car_brand_{idx+1}"
+            if idx < len(top_car_brands):
+                context[key] = top_car_brands[idx]
+            else:
+                context[key] = None
+
+        # Дополнительно список и флаг
+        context['top_car_brands_list'] = top_car_brands
+        context['has_top_car_brands'] = bool(top_car_brands)
+
+        # ---- Обновляем основной контекст ----
         context.update({
             'page_obj': page_obj,
             'total_expenses_all': total_expenses_all,
@@ -169,7 +230,9 @@ class AdvertStatisticsView(UserPassesTestMixin, CustomHtmxMixin, TemplateView):
             'chart_expenses': chart_expenses,
             'chart_withdrawals': chart_withdrawals,
         })
+
         return context
+
 
 @csrf_exempt
 def add_gallery_group(request):
