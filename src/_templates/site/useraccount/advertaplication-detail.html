@@ -504,7 +504,6 @@ document.addEventListener('DOMContentLoaded', function () {
 {% if current_driver and current_driver_lat is not None and current_driver_lng is not None %}
   var carLat = {{ current_driver_lat|unlocalize }};
   var carLng = {{ current_driver_lng|unlocalize }};
-{% endif %}
 
     // HTML с расширенной информацией о водителе
     var driverPopupHtml = `
@@ -531,6 +530,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         </div>
     `;
+{% endif %}
 
     L.marker([carLat, carLng], { icon: carIcon })
         .addTo(map)
