@@ -139,13 +139,9 @@
     .page-item .page-link:hover { background: var(--primary-color); color:white; transform: scale(1.1); }
 </style>
 
-<div class="main-container">
+<div class="">
 
-    <!-- Заголовок -->
-    <div class="page-header">
-        <h3 class="page-title">📋 Список заявок</h3>
-        <p class="page-subtitle">Управление и отслеживание всех ваших заявок</p>
-    </div>
+
     <!-- Вкладки -->
     <ul class="nav nav-tabs mb-3" id="dashboardTabs" role="tablist">
         <li class="nav-item" role="presentation">
@@ -154,8 +150,8 @@
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="tab-point-a" data-bs-toggle="tab" data-bs-target="#point-a" type="button" role="tab">Точка А Точка Б</button>
         </li>
-        <li class="nav-item d-none" role="presentation">
-            <button class="nav-link" id="tab-point-b" data-bs-toggle="tab" data-bs-target="#point-b" type="button" role="tab">Название</button>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-point-b" data-bs-toggle="tab" data-bs-target="#point-b" type="button" role="tab">Продуктовый портфель</button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="tab-opu" data-bs-toggle="tab" data-bs-target="#opu" type="button" role="tab">ОПУ</button>
@@ -182,75 +178,75 @@
         <!-- Точка А -->
         <div class="tab-pane fade" id="point-a" role="tabpanel">
             <div class="card p-4 mb-4">
-<!-- Вкладка Точка А -->
-    <div class="card p-4 mb-4">
-        <h3 class="mb-3">📍 Точка А</h3>
-        <div class="table-responsive">
-            <table class="table table-hover table-bordered">
-                <thead class="table-light">
-                    <tr>
-                        <th>№</th>
-                        <th>Название заявки</th>
-                        <th>Статус</th>
-                        <th>Дата создания</th>
-                        <th>Стоимость</th>
-                        <th>Расходы</th>
-                        <th>Остаток</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for i in "12345"|make_list %}
-                    <tr>
-                        <td>{{ forloop.counter }}</td>
-                        <td>—</td>
-                        <td>—</td>
-                        <td>—</td>
-                        <td>—</td>
-                        <td>—</td>
-                        <td>—</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        <div class="text-center text-muted mt-3">
-            Данные будут загружены после добавления заявок
-        </div>
-    </div>
-    <div class="card p-4 mb-4">
-        <h3 class="mb-3">📍 Точка Б</h3>
-        <div class="table-responsive">
-            <table class="table table-hover table-bordered">
-                <thead class="table-light">
-                    <tr>
-                        <th>№</th>
-                        <th>Название заявки</th>
-                        <th>Статус</th>
-                        <th>Дата создания</th>
-                        <th>Стоимость</th>
-                        <th>Расходы</th>
-                        <th>Остаток</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for i in "12345"|make_list %}
-                    <tr>
-                        <td>{{ forloop.counter }}</td>
-                        <td>—</td>
-                        <td>—</td>
-                        <td>—</td>
-                        <td>—</td>
-                        <td>—</td>
-                        <td>—</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        <div class="text-center text-muted mt-3">
-            Данные будут загружены после добавления заявок
-        </div>
-    </div>
+                <!-- Вкладка Точка А -->
+                <div class="card p-4 mb-4">
+                    <h3 class="mb-3">📍 Точка А</h3>
+                    <div class="table-responsive">
+                        <table class="table table-hover table-bordered">
+                            <thead class="table-light">
+                            <tr>
+                                <th>№</th>
+                                <th>Название заявки</th>
+                                <th>Статус</th>
+                                <th>Дата создания</th>
+                                <th>Стоимость</th>
+                                <th>Расходы</th>
+                                <th>Остаток</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for i in "12345"|make_list %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>—</td>
+                                <td>—</td>
+                                <td>—</td>
+                                <td>—</td>
+                                <td>—</td>
+                                <td>—</td>
+                            </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-center text-muted mt-3">
+                        Данные будут загружены после добавления заявок
+                    </div>
+                </div>
+                <div class="card p-4 mb-4">
+                    <h3 class="mb-3">📍 Точка Б</h3>
+                    <div class="table-responsive">
+                        <table class="table table-hover table-bordered">
+                            <thead class="table-light">
+                            <tr>
+                                <th>№</th>
+                                <th>Название заявки</th>
+                                <th>Статус</th>
+                                <th>Дата создания</th>
+                                <th>Стоимость</th>
+                                <th>Расходы</th>
+                                <th>Остаток</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for i in "12345"|make_list %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>—</td>
+                                <td>—</td>
+                                <td>—</td>
+                                <td>—</td>
+                                <td>—</td>
+                                <td>—</td>
+                            </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-center text-muted mt-3">
+                        Данные будут загружены после добавления заявок
+                    </div>
+                </div>
 
 
             </div>
@@ -260,7 +256,115 @@
         <div class="tab-pane fade" id="point-b" role="tabpanel">
             <div class="card p-4 mb-4">
                 <h3 class="mb-3">Название</h3>
-                <p>Здесь будет информация по Точке Б, маршруты и статистика.</p>
+{# advert_statistics.html #}
+{# advert_statistics.html - кусок с таблицей топ-9 брендов #}
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th class="empty-cell"></th>
+            <th>А</th>
+            <th>Б</th>
+            <th>Д</th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Популярные (1..3) -->
+        <tr>
+            <td class="empty-cell">Популярные</td>
+
+            <td>
+                {% if top_car_brand_1 and top_car_brand_1.brand %}
+                    <a href="">{{ top_car_brand_1.brand.name }}</a>
+                    <span class="badge bg-secondary ms-2">{{ top_car_brand_1.count }}</span>
+                {% else %}
+                    &mdash;
+                {% endif %}
+            </td>
+
+            <td>
+                {% if top_car_brand_2 and top_car_brand_2.brand %}
+                    <a href="">{{ top_car_brand_2.brand.name }}</a>
+                    <span class="badge bg-secondary ms-2">{{ top_car_brand_2.count }}</span>
+                {% else %}
+                    &mdash;
+                {% endif %}
+            </td>
+
+            <td>
+                {% if top_car_brand_3 and top_car_brand_3.brand %}
+                    <a href="">{{ top_car_brand_3.brand.name }}</a>
+                    <span class="badge bg-secondary ms-2">{{ top_car_brand_3.count }}</span>
+                {% else %}
+                    &mdash;
+                {% endif %}
+            </td>
+        </tr>
+
+        <!-- Средние (4..6) -->
+        <tr>
+            <td class="empty-cell">Средние</td>
+
+            <td>
+                {% if top_car_brand_4 and top_car_brand_4.brand %}
+                    <a href="">{{ top_car_brand_4.brand.name }}</a>
+                    <span class="badge bg-secondary ms-2">{{ top_car_brand_4.count }}</span>
+                {% else %}
+                    &mdash;
+                {% endif %}
+            </td>
+
+            <td>
+                {% if top_car_brand_5 and top_car_brand_5.brand %}
+                    <a href="">{{ top_car_brand_5.brand.name }}</a>
+                    <span class="badge bg-secondary ms-2">{{ top_car_brand_5.count }}</span>
+                {% else %}
+                    &mdash;
+                {% endif %}
+            </td>
+
+            <td>
+                {% if top_car_brand_6 and top_car_brand_6.brand %}
+                    <a href="">{{ top_car_brand_6.brand.name }}</a>
+                    <span class="badge bg-secondary ms-2">{{ top_car_brand_6.count }}</span>
+                {% else %}
+                    &mdash;
+                {% endif %}
+            </td>
+        </tr>
+
+        <!-- Низкие (7..9) -->
+        <tr>
+            <td class="empty-cell">Низкие</td>
+
+            <td>
+                {% if top_car_brand_7 and top_car_brand_7.brand %}
+                    <a href="">{{ top_car_brand_7.brand.name }}</a>
+                    <span class="badge bg-secondary ms-2">{{ top_car_brand_7.count }}</span>
+                {% else %}
+                    &mdash;
+                {% endif %}
+            </td>
+
+            <td>
+                {% if top_car_brand_8 and top_car_brand_8.brand %}
+                    <a href="">{{ top_car_brand_8.brand.name }}</a>
+                    <span class="badge bg-secondary ms-2">{{ top_car_brand_8.count }}</span>
+                {% else %}
+                    &mdash;
+                {% endif %}
+            </td>
+
+            <td>
+                {% if top_car_brand_9 and top_car_brand_9.brand %}
+                    <a href="">{{ top_car_brand_9.brand.name }}</a>
+                    <span class="badge bg-secondary ms-2">{{ top_car_brand_9.count }}</span>
+                {% else %}
+                    &mdash;
+                {% endif %}
+            </td>
+        </tr>
+    </tbody>
+</table>
             </div>
         </div>
 
