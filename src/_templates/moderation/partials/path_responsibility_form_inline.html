@@ -1,0 +1,84 @@
+{# moderation/partials/path_responsibility_form_inline.html #}
+{# Контекст: application, paths, (pr optional), action_url, status_choices (optional) #}
+
+<form id="pathResponsibilityForm"
+      method="post"
+hx-post="{% url 'moderation:update_responsibility'  %}"
+      hx-target="#pathResponsibilityList"
+      hx-swap="innerHTML">
+    {% csrf_token %}
+    <input type="hidden" name="application_id" value="{{ application.id }}">
+    <input type="hidden" name="responsibility_id" value="{% if pr %}{{ pr.id }}{% endif %}">
+
+    <div class="row g-3">
+        <!-- Выбор этапа (path_choice) -->
+        <div class="col-md-6">
+            <label class="form-label small mb-1">Этап (Путь)</label>
+            <select class="form-select form-select-sm" name="path_choice_id" id="pathChoice" required>
+                <option value="">— выберите этап —</option>
+                {% for path in paths %}
+                  <option value="{{ path.id }}"
+                    {% if pr and pr.path_choice_id == path.id %}selected{% endif %}>
+                    {{ path.name }}
+                  </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Статус -->
+        <div class="col-md-6">
+            <label class="form-label small mb-1">Статус</label>
+            <select class="form-select form-select-sm" name="status" id="respStatus" required>
+                {% comment %} Передай status_choices = PathResponsibility.STATUS_CHOICES как контекст (или можно захардкодить) {% endcomment %}
+                {% if status_choices %}
+                  {% for code,label in status_choices %}
+                    <option value="{{ code }}" {% if pr and pr.status|stringformat:"s" == code|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+                  {% endfor %}
+                {% else %}
+                  <option value="0" {% if pr and pr.status == "0" %}selected{% endif %}>В ожидании</option>
+                  <option value="1" {% if pr and pr.status == "1" %}selected{% endif %}>Принял</option>
+                  <option value="2" {% if pr and pr.status == "2" %}selected{% endif %}>Закончил</option>
+                {% endif %}
+            </select>
+        </div>
+
+        <!-- Ответственный -->
+        <div class="col-md-6">
+            <label class="form-label small mb-1">Ответственный</label>
+            <select class="form-select form-select-sm" id="responsibleSelect" name="responsible_id" required>
+                <option value="">— выберите ответственного —</option>
+                {% for men in application.user_drivers.all %}
+                  <option value="{{ men.id }}" {% if pr and pr.responsible_id == men.id %}selected{% endif %}>
+                    {{ men.get_full_name }} — {{ men.get_role_display }}
+                  </option>
+                {% endfor %}
+                {% for men in application.user_menager.all %}
+                  <option value="{{ men.id }}" {% if pr and pr.responsible_id == men.id %}selected{% endif %}>
+                    {{ men.get_full_name }} — {{ men.get_role_display }}
+                  </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Дополнение -->
+        <div class="col-md-6">
+            <label class="form-label small mb-1">Дополнение</label>
+            <input type="text"
+                   class="form-control form-control-sm"
+                   id="additionalInput"
+                   name="additional"
+                   value="{% if pr %}{{ pr.additional|escape }}{% endif %}">
+        </div>
+
+
+
+    </div>
+
+    <div class="mt-3 d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Отмена</button>
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+    </div>
+</form>
+
+
+

@@ -17,6 +17,7 @@ urlpatterns = [
         views.add_gallery_group_with_items,
         name="add_gallery_group_with_items",
     ),
+
     path("responsibility/form/", views.responsibility_form, name="responsibility_create"),
     path("responsibility/<int:pk>/form/", views.responsibility_form, name="responsibility_update"),
 
@@ -64,8 +65,8 @@ urlpatterns = [
     path('path/update/<int:path_id>/', views.update_path, name='update_path'),
     path('path/delete/<int:path_id>/', views.delete_path, name='delete_path'),
     path('responsibility/create/', views.create_responsibility, name='create_responsibility'),
-    path('responsibility/update/<int:responsibility_id>/', views.update_responsibility,
-         name='update_responsibility'),
+    path('responsibility/update/', views.update_responsibility, name='update_responsibility'),
+
     path('responsibility/delete/<int:responsibility_id>/', views.delete_responsibility,
          name='delete_responsibility'),
 

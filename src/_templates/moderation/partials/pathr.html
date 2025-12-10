@@ -1,79 +1,77 @@
 {% load l10n %}
 
-{% for path in paths %}
-<div class="stage-card"
-     {% if path.latitude and path.longitude %}
-     data-lat="{{ path.latitude|unlocalize }}"
-     data-lng="{{ path.longitude|unlocalize }}"
-     data-title="{{ path.name|default:'Этап'|escapejs }}"
-     {% endif %}>
-    <h5 class="text-primary fw-semibold mb-2 text-center">
-        Этап {{ forloop.counter }}
-    </h5>
+<style>
+/* Стили для прокрутки пунктов и стрелок */
+.paths-scroll-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
 
-    <div class="text-center mb-3">
-        {{ path.name }}
-    </div>
+/* Контейнер с самими карточками (горизонтальный скролл) */
+.paths-scroll {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 12px 8px;
+  scroll-behavior: smooth;
+}
 
-    {% if path.description %}
-    <div class="text-muted small mb-2 text-center">
-        {{ path.description }}
-    </div>
-    {% endif %}
+/* Скрываем скроллбар в некоторых браузерах, но оставляем в FF тонкий */
+.paths-scroll::-webkit-scrollbar { height: 10px; }
+.paths-scroll::-webkit-scrollbar-track { background: transparent; }
+.paths-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.08); border-radius: 8px; }
+.paths-scroll { scrollbar-width: thin; }
 
-    <hr class="my-2">
+/* Стрелки */
+.paths-scroll-btn {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  border-radius: 50%;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  box-shadow: 0 6px 18px rgba(15,23,42,0.08);
+  cursor: pointer;
+}
 
-    <div class="small fw-semibold mb-2">
-        <i class="bi bi-people me-1"></i>Участник этапа
-    </div>
-    <div class="stage-participant mb-3">
-        <div class="avatar-circle me-2">
-            {{ path.responsible.first_name|default:path.responsible.username|slice:":1" }}
-        </div>
-        <div>
-            <div class="small fw-semibold mb-0">
-                {{ path.responsible.get_full_name|default:path.responsible.username }}
-            </div>
-            <div class="text-muted small">
-                {{ path.responsible.get_role_display|default:"Участник" }}
-            </div>
-        </div>
-    </div>
+/* Снаружи контейнера, по краям */
+.paths-scroll-btn-left { margin-right: 8px; }
+.paths-scroll-btn-right { margin-left: 8px; }
 
-    <!-- Текущий статус + переключатель -->
-    <div class="small text-muted mb-1">
-        Статус –
-        <span class="fw-semibold">
-            {{ path.get_status_display }}
-        </span>
-    </div>
+/* Скрывать кнопки, когда прокрутка не нужна (будет включаться JS) */
+.paths-scroll-btn.hidden { display: none !important; }
 
-    <!-- 🔹 Форма смены статуса через htmx -->
+/* Немного отступов для карточек внутри (чтобы выглядело как в твоём примере) */
+.path-card {
+  min-width: 320px; /* можно уменьшить/увеличить */
+  flex-shrink: 0;
+}
+</style>
 
-    {# 🔹 Форма смены статуса показываем только если prev_finished == True или это первый этап #}
-    {% if not prev_finished %}
-    <form
-        hx-post="{% url 'moderation:path_change_status' path.id %}"
-        hx-target="#pathr"
-        hx-swap="innerHTML"
-        class="mb-2">
-        {% csrf_token %}
-        <select name="status"
-                class="form-select form-select-sm"
-                onchange="this.form.requestSubmit()">
-            {% for value, label in path.STATUS_CHOICES %}
-                <option value="{{ value }}"
-                        {% if path.status == value %}selected{% endif %}>
-                    {{ label }}
-                </option>
-            {% endfor %}
-        </select>
-    </form>
-    {% endif %}
+<div class="d-flex gap-3 align-items-start">
+  <div class="paths-scroll-wrapper w-100">
 
+    <!-- Кнопка влево -->
+    <button type="button" class="paths-scroll-btn paths-scroll-btn-left me-2" id="pathScrollLeft" aria-label="Прокрутить влево">
+      <i class="bi bi-chevron-left"></i>
+    </button>
 
-    <div class="mt-auto pt-2">
-        <div class="d-flex justify-content-between gap-2">
+    <!-- Сама полоса с карточками -->
+    <div class="paths-scroll" id="pathsScroll" role="list">
+      {% for path in paths %}
+      <div class="d-flex align-items-center rounded-3 p-3 bg-light border mt-3 path-card" role="listitem" aria-label="{{ path.name }}">
+        <span class="point-number rounded-circle d-flex align-items-center justify-content-center me-3">1</span>
+        <div class="flex-grow-1">
+          <h5 class="mb-1 fw-bold">{{ path.name }}</h5>
+          <div class="d-flex align-items-center">
+            <span class="coordinates-badge me-3">{{ path.latitude|unlocalize }}° N, {{ path.longitude|unlocalize }}° E</span>
+          </div>
+
+          <div class="d-flex justify-content-between gap-2 mt-2">
             <!-- Редактировать -->
             <button type="button"
                     class="btn btn-sm btn-light border flex-fill btn-edit-stage"
@@ -90,23 +88,79 @@
 
             <!-- Удалить -->
             <form method="post"
-      hx-post="{% url 'moderation:path_delete' path.id %}"
-      hx-target="#pathr"
-      hx-swap="innerHTML"
-      hx-confirm="Удалить этап «{{ path.name }}»?"
-      class="flex-fill">
-    {% csrf_token %}
-    <button type="submit"
-            class="btn btn-sm btn-outline-danger w-100">
-        <i class="bi bi-trash3 me-1"></i>Удалить
-    </button>
-</form>
-
+                  hx-post="{% url 'moderation:path_delete' path.id %}"
+                  hx-target="#pathr"
+                  hx-swap="innerHTML"
+                  hx-confirm="Удалить этап «{{ path.name }}»?"
+                  class="flex-fill ms-2">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-danger w-100">
+                    <i class="bi bi-trash3 me-1"></i>Удалить
+                </button>
+            </form>
+          </div>
         </div>
+      </div>
+      {% endfor %}
     </div>
+
+    <!-- Кнопка вправо -->
+    <button type="button" class="paths-scroll-btn paths-scroll-btn-right ms-2" id="pathScrollRight" aria-label="Прокрутить вправо">
+      <i class="bi bi-chevron-right"></i>
+    </button>
+
+  </div>
 </div>
-{% empty %}
-<div class="text-muted small">
-    Этапы ещё не созданы.
-</div>
-{% endfor %}
+
+<script>
+(function(){
+  const scrollEl = document.getElementById('pathsScroll');
+  const btnLeft = document.getElementById('pathScrollLeft');
+  const btnRight = document.getElementById('pathScrollRight');
+
+  if (!scrollEl) return;
+
+  // Шаг прокрутки: ширина видимой области минус небольшой отступ
+  function getScrollStep() {
+    return Math.max(200, Math.floor(scrollEl.clientWidth * 0.7));
+  }
+
+  btnLeft.addEventListener('click', ()=> {
+    scrollEl.scrollBy({ left: -getScrollStep(), behavior: 'smooth' });
+  });
+
+  btnRight.addEventListener('click', ()=> {
+    scrollEl.scrollBy({ left: getScrollStep(), behavior: 'smooth' });
+  });
+
+  // Показывать/скрывать стрелки в зависимости от наличия переполнения и позиции
+  function updateButtons() {
+    const maxScrollLeft = scrollEl.scrollWidth - scrollEl.clientWidth;
+    if (maxScrollLeft <= 5) {
+      btnLeft.classList.add('hidden');
+      btnRight.classList.add('hidden');
+      return;
+    }
+    // скрываем левую если уже в начале
+    if (scrollEl.scrollLeft <= 5) btnLeft.classList.add('hidden'); else btnLeft.classList.remove('hidden');
+    // скрываем правую если уже в конце
+    if (scrollEl.scrollLeft >= maxScrollLeft - 5) btnRight.classList.add('hidden'); else btnRight.classList.remove('hidden');
+  }
+
+  // Обновляем при скролле и ресайзе
+  scrollEl.addEventListener('scroll', updateButtons);
+  window.addEventListener('resize', updateButtons);
+
+  // Инициалный вызов (подождём, чтобы контент встал)
+  window.requestAnimationFrame(updateButtons);
+
+  // Поддержка клавиш ← и →, когда фокус внутри блока
+  scrollEl.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') { e.preventDefault(); scrollEl.scrollBy({ left: -getScrollStep(), behavior: 'smooth' }); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); scrollEl.scrollBy({ left: getScrollStep(), behavior: 'smooth' }); }
+  });
+
+  // Делаем контейнер фокусируемым для обработки клавиш
+  scrollEl.tabIndex = 0;
+})();
+</script>

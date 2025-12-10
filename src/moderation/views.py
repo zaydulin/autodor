@@ -2,6 +2,7 @@ import base64
 import io
 import json
 import os
+from audioop import reverse
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
 from urllib.parse import urlparse
@@ -34,7 +35,7 @@ from django.views.generic import ListView, DetailView, TemplateView, FormView
 from django.db.models import Q, Prefetch
 from django.contrib.auth.mixins import LoginRequiredMixin
 
-from .forms import PathForm, PathResponsibilityForm, AdvertAplicationGalleryForm
+from .forms import PathForm, AdvertAplicationGalleryForm
 from .models import AdvertAplication, ChatMessage, CallSession, AdvertDocument, AdvertExpense, AdvertApplicationImage, \
     CarModel, CarBrand, AdvertAplicationGallery, ExpenseMask, AdvertAplicationGalleryGroup, CartVod, WalletDriver
 from moderation.models import Advert, AdvertAplication,Path,PathResponsibility, Withdrawal
@@ -788,71 +789,106 @@ def delete_path(request, path_id):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 
-
-@csrf_exempt
 @require_http_methods(["POST"])
 def create_responsibility(request):
     try:
-        data = json.loads(request.body)
-        application_id = data.get("application_id")  # 👈 достаём id заявки
+        # Получаем данные из POST
+        application_id = request.POST.get("application_id")
+        path_choice_id = request.POST.get("path_choice_id")
+        status = request.POST.get("status")
+        responsible_id = request.POST.get("responsible_id")
+        additional = request.POST.get("additional", "")
 
-        form = PathResponsibilityForm(data, application_id=application_id)  # 👈 передаём в форму
+        # Проверяем объекты
+        application = get_object_or_404(AdvertAplication, id=application_id)
+        path_choice = get_object_or_404(Path, id=path_choice_id)
+        responsible = get_object_or_404(Profile, id=responsible_id)
 
-        if form.is_valid():
-            responsibility = form.save()
-            return JsonResponse({
-                'success': True,
-                'responsibility': {
-                    'id': responsibility.id,
-                    'status': responsibility.status,
-                    'additional': responsibility.additional,
-                    'responsible': {
-                        'id': responsibility.responsible.id,
-                        'name': f"{responsibility.responsible.first_name} {responsibility.responsible.last_name}"
-                    }
-                }
-            })
-        else:
-            return JsonResponse({'success': False, 'errors': form.errors})
+        # Создаём PathResponsibility
+        PathResponsibility.objects.create(
+            path_choice=path_choice,
+            status=status,
+            responsible=responsible,
+            additional=additional
+        )
+
+        # Получаем все PathResponsibility для этой заявки
+        path_responsibilitys = PathResponsibility.objects.filter(
+            path_choice__aplication=application
+        ).order_by("id")  # или "created_at" если есть поле
+
+        # Вернуть HTML для htmx прямо здесь
+        return render(
+            request,
+            "moderation/partials/path_responsibility_item.html",  # используем один шаблон
+            {"path_responsibilitys": path_responsibilitys}
+        )
+
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 
 
-@csrf_exempt
+
 @require_http_methods(["POST"])
-def update_responsibility(request, responsibility_id):
+def update_responsibility(request):
     try:
-        responsibility = get_object_or_404(PathResponsibility, id=responsibility_id)
-        data = json.loads(request.body)
-        form = PathResponsibilityForm(data, instance=responsibility)
+        responsibility_id = request.POST.get("responsibility_id")
+        if not responsibility_id:
+            return JsonResponse({'success': False, 'error': 'responsibility_id не передан'})
 
-        if form.is_valid():
-            responsibility = form.save()
-            return JsonResponse({
-                'success': True,
-                'responsibility': {
-                    'id': responsibility.id,
-                    'status': responsibility.status,
-                    'additional': responsibility.additional
-                }
-            })
-        else:
-            return JsonResponse({'success': False, 'errors': form.errors})
+        responsibility = get_object_or_404(PathResponsibility, id=responsibility_id)
+
+        # Дальше как раньше
+        path_choice_id = request.POST.get("path_choice_id")
+        status = request.POST.get("status")
+        responsible_id = request.POST.get("responsible_id")
+        additional = request.POST.get("additional", "")
+
+        if path_choice_id:
+            responsibility.path_choice = get_object_or_404(Path, id=path_choice_id)
+        if responsible_id:
+            responsibility.responsible = get_object_or_404(Profile, id=responsible_id)
+
+        responsibility.status = status
+        responsibility.additional = additional
+        responsibility.save()
+
+        application = responsibility.path_choice.aplication
+        path_responsibilitys = PathResponsibility.objects.filter(
+            path_choice__aplication=application
+        ).order_by("id")
+
+        return render(
+            request,
+            "moderation/partials/path_responsibility_item.html",
+            {"path_responsibilitys": path_responsibilitys}
+        )
 
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 
 
-@csrf_exempt
-@require_http_methods(["DELETE"])
+
+@require_http_methods(["POST"])
 def delete_responsibility(request, responsibility_id):
     try:
         responsibility = get_object_or_404(PathResponsibility, id=responsibility_id)
+        application = responsibility.path_choice.aplication
         responsibility.delete()
-        return JsonResponse({'success': True})
+
+        # Вернуть обновлённый список
+        path_responsibilitys = PathResponsibility.objects.filter(
+            path_choice__aplication=application
+        ).order_by("id")
+
+        return render(
+            request,
+            "moderation/partials/path_responsibility_item.html",
+            {"path_responsibilitys": path_responsibilitys}
+        )
+
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
-
 
 
 def document_editor(request,document_id):

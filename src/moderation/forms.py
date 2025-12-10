@@ -93,62 +93,6 @@ class PathForm(forms.ModelForm):
                 raise forms.ValidationError('Широта должна быть в диапазоне от -90 до 90')
         return latitude
 
-class PathResponsibilityForm(forms.ModelForm):
-    STATUS_CHOICES = [
-        ('принял', 'Принял'),
-        ('закончил', 'Закончил'),
-    ]
-
-    status = forms.ChoiceField(
-        choices=STATUS_CHOICES,
-        widget=forms.Select(attrs={'class': 'form-control'}),
-        label='Статус'
-    )
-
-    class Meta:
-        model = PathResponsibility
-        fields = ['path_choice', 'status', 'additional', 'responsible']
-        widgets = {
-            'path_choice': forms.Select(attrs={'class': 'form-control'}),
-            'additional': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 3,
-                'placeholder': 'Введите дополнительную информацию'
-            }),
-            'responsible': forms.Select(attrs={'class': 'form-control'}),
-        }
-        labels = {
-            'path_choice': 'Путь',
-            'additional': 'Дополнение',
-            'responsible': 'Ответственный'
-        }
-
-    def __init__(self, *args, **kwargs):
-        application_id = kwargs.pop("application_id", None)
-        super().__init__(*args, **kwargs)
-
-        # если редактируем — не даём менять path_choice,
-        # но в queryset обязательно включаем текущий путь,
-        # чтобы select корректно отрисовался
-        if self.instance and self.instance.pk:
-            self.fields["path_choice"].queryset = Path.objects.filter(pk=self.instance.path_choice_id)
-            self.fields["path_choice"].disabled = True
-            self.fields["path_choice"].required = False
-        else:
-            if application_id:
-                self.fields["path_choice"].queryset = Path.objects.filter(aplication_id=application_id)
-            else:
-                self.fields["path_choice"].queryset = Path.objects.none()
-
-        self.fields["responsible"].queryset = Profile.objects.filter(type=0)
-
-    # при редактировании всегда возвращаем исходный path_choice из instance,
-    # чтобы валидация не падала из-за disabled/select без значения в POST
-    def clean_path_choice(self):
-        if self.instance and self.instance.pk:
-            return self.instance.path_choice
-        return self.cleaned_data.get('path_choice')
-
 
 class AdvertAplicationGalleryForm(forms.ModelForm):
     class Meta:
@@ -167,32 +111,32 @@ class AdvertAplicationGalleryForm(forms.ModelForm):
 
 
 
-class PathResponsibilityUpdateForm(forms.ModelForm):
-    """Форма для обновления ответственности (только статус и дополнение)"""
-    STATUS_CHOICES = [
-        ('принял', 'Принял'),
-        ('закончил', 'Закончил'),
-    ]
-
-    status = forms.ChoiceField(
-        choices=STATUS_CHOICES,
-        widget=forms.Select(attrs={'class': 'form-control'}),
-        label='Статус'
-    )
-
-    class Meta:
-        model = PathResponsibility
-        fields = ['status', 'additional']
-        widgets = {
-            'additional': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 3,
-                'placeholder': 'Введите дополнительную информацию'
-            })
-        }
-        labels = {
-            'additional': 'Дополнение'
-        }
+# class PathResponsibilityUpdateForm(forms.ModelForm):
+#     """Форма для обновления ответственности (только статус и дополнение)"""
+#     STATUS_CHOICES = [
+#         ('принял', 'Принял'),
+#         ('закончил', 'Закончил'),
+#     ]
+#
+#     status = forms.ChoiceField(
+#         choices=STATUS_CHOICES,
+#         widget=forms.Select(attrs={'class': 'form-control'}),
+#         label='Статус'
+#     )
+#
+#     class Meta:
+#         model = PathResponsibility
+#         fields = ['status', 'additional']
+#         widgets = {
+#             'additional': forms.Textarea(attrs={
+#                 'class': 'form-control',
+#                 'rows': 3,
+#                 'placeholder': 'Введите дополнительную информацию'
+#             })
+#         }
+#         labels = {
+#             'additional': 'Дополнение'
+#         }
 
 
 

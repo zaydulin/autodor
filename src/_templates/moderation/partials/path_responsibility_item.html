@@ -1,0 +1,134 @@
+{% for path in path_responsibilitys %}
+<div class="stage-card">
+<h5 class="text-primary fw-semibold mb-2 text-center">
+        Этап {{ forloop.counter }}
+    </h5>
+
+    <div class="text-center mb-3">
+        {{ path.name }}
+    </div>
+
+    {% if path.description %}
+    <div class="text-muted small mb-2 text-center">
+        {{ path.description }}
+    </div>
+    {% endif %}
+
+    <hr class="my-2">
+
+    <div class="small fw-semibold mb-2">
+        <i class="bi bi-people me-1"></i>Участник этапа
+    </div>
+    <div class="stage-participant mb-3">
+        <div class="avatar-circle me-2">
+            {{ path.responsible.first_name|default:path.responsible.username|slice:":1" }}
+        </div>
+        <div>
+            <div class="small fw-semibold mb-0">
+                {{ path.responsible.get_full_name|default:path.responsible.username }}
+            </div>
+            <div class="text-muted small">
+                {{ path.responsible.get_role_display|default:"Участник" }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Текущий статус + переключатель -->
+    <div class="small text-muted mb-1">
+        Статус –
+        <span class="fw-semibold">
+            {{ path.get_status_display }}
+        </span>
+    </div>
+
+    <!-- 🔹 Форма смены статуса через htmx -->
+
+    {# 🔹 Форма смены статуса показываем только если prev_finished == True или это первый этап #}
+    {% if not prev_finished %}
+    <form
+            hx-post="{% url 'moderation:path_change_status' path.id %}"
+            hx-target="#pathr"
+            hx-swap="innerHTML"
+            class="mb-2">
+        {% csrf_token %}
+        <select name="status"
+                class="form-select form-select-sm"
+                onchange="this.form.requestSubmit()">
+            {% for value, label in path.STATUS_CHOICES %}
+            <option value="{{ value }}"
+                    {% if path.status == value %}selected{% endif %}>
+                {{ label }}
+            </option>
+            {% endfor %}
+        </select>
+    </form>
+    {% endif %}
+
+    <div class="mt-auto pt-2">
+        <div class="d-flex justify-content-between gap-2">
+            <!-- Редактировать -->
+            <button type="button"
+        class="btn btn-sm btn-light border flex-fill btn-edit-stage"
+        data-bs-toggle="modal"
+        data-bs-target="#editEtapeModal"
+        data-stage-id="{{ path.id }}"
+        data-stage-path-choice-id="{{ path.path_choice.id }}"
+        data-stage-status="{{ path.status }}"
+        data-stage-participant-id="{{ path.responsible_id }}"
+        data-stage-additional="{{ path.additional|default_if_none:''|escapejs }}">
+    <i class="bi bi-pencil me-1"></i>Редактировать
+</button>
+
+
+            <!-- Удалить -->
+            <form method="post"
+                  hx-post="{% url 'moderation:delete_responsibility' path.id %}"
+                  hx-target="#pathResponsibilityList"
+                  hx-swap="innerHTML"
+                  hx-confirm="Удалить этап «{{ path.name }}»?"  class="flex-fill">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-danger w-100">
+                    <i class="bi bi-trash3 me-1"></i>Удалить
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% empty %}
+<div class="text-muted small">
+    Этапы ещё не созданы.
+</div>
+{% endfor %}
+
+<!-- Универсальный попап -->
+<div class="modal fade" id="editEtapeModal" tabindex="-1" aria-labelledby="editEtapeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editEtapeModalLabel">Редактирование этапа</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <div class="modal-body">
+                {% include 'moderation/partials/path_responsibility_form_inline.html' %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.querySelectorAll('.btn-edit-stage').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const modal = document.getElementById('editEtapeModal');
+        const form = modal.querySelector('form');
+
+        form.querySelector('[name="responsibility_id"]').value = btn.dataset.stageId;
+        form.querySelector('[name="path_choice_id"]').value = btn.dataset.stagePathChoiceId;
+        form.querySelector('[name="status"]').value = btn.dataset.stageStatus;
+        form.querySelector('[name="responsible_id"]').value = btn.dataset.stageParticipantId;
+        form.querySelector('[name="additional"]').value = btn.dataset.stageAdditional;
+
+        // Меняем URL формы на update
+        form.setAttribute('hx-post', `/responsibility/update/${btn.dataset.stageId}/`);
+    });
+});
+</script>

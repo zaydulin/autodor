@@ -1,0 +1,429 @@
+
+<div class="container py-4">
+    <div class="row g-3">
+        <!-- Левая колонка: авто / объект -->
+        <div class="col-lg-12">
+
+
+
+            <!-- Leaflet JS -->
+            <script
+                    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+                    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+                    crossorigin=""
+            ></script>
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="fw-bold mb-0">Система этапов</h2>
+
+                <button type="button"
+                        class="btn btn-primary btn-sm d-flex align-items-center"
+                        id="createStageBtn"
+                        data-bs-toggle="modal"
+                        data-bs-target="#editStageModal">
+                    <i class="bi bi-plus-lg me-1"></i>
+                    Создать этап
+                </button>
+            </div>
+
+
+            <!-- ===== ЭТАПЫ В ОДНУ ЛИНИЮ С ПРОКРУТКОЙ ===== -->
+            <div class="stages-scroll-container mb-3">
+
+                <!-- Кнопки прокрутки -->
+                <button class="stages-scroll-btn stages-scroll-btn-left" type="button">
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+                <div class="stages-scroll-wrapper">
+                    <div class="stages-scroll">
+
+                        <!-- Этап 1 -->
+                        <div class="stage-card">
+                            <h5 class="text-primary fw-semibold mb-2 text-center">Этап 1</h5>
+                            <div class="text-center mb-3">Дополнение</div>
+                            <hr class="my-2">
+                            <div class="small fw-semibold mb-2">
+                                <i class="bi bi-people me-1"></i>Участники этапа
+                            </div>
+                            <div class="stage-participant mb-3">
+                                <div class="avatar-circle me-2">ГВ</div>
+                                <div>
+                                    <div class="small fw-semibold mb-0">Георгий Водителевич</div>
+                                    <div class="text-muted small">Водитель</div>
+                                </div>
+                            </div>
+
+                            <div class="mt-auto pt-2">
+                                <div class="text-center small text-muted mb-2">
+                                    статус – <span class="text-success fw-semibold">закончил</span>
+                                </div>
+                                <div class="d-flex justify-content-between gap-2">
+                                    <button type="button"
+                                            class="btn btn-sm btn-light border flex-fill btn-edit-stage"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#editStageModal"
+                                            data-stage-id="1"
+                                            data-stage-title="Этап 1"
+                                            data-stage-description="Дополнение"
+                                            data-stage-participant-id="1"
+                                            data-stage-role="Водитель"
+                                            data-stage-status="закончил"
+                                            data-stage-location="Германия"
+                                            data-stage-lat="51.1657"
+                                            data-stage-lng="10.4515">
+                                        <i class="bi bi-pencil me-1"></i>Редактировать
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger flex-fill">
+                                        <i class="bi bi-trash3 me-1"></i>Удалить
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Этап 2 -->
+                        <div class="stage-card">
+                            <h5 class="text-primary fw-semibold mb-2 text-center">Этап 2</h5>
+                            <div class="text-center mb-3">Проверка документов</div>
+                            <hr class="my-2">
+                            <div class="small fw-semibold mb-2">
+                                <i class="bi bi-people me-1"></i>Участники этапа
+                            </div>
+                            <div class="stage-participant mb-3">
+                                <div class="avatar-circle me-2">АД</div>
+                                <div>
+                                    <div class="small fw-semibold mb-0">Администратор</div>
+                                    <div class="text-muted small">Админ</div>
+                                </div>
+                            </div>
+
+                            <div class="mt-auto pt-2">
+                                <div class="text-center small text-muted mb-2">
+                                    статус – <span class="text-primary fw-semibold">принял</span>
+                                </div>
+                                <div class="d-flex justify-content-between gap-2">
+                                    <button type="button"
+                                            class="btn btn-sm btn-light border flex-fill btn-edit-stage"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#editStageModal"
+                                            data-stage-id="2"
+                                            data-stage-title="Этап 2"
+                                            data-stage-description="Проверка документов"
+                                            data-stage-participant-id="3"
+                                            data-stage-role="Админ"
+                                            data-stage-status="принял"
+                                            data-stage-location="Польша"
+                                            data-stage-lat="51.9194"
+                                            data-stage-lng="19.1451">
+                                        <i class="bi bi-pencil me-1"></i>Редактировать
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger flex-fill">
+                                        <i class="bi bi-trash3 me-1"></i>Удалить
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Этап 3 -->
+                        <div class="stage-card">
+                            <h5 class="text-primary fw-semibold mb-2 text-center">Этап 3</h5>
+                            <div class="text-center mb-3">Оплата</div>
+                            <hr class="my-2">
+                            <div class="small fw-semibold mb-2">
+                                <i class="bi bi-people me-1"></i>Участники этапа
+                            </div>
+                            <div class="stage-participant mb-3">
+                                <div class="avatar-circle me-2">ГМ</div>
+                                <div>
+                                    <div class="small fw-semibold mb-0">Георгий Менеджеров</div>
+                                    <div class="text-muted small">Менеджер</div>
+                                </div>
+                            </div>
+
+                            <div class="mt-auto pt-2">
+                                <div class="text-center small text-muted mb-2">
+                                    статус – <span class="text-primary fw-semibold">в процессе</span>
+                                </div>
+                                <div class="d-flex justify-content-between gap-2">
+                                    <button type="button"
+                                            class="btn btn-sm btn-light border flex-fill btn-edit-stage"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#editStageModal"
+                                            data-stage-id="3"
+                                            data-stage-title="Этап 3"
+                                            data-stage-description="Оплата"
+                                            data-stage-participant-id="2"
+                                            data-stage-role="Менеджер"
+                                            data-stage-status="в процессе"
+                                            data-stage-location="Между Польшей и Беларусью"
+                                            data-stage-lat="52.5"
+                                            data-stage-lng="23.0">
+                                        <i class="bi bi-pencil me-1"></i>Редактировать
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger flex-fill">
+                                        <i class="bi bi-trash3 me-1"></i>Удалить
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Этап 4 -->
+                        <div class="stage-card">
+                            <h5 class="text-primary fw-semibold mb-2 text-center">Этап 4</h5>
+                            <div class="text-center mb-3">Погрузка</div>
+                            <hr class="my-2">
+                            <div class="small fw-semibold mb-2">
+                                <i class="bi bi-people me-1"></i>Участники этапа
+                            </div>
+                            <div class="stage-participant mb-3">
+                                <div class="avatar-circle me-2">СК</div>
+                                <div>
+                                    <div class="small fw-semibold mb-0">Склад</div>
+                                    <div class="text-muted small">Логистика</div>
+                                </div>
+                            </div>
+
+                            <div class="mt-auto pt-2">
+                                <div class="text-center small text-muted mb-2">
+                                    статус – <span class="text-muted fw-semibold">ожидает</span>
+                                </div>
+                                <div class="d-flex justify-content-between gap-2">
+                                    <button type="button"
+                                            class="btn btn-sm btn-light border flex-fill btn-edit-stage"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#editStageModal"
+                                            data-stage-id="4"
+                                            data-stage-title="Этап 4"
+                                            data-stage-description="Погрузка"
+                                            data-stage-participant-id="4"
+                                            data-stage-role="Логистика"
+                                            data-stage-status="ожидает"
+                                            data-stage-location="Беларусь"
+                                            data-stage-lat="53.7098"
+                                            data-stage-lng="27.9534">
+                                        <i class="bi bi-pencil me-1"></i>Редактировать
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger flex-fill">
+                                        <i class="bi bi-trash3 me-1"></i>Удалить
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Этап 5 -->
+                        <div class="stage-card">
+                            <h5 class="text-primary fw-semibold mb-2 text-center">Этап 5</h5>
+                            <div class="text-center mb-3">Доставка в страну</div>
+                            <hr class="my-2">
+                            <div class="small fw-semibold mb-2">
+                                <i class="bi bi-people me-1"></i>Участники этапа
+                            </div>
+                            <div class="stage-participant mb-3">
+                                <div class="avatar-circle me-2">ТР</div>
+                                <div>
+                                    <div class="small fw-semibold mb-0">Транспортная компания</div>
+                                    <div class="text-muted small">Перевозчик</div>
+                                </div>
+                            </div>
+
+                            <div class="mt-auto pt-2">
+                                <div class="text-center small text-muted mb-2">
+                                    статус – <span class="text-muted fw-semibold">ожидает</span>
+                                </div>
+                                <div class="d-flex justify-content-between gap-2">
+                                    <button type="button"
+                                            class="btn btn-sm btn-light border flex-fill btn-edit-stage"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#editStageModal"
+                                            data-stage-id="5"
+                                            data-stage-title="Этап 5"
+                                            data-stage-description="Доставка в страну"
+                                            data-stage-participant-id="4"
+                                            data-stage-role="Перевозчик"
+                                            data-stage-status="ожидает"
+                                            data-stage-location="Граница Беларусь/Казахстан"
+                                            data-stage-lat="50.0"
+                                            data-stage-lng="40.0">
+                                        <i class="bi bi-pencil me-1"></i>Редактировать
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger flex-fill">
+                                        <i class="bi bi-trash3 me-1"></i>Удалить
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Этап 6 -->
+                        <div class="stage-card">
+                            <h5 class="text-primary fw-semibold mb-2 text-center">Этап 6</h5>
+                            <div class="text-center mb-3">Выдача клиенту</div>
+                            <hr class="my-2">
+                            <div class="small fw-semibold mb-2">
+                                <i class="bi bi-people me-1"></i>Участники этапа
+                            </div>
+                            <div class="stage-participant mb-3">
+                                <div class="avatar-circle me-2">НК</div>
+                                <div>
+                                    <div class="small fw-semibold mb-0">Николай Климентович</div>
+                                    <div class="text-muted small">Клиент</div>
+                                </div>
+                            </div>
+
+                            <div class="mt-auto pt-2">
+                                <div class="text-center small text-muted mb-2">
+                                    статус – <span class="text-muted fw-semibold">ожидает</span>
+                                </div>
+                                <div class="d-flex justify-content-between gap-2">
+                                    <button type="button"
+                                            class="btn btn-sm btn-light border flex-fill btn-edit-stage"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#editStageModal"
+                                            data-stage-id="6"
+                                            data-stage-title="Этап 6"
+                                            data-stage-description="Выдача клиенту"
+                                            data-stage-participant-id="5"
+                                            data-stage-role="Клиент"
+                                            data-stage-status="ожидает"
+                                            data-stage-location="Казахстан"
+                                            data-stage-lat="48.0196"
+                                            data-stage-lng="66.9237">
+                                        <i class="bi bi-pencil me-1"></i>Редактировать
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger flex-fill">
+                                        <i class="bi bi-trash3 me-1"></i>Удалить
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+
+                <!-- ===== ПРОГРЕСС + СТРЕЛКИ В ОДНОЙ РАМКЕ ===== -->
+                <div class="progress-arrows-block">
+                    <!-- Дорожка со стрелками -->
+                    <div class="arrow-track-wrapper">
+                        <div class="arrow-track" id="arrowTrack">
+                            <!-- кол-во стрелок можно менять -->
+                            <div class="arrow-step"></div>
+                            <div class="arrow-step"></div>
+                            <div class="arrow-step"></div>
+                            <div class="arrow-step"></div>
+                            <div class="arrow-step"></div>
+                            <div class="arrow-step"></div>
+                            <div class="arrow-step"></div>
+                            <div class="arrow-step"></div>
+                            <div class="arrow-step"></div>
+                            <div class="arrow-step"></div>
+                            <div class="arrow-step"></div>
+                            <div class="arrow-step"></div>
+                            <div class="arrow-step"></div>
+
+                        </div>
+                        <!-- Кнопка добавления -->
+                        <button class="btn-add-step btn btn-outline-primary btn-sm rounded-circle d-flex align-items-center justify-content-center ms-2"
+                                type="button"
+                                title="Добавить этап">
+                            <i class="bi bi-plus"></i>
+                        </button>
+                    </div>
+                </div>
+                <!-- ===== Пункты ===== -->
+                <div class="d-flex  gap-3">
+                    <!-- Точка 1 -->
+                    <div class="d-flex align-items-center rounded-3 p-3 bg-light border mt-3">
+                        <span class="point-number rounded-circle d-flex align-items-center justify-content-center me-3">1</span>
+                        <div>
+                            <h5 class="mb-1 fw-bold">Москва, Склад №1</h5>
+                            <div class="d-flex align-items-center">
+                                <span class="coordinates-badge me-3">55.7558° N, 37.6173° E</span>
+                            </div>
+                            <div class="d-flex justify-content-between gap-2 mt-3">
+                                <button type="button"
+                                        class="btn btn-sm btn-light border flex-fill btn-edit-stage"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#editStageModal"
+                                        data-stage-id="6"
+                                        data-stage-title="Этап 6"
+                                        data-stage-description="Выдача клиенту"
+                                        data-stage-participant-id="5"
+                                        data-stage-role="Клиент"
+                                        data-stage-status="ожидает"
+                                        data-stage-location="Казахстан"
+                                        data-stage-lat="48.0196"
+                                        data-stage-lng="66.9237">
+                                    <i class="bi bi-pencil me-1"></i>Редактировать
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger flex-fill">
+                                    <i class="bi bi-trash3 me-1"></i>Удалить
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Точка 2 -->
+                    <div class="d-flex align-items-center rounded-3 p-3 bg-light border mt-3">
+                        <span class="point-number rounded-circle d-flex align-items-center justify-content-center me-3">2</span>
+                        <div>
+                            <h5 class="mb-1 fw-bold">Москва, Склад №2</h5>
+                            <div class="d-flex align-items-center">
+                                <span class="coordinates-badge me-3">55.7558° N, 37.6173° E</span>
+                            </div>
+                            <div class="d-flex justify-content-between gap-2  mt-3">
+                                <button type="button"
+                                        class="btn btn-sm btn-light border flex-fill btn-edit-stage"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#editStageModal"
+                                        data-stage-id="6"
+                                        data-stage-title="Этап 6"
+                                        data-stage-description="Выдача клиенту"
+                                        data-stage-participant-id="5"
+                                        data-stage-role="Клиент"
+                                        data-stage-status="ожидает"
+                                        data-stage-location="Казахстан"
+                                        data-stage-lat="48.0196"
+                                        data-stage-lng="66.9237">
+                                    <i class="bi bi-pencil me-1"></i>Редактировать
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger flex-fill">
+                                    <i class="bi bi-trash3 me-1"></i>Удалить
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Точка 3 -->
+                    <div class="d-flex align-items-center rounded-3 p-3 bg-light border  mt-3">
+                        <span class="point-number rounded-circle d-flex align-items-center justify-content-center me-3">3</span>
+                        <div>
+                            <h5 class="mb-1 fw-bold">Москва, Склад №3</h5>
+                            <div class="d-flex align-items-center">
+                                <span class="coordinates-badge me-3">55.7558° N, 37.6173° E</span>
+                            </div>
+                            <div class="d-flex justify-content-between gap-2  mt-3">
+                                <button type="button"
+                                        class="btn btn-sm btn-light border flex-fill btn-edit-stage"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#editStageModal"
+                                        data-stage-id="6"
+                                        data-stage-title="Этап 6"
+                                        data-stage-description="Выдача клиенту"
+                                        data-stage-participant-id="5"
+                                        data-stage-role="Клиент"
+                                        data-stage-status="ожидает"
+                                        data-stage-location="Казахстан"
+                                        data-stage-lat="48.0196"
+                                        data-stage-lng="66.9237">
+                                    <i class="bi bi-pencil me-1"></i>Редактировать
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger flex-fill">
+                                    <i class="bi bi-trash3 me-1"></i>Удалить
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>

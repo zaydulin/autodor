@@ -788,11 +788,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 <button type="button"
                         class="btn btn-primary btn-sm d-flex align-items-center"
-                        id="createStageBtn"
+                        id="createEtapBtn"
                         data-bs-toggle="modal"
-                        data-bs-target="#editStageModal">
+                        data-bs-target="#editEtapeModal">
                     <i class="bi bi-plus-lg me-1"></i>
-                    Создать этап
                 </button>
             </div>
 
@@ -804,9 +803,25 @@ document.addEventListener('DOMContentLoaded', function () {
                 <button class="stages-scroll-btn stages-scroll-btn-left" type="button">
                     <i class="bi bi-chevron-left"></i>
                 </button>
-                <div class="stages-scroll-wrapper">
-                    <div class="stages-scroll" id="pathr">
-                        {% include 'moderation/partials/pathr.html' %}
+                <div class="stages-scroll-wrapper" >
+                <div class="stages-scroll" id="pathResponsibilityList">
+                    {% include 'moderation/partials/path_responsibility_item.html' %}
+                </div>
+                </div>
+
+                <div class="modal fade" id="editEtapeModal" tabindex="-1" aria-labelledby="editEtapeModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="editEtapeModalLabel">Создание этапа</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                            </div>
+                            <div class="modal-body">
+                                {% include 'moderation/partials/pathresponsibility_form.html' %}
+
+                            </div>
+
+                        </div>
                     </div>
                 </div>
 
@@ -814,7 +829,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     <div class="modal-dialog modal-dialog-centered modal-lg">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title" id="editStageModalLabel">Редактирование этапа</h5>
+                                <h5 class="modal-title" id="editStageModalLabel">Редактирование пути</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
                             </div>
                             <div class="modal-body">
@@ -836,7 +851,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                             <input type="text" class="form-control form-control-sm" id="editStageDescription" name="description">
                                         </div>
 
-                                        <div class="col-md-6">
+                                        <div class="col-md-6 d-none">
                                             <label class="form-label small mb-1">Участник</label>
                                             <select class="form-select form-select-sm" id="editStageParticipant" name="participant_id" required>
                                                 {% for men in application.user_drivers.all %}
@@ -957,11 +972,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- ===== ПРОГРЕСС + СТРЕЛКИ В ОДНОЙ РАМКЕ ===== -->
             <div class="progress-arrows-block">
-
-
-
                 <!-- Дорожка со стрелками -->
-                <div class="arrow-track-wrapper">
+                <div class="arrow-track-wrapper d-flex align-items-center">
+                    <!-- Большая кнопка плюсик -->
+                    <button class="btn-add-step btn btn-primary rounded-circle d-flex align-items-center justify-content-center me-3"
+                            id="createStageBtn"
+                            data-bs-toggle="modal"
+                            data-bs-target="#editStageModal"
+                            style="width: 40px; height: 40px;"
+                            title="Добавить новый этап">
+                        <i class="bi bi-plus fs-5"></i>
+                    </button>
                     <div class="arrow-track" id="arrowTrack">
                         <!-- кол-во стрелок можно менять -->
                         <div class="arrow-step"></div>
@@ -979,11 +1000,15 @@ document.addEventListener('DOMContentLoaded', function () {
                         <div class="arrow-step"></div>
 
                     </div>
+                    <!-- Кнопка добавления -->
                 </div>
             </div>
+            <!-- ===== Пункты ===== -->
+            <div class=""  id="pathr">
+                <!-- Точка 1 -->
+                {% include 'moderation/partials/pathr.html' %}
 
-
-
+            </div>
         </div>
     </div>
     <!-- Правая колонка: управление и информация -->
@@ -1020,62 +1045,62 @@ document.addEventListener('DOMContentLoaded', function () {
         </div>
 
         <!-- Offcanvas: Активность по заявке/водителю -->
-<!-- Offcanvas: Активность по заявке/водителю -->
-<div class="offcanvas offcanvas-end activity-offcanvas" tabindex="-1" id="activityOffcanvas" aria-labelledby="activityOffcanvasLabel">
-    <div class="offcanvas-header">
-        <h5 class="offcanvas-title" id="activityOffcanvasLabel">Активность</h5>
-        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Закрыть"></button>
-    </div>
+        <!-- Offcanvas: Активность по заявке/водителю -->
+        <div class="offcanvas offcanvas-end activity-offcanvas" tabindex="-1" id="activityOffcanvas" aria-labelledby="activityOffcanvasLabel">
+            <div class="offcanvas-header">
+                <h5 class="offcanvas-title" id="activityOffcanvasLabel">Активность</h5>
+                <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Закрыть"></button>
+            </div>
 
-    <div class="offcanvas-body">
-        <div class="small text-muted mb-2">Последние действия по заявке</div>
+            <div class="offcanvas-body">
+                <div class="small text-muted mb-2">Последние действия по заявке</div>
 
-        <ul class="list-unstyled activity-list mb-0">
-            {% comment %} Берём последние логи по дате (лучше в view сделать .order_by('-created_at') ) {% endcomment %}
-            {% for log in application.logs.all|dictsortreversed:"created_at" %}
-                <li class="activity-item mb-3">
-                    <div class="activity-time">{{ log.created_at|date:"H:i" }}</div>
+                <ul class="list-unstyled activity-list mb-0">
+                    {% comment %} Берём последние логи по дате (лучше в view сделать .order_by('-created_at') ) {% endcomment %}
+                    {% for log in application.logs.all|dictsortreversed:"created_at" %}
+                    <li class="activity-item mb-3">
+                        <div class="activity-time">{{ log.created_at|date:"H:i" }}</div>
 
-                    <div class="activity-content">
-                        {# Заголовок #}
-                        <div class="activity-title">
-                            {% if log.action == "create" %}
+                        <div class="activity-content">
+                            {# Заголовок #}
+                            <div class="activity-title">
+                                {% if log.action == "create" %}
                                 Создан: <span class="text-primary">{{ log.related_model|capfirst }}</span>
-                            {% elif log.action == "delete" %}
+                                {% elif log.action == "delete" %}
                                 Удалён: <span class="text-primary">{{ log.related_model|capfirst }}</span>
-                            {% elif log.action == "update" %}
+                                {% elif log.action == "update" %}
                                 Обновлён: <span class="text-primary">{{ log.related_model|capfirst }}</span>
-                            {% else %}
-                                {{ log.related_model|capfirst }} — {{ log.action|capfirst }}
-                            {% endif %}
-                        </div>
-
-                        {# Пользователь #}
-                        <div class="activity-meta text-muted small mt-1">
-                            {% if log.user %}
-                                {% if log.user in application.user_menager.all %}
-                                    Менеджер:
-                                {% elif log.user in application.user_drivers.all %}
-                                    Водитель:
                                 {% else %}
-                                    Пользователь:
+                                {{ log.related_model|capfirst }} — {{ log.action|capfirst }}
+                                {% endif %}
+                            </div>
+
+                            {# Пользователь #}
+                            <div class="activity-meta text-muted small mt-1">
+                                {% if log.user %}
+                                {% if log.user in application.user_menager.all %}
+                                Менеджер:
+                                {% elif log.user in application.user_drivers.all %}
+                                Водитель:
+                                {% else %}
+                                Пользователь:
                                 {% endif %}
                                 <span>{{ log.user.get_full_name|default:log.user.username }}</span>
-                            {% else %}
+                                {% else %}
                                 <span class="text-muted">Системное действие</span>
-                            {% endif %}
-                        </div>
+                                {% endif %}
+                            </div>
 
-                        {# Отображение изменений: log.changes в формате {field: {action, new}} или {field: {action, old, new}} #}
-                        {% if log.changes %}
+                            {# Отображение изменений: log.changes в формате {field: {action, new}} или {field: {action, old, new}} #}
+                            {% if log.changes %}
                             <div class="activity-details mt-2 small">
                                 {% for field, info in log.changes.items %}
-                                    <div class="mb-2 pb-1 border-bottom">
-                                        <strong>{{ field }}:</strong>
-                                        <div>
-                                            {% if info.action == "добавил" %}
-                                                <span class="text-muted">добавил — </span>
-                                                <span class="text-primary">
+                                <div class="mb-2 pb-1 border-bottom">
+                                    <strong>{{ field }}:</strong>
+                                    <div>
+                                        {% if info.action == "добавил" %}
+                                        <span class="text-muted">добавил — </span>
+                                        <span class="text-primary">
                                                     {% if info.new is iterable and info.new|stringformat:"s" != info.new %}
                                                         {# если это список/iterable показываем через запятую #}
                                                         {{ info.new|join:", " }}
@@ -1083,38 +1108,38 @@ document.addEventListener('DOMContentLoaded', function () {
                                                         {{ info.new }}
                                                     {% endif %}
                                                 </span>
-                                            {% elif info.action == "изменил" %}
-                                                <div>
-                                                    <span class="text-muted">было:</span>
-                                                    <span>{{ info.old }}</span>
-                                                </div>
-                                                <div>
-                                                    <span class="text-muted">стало:</span>
-                                                    <span class="text-primary">
+                                        {% elif info.action == "изменил" %}
+                                        <div>
+                                            <span class="text-muted">было:</span>
+                                            <span>{{ info.old }}</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-muted">стало:</span>
+                                            <span class="text-primary">
                                                         {% if info.new is iterable and info.new|stringformat:"s" != info.new %}
                                                             {{ info.new|join:", " }}
                                                         {% else %}
                                                             {{ info.new }}
                                                         {% endif %}
                                                     </span>
-                                                </div>
-                                            {% else %}
-                                                {# на случай других action #}
-                                                <span>{{ info }}</span>
-                                            {% endif %}
                                         </div>
+                                        {% else %}
+                                        {# на случай других action #}
+                                        <span>{{ info }}</span>
+                                        {% endif %}
                                     </div>
+                                </div>
                                 {% endfor %}
                             </div>
-                        {% endif %}
-                    </div>
-                </li>
-            {% empty %}
-                <li class="text-muted small">Действий в логе пока нет.</li>
-            {% endfor %}
-        </ul>
-    </div>
-</div>
+                            {% endif %}
+                        </div>
+                    </li>
+                    {% empty %}
+                    <li class="text-muted small">Действий в логе пока нет.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
 
 
         <!-- Основная информация по заявке -->
@@ -1561,9 +1586,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }, {once: true}); // сработает один раз после этого submit
     });
 </script>
-
-
-
 
 <!-- Модальное окно для редактирования заявки -->
 <div class="modal fade" id="editApplicationModal" tabindex="-1"

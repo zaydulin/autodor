@@ -1015,11 +1015,14 @@ class Path(models.Model):
 
 class PathResponsibility(models.Model):
 
-    # 0: "принял"
-    # 1: "закончил"
+    STATUS_CHOICES = [
+        ('pending', 'В ожидании'),
+        ('accepted', 'Принял'),
+        ('completed', 'Закончил'),
+    ]
 
     path_choice = models.ForeignKey(Path, on_delete=models.CASCADE, verbose_name='Путь выбор пути')
-    status = models.CharField(max_length=50, verbose_name='Статус')
+    status = models.CharField(max_length=50, verbose_name='Статус', choices=STATUS_CHOICES,)
     additional = models.TextField(verbose_name='Дополнение', blank=True, null=True)
     responsible = models.ForeignKey(Profile, verbose_name='Ответственный',on_delete=models.CASCADE)
 
@@ -1030,6 +1033,11 @@ class PathResponsibility(models.Model):
     class Meta:
         verbose_name = "Этап"
         verbose_name_plural = "Этапы"
+
+
+
+
+
 
 
 
