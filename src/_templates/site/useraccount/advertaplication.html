@@ -208,11 +208,29 @@
 
     {% if advertaplications %}
     {% for advertaplication in advertaplications %}
-    <div style="padding-bottom: 10%; background: white;"
-     hx-get="{% url 'moderation:application_detail' advertaplication.id %}"
-     hx-target="#content-body"
-     hx-push-url="true"
-     hx-on="htmx:afterRequest: reloadPage()">
+    <div style="padding-bottom: 10%; background: white; cursor: pointer;"
+     onclick="redirectAndReload('{% url 'moderation:application_detail' advertaplication.id %}')">
+<script>
+function redirectAndReload(url) {
+    // Сохраняем текущую позицию скролла если нужно
+    sessionStorage.setItem('scrollPosition', window.pageYOffset || document.documentElement.scrollTop);
+
+    // Переходим на страницу
+    window.location.href = url;
+
+    // ИЛИ если хотите чтобы после загрузки сразу обновилось:
+    // window.location.href = url + '?reload=' + Date.now();
+}
+
+// При загрузке страницы проверяем нужно ли скроллить
+window.addEventListener('load', function() {
+    const scrollPosition = sessionStorage.getItem('scrollPosition');
+    if (scrollPosition) {
+        window.scrollTo(0, parseInt(scrollPosition));
+        sessionStorage.removeItem('scrollPosition');
+    }
+});
+</script>
         <div style="padding:5%" class="row d-flex align-items-center pb-3 "  >
 
             <div class="col-lg-6 d-flex justify-content-center align-items-center" style="height:300px;">
