@@ -603,6 +603,73 @@ document.addEventListener('DOMContentLoaded', function () {
 
 //Метки на карте
 
+ document.addEventListener("DOMContentLoaded", function () {
+    // Инициализация карты (центр примерно на Польше)
+    var map = L.map('map').setView([52.0, 20.5], 4);
+
+    // Подложка OpenStreetMap
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 18,
+        attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+
+    // Иконка для стран (стандартный маркер)
+    function addCountryMarker(lat, lng, label) {
+        L.marker([lat, lng])
+            .addTo(map)
+            .bindPopup(label);
+    }
+
+    // Метки стран
+          {% for path in paths %}
+
+    addCountryMarker({{ path.latitude|unlocalize }}, {{ path.longitude|unlocalize }}, '{{ path.name }}');
+{% endfor %}
+    // Кастомная иконка "машинка" между Польшей и Беларусью
+    var carIcon = L.divIcon({
+        className: 'car-marker',
+        html: '🚗',
+        iconSize: [24, 24],
+        iconAnchor: [12, 12]
+    });
+
+    // Примерная точка между Польшей и Беларусью
+{% if current_driver and current_driver_lat is not None and current_driver_lng is not None %}
+  var carLat = {{ current_driver_lat|unlocalize }};
+  var carLng = {{ current_driver_lng|unlocalize }};
+
+
+    // HTML с расширенной информацией о водителе
+    var driverPopupHtml = `
+        <div class="driver-popup">
+            <div class="driver-popup-header mb-1">
+                <strong>Водитель в пути</strong>
+            </div>
+            <div class="driver-popup-body small">
+                <div class="driver-popup-row">
+                    <span class="driver-label">Имя:</span>
+                    <span class="driver-value">{{ current_driver.get_full_name|default:current_driver.username|escapejs }}</span>
+                </div>
+                <div class="driver-popup-row">
+                    <span class="driver-label">Телефон:</span>
+                    <span class="driver-value">{{ current_driver.email|escapejs }}</span>
+                </div>
+
+                <div class="driver-popup-row">
+                    <span class="driver-label">Статус:</span>
+                    <span class="driver-value text-primary">{{ current_path.get_status_display|escapejs }}</span>
+                </div>
+
+            </div>
+
+        </div>
+    `;
+{% endif %}
+
+    L.marker([carLat, carLng], { icon: carIcon })
+        .addTo(map)
+        .bindPopup(driverPopupHtml);
+});
 
 
 
@@ -1425,7 +1492,6 @@ document.addEventListener('DOMContentLoaded', function () {
         </form>
     </div>
 </div>
-
 
 <!-- Скрытое поле для ID приложения -->
 <input type="hidden" id="application-id" value="{{ application.id }}">
