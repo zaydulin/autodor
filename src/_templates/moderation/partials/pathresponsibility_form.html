@@ -5,7 +5,9 @@
       method="post"
       hx-post="{% url 'moderation:create_responsibility' %}"
       hx-target="#pathResponsibilityList"
-      hx-swap="innerHTML">
+      hx-swap="innerHTML"
+            hx-on="htmx:afterOnLoad: closePathResponsibilityModal()">
+
     {% csrf_token %}
     <input type="hidden" name="application_id" value="{{ application.id }}">
     <input type="hidden" name="responsibility_id" value="{% if pr %}{{ pr.id }}{% endif %}">
@@ -14,7 +16,7 @@
         <!-- Выбор этапа (path_choice) -->
         <div class="col-md-6">
             <label class="form-label small mb-1">Этап (Путь)</label>
-            <select class="form-select form-select-sm" name="path_choice_id" id="pathChoice" required>
+            <select class="form-select form-select-sm" name="path_choice_id" id="pathChoice" required data-paths="all">
                 <option value="">— выберите этап —</option>
                 {% for path in paths %}
                   <option value="{{ path.id }}"
@@ -45,7 +47,7 @@
         <!-- Ответственный -->
         <div class="col-md-6">
             <label class="form-label small mb-1">Ответственный</label>
-            <select class="form-select form-select-sm" id="responsibleSelect" name="responsible_id" required>
+            <select class="form-select form-select-sm" id="responsibleSelect" name="responsible_id" data-user="all" required>
                 <option value="">— выберите ответственного —</option>
                 {% for men in application.user_drivers.all %}
                   <option value="{{ men.id }}" {% if pr and pr.responsible_id == men.id %}selected{% endif %}>
@@ -100,3 +102,13 @@ document.querySelectorAll('.btn-edit-stage').forEach(btn => {
 
 </script>
 
+
+<script>
+function closePathResponsibilityModal() {
+    const modalEl = document.querySelector('#pathResponsibilityModal'); // ID твоего модала
+    if(modalEl) {
+        const modalInstance = bootstrap.Modal.getInstance(modalEl);
+        if(modalInstance) modalInstance.hide();
+    }
+}
+</script>

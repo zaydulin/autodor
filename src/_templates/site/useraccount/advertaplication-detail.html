@@ -11,7 +11,60 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.theme.default.min.css">
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
+<script>
+    function refreshResponsibleSelects() {
+        const allUsersDiv = document.getElementById('all-users');
+        if (!allUsersDiv) return;
+
+        // Получаем все строки из all-users, разбиваем по строкам
+        const lines = allUsersDiv.innerText.split('\n').map(s => s.trim()).filter(Boolean);
+
+        // Преобразуем в массив объектов {id, name}
+        const users = [];
+        for (let i = 0; i < lines.length; i += 2) {
+            const name = lines[i];
+            const id = lines[i + 1];
+            if (name && id) {
+                users.push({id: id, name: name});
+            }
+        }
+
+        // Обновляем все select с data-user="all"
+        const selects = document.querySelectorAll('select[data-user="all"]');
+        selects.forEach(select => {
+            // Сохраняем выбранное значение
+            const selectedValue = select.value;
+
+            // Очищаем options
+            select.innerHTML = '<option value="">— выберите ответственного —</option>';
+
+            // Добавляем новые options
+            users.forEach(user => {
+                const option = document.createElement('option');
+                option.value = user.id;
+                option.textContent = user.name;
+                if (user.id === selectedValue) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            });
+        });
+    }
+
+    // первый раз сразу
+    refreshResponsibleSelects();
+
+    // каждые 5 секунд
+    setInterval(refreshResponsibleSelects, 5000);
+</script>
+
 <style>
+    #all-users{
+    display:none;
+    }
+    div#pathResponsibilityList {
+    min-height: 100px;
+}
     body {
            background: #f5f7fb;
        }
@@ -301,6 +354,86 @@
      overflow: hidden;
  }
 </style>
+<script>
+    let mapInstance;
+    let markersLayer;
+    let existingMarkers = {}; // ключ: type+lat+lng
+
+    function initMap() {
+        if (!mapInstance) {
+            mapInstance = L.map('map').setView([52.0, 20.5], 4);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 18,
+                attribution: '&copy; OpenStreetMap'
+            }).addTo(mapInstance);
+
+            markersLayer = L.layerGroup().addTo(mapInstance);
+        }
+
+        refreshMarkers(); // первый запуск
+        setInterval(refreshMarkers, 5000); // каждые 5 секунд
+    }
+
+    function refreshMarkers() {
+        const ul = document.getElementById('pathResponsibilityListMap');
+        if (!ul) return;
+
+        const currentKeys = {};
+
+        // Обновляем маркеры путей
+        ul.querySelectorAll('.path-marker').forEach(li => {
+            const lat = parseFloat(li.dataset.lat);
+            const lng = parseFloat(li.dataset.lng);
+            const name = li.dataset.name;
+            const key = `path-${lat}-${lng}`;
+            currentKeys[key] = true;
+
+            if (!existingMarkers[key]) {
+                const marker = L.marker([lat, lng]).bindPopup(name).addTo(markersLayer);
+                existingMarkers[key] = marker;
+            }
+        });
+
+        // Обновляем маркеры водителей
+        ul.querySelectorAll('.driver-marker').forEach(li => {
+            const lat = parseFloat(li.dataset.lat);
+            const lng = parseFloat(li.dataset.lng);
+            const name = li.dataset.name;
+            const email = li.dataset.email || '';
+            const status = li.dataset.status || '';
+            const key = `driver-${lat}-${lng}`;
+            currentKeys[key] = true;
+
+            if (!existingMarkers[key]) {
+                const carIcon = L.divIcon({
+                    className: 'car-marker',
+                    html: '🚗',
+                    iconSize: [24, 24],
+                    iconAnchor: [12, 12]
+                });
+
+                const marker = L.marker([lat, lng], { icon: carIcon })
+                    .bindPopup(`<strong>${name}</strong><br>${email}<br>${status}`)
+                    .addTo(markersLayer);
+
+                existingMarkers[key] = marker;
+            }
+        });
+
+        // Удаляем метки, которых больше нет в DOM
+        Object.keys(existingMarkers).forEach(key => {
+            if (!currentKeys[key]) {
+                markersLayer.removeLayer(existingMarkers[key]);
+                delete existingMarkers[key];
+            }
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", initMap);
+</script>
+
+
+
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -504,6 +637,10 @@ document.addEventListener('DOMContentLoaded', function () {
 {% if current_driver and current_driver_lat is not None and current_driver_lng is not None %}
   var carLat = {{ current_driver_lat|unlocalize }};
   var carLng = {{ current_driver_lng|unlocalize }};
+<<<<<<< HEAD
+=======
+
+>>>>>>> f266e246866645ecb0a3794131e5ff51ed9d008b
 
     // HTML с расширенной информацией о водителе
     var driverPopupHtml = `
@@ -735,13 +872,13 @@ document.addEventListener('DOMContentLoaded', function () {
                     crossorigin=""
             ></script>
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="fw-bold mb-0">Система этапов</h2>
+                <h2 class="fw-bold mb-0"  style="padding-left:10px">Система этапов</h2>
 
                 <button type="button"
                         class="btn btn-primary btn-sm d-flex align-items-center"
                         id="createEtapBtn"
                         data-bs-toggle="modal"
-                        data-bs-target="#editEtapeModal">
+                        data-bs-target="#AddEtapeModal">
                     <i class="bi bi-plus-lg me-1"></i>
                 </button>
             </div>
@@ -755,23 +892,23 @@ document.addEventListener('DOMContentLoaded', function () {
                     <i class="bi bi-chevron-left"></i>
                 </button>
                 <div class="stages-scroll-wrapper" >
-                <div class="stages-scroll" id="pathResponsibilityList">
-                    {% include 'moderation/partials/path_responsibility_item.html' %}
-                </div>
+                    <div class="stages-scroll" id="pathResponsibilityList"
+                         data-paths='{{ paths_data|escapejs }}'
+                         data-drivers='{{ drivers_data|escapejs }}'>
+                        {% include 'moderation/partials/path_responsibility_item.html' %}
+                    </div>
                 </div>
 
-                <div class="modal fade" id="editEtapeModal" tabindex="-1" aria-labelledby="editEtapeModalLabel" aria-hidden="true">
+                <div class="modal fade" id="AddEtapeModal" tabindex="-1" aria-labelledby="AddEtapeModalLabel" aria-hidden="true">
                     <div class="modal-dialog modal-dialog-centered modal-lg">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title" id="editEtapeModalLabel">Создание этапа</h5>
+                                <h5 class="modal-title" id="AddEtapeModalLabel">Создание этапа</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
                             </div>
                             <div class="modal-body">
                                 {% include 'moderation/partials/pathresponsibility_form.html' %}
-
                             </div>
-
                         </div>
                     </div>
                 </div>
@@ -867,7 +1004,7 @@ document.addEventListener('DOMContentLoaded', function () {
                           if (!form) return;
                           form.reset();
                           if (idInput) idInput.value = "";
-                          if (modalTitleEl) modalTitleEl.textContent = "Создать этап";
+                          if (modalTitleEl) modalTitleEl.textContent = "Создать Пути";
                         });
                       }
 
@@ -911,6 +1048,39 @@ document.addEventListener('DOMContentLoaded', function () {
                           }
                         }
                       });
+                    });
+                </script>
+                <script>
+                    function closeBootstrapModal(modalId) {
+                        const modalEl = document.getElementById(modalId);
+                        if (!modalEl) return;
+
+                        // Получаем или создаём инстанс модалки
+                        let modalInstance = bootstrap.Modal.getInstance(modalEl);
+                        if (!modalInstance) modalInstance = new bootstrap.Modal(modalEl);
+
+                        // Скрываем модалку через API
+                        modalInstance.hide();
+
+                        // Ждём окончания анимации и удаления show класса
+                        setTimeout(() => {
+                            // Удаляем backdrop полностью
+                            document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+                            // Снимаем класс modal-open с body
+                            document.body.classList.remove('modal-open');
+                            // Убираем show и display у модалки на всякий случай
+                            modalEl.classList.remove('show');
+                            modalEl.style.display = 'none';
+                            modalEl.setAttribute('aria-hidden', 'true');
+                        }, 300); // 300ms = стандартная длительность fade анимации Bootstrap
+                    }
+
+                    // Отслеживаем HTMX обновление списка (#pathr)
+                    document.body.addEventListener('htmx:afterSwap', function(event) {
+                        if (event.target.id === 'pathr') {
+                            closeBootstrapModal('editStageModal');  // если есть второй модал — можно вызвать ещё раз
+                            closeBootstrapModal('AddEtapeModal');
+                        }
                     });
                 </script>
 
@@ -1006,89 +1176,21 @@ document.addEventListener('DOMContentLoaded', function () {
             <div class="offcanvas-body">
                 <div class="small text-muted mb-2">Последние действия по заявке</div>
 
-                <ul class="list-unstyled activity-list mb-0">
-                    {% comment %} Берём последние логи по дате (лучше в view сделать .order_by('-created_at') ) {% endcomment %}
-                    {% for log in application.logs.all|dictsortreversed:"created_at" %}
-                    <li class="activity-item mb-3">
-                        <div class="activity-time">{{ log.created_at|date:"H:i" }}</div>
-
-                        <div class="activity-content">
-                            {# Заголовок #}
-                            <div class="activity-title">
-                                {% if log.action == "create" %}
-                                Создан: <span class="text-primary">{{ log.related_model|capfirst }}</span>
-                                {% elif log.action == "delete" %}
-                                Удалён: <span class="text-primary">{{ log.related_model|capfirst }}</span>
-                                {% elif log.action == "update" %}
-                                Обновлён: <span class="text-primary">{{ log.related_model|capfirst }}</span>
-                                {% else %}
-                                {{ log.related_model|capfirst }} — {{ log.action|capfirst }}
-                                {% endif %}
-                            </div>
-
-                            {# Пользователь #}
-                            <div class="activity-meta text-muted small mt-1">
-                                {% if log.user %}
-                                {% if log.user in application.user_menager.all %}
-                                Менеджер:
-                                {% elif log.user in application.user_drivers.all %}
-                                Водитель:
-                                {% else %}
-                                Пользователь:
-                                {% endif %}
-                                <span>{{ log.user.get_full_name|default:log.user.username }}</span>
-                                {% else %}
-                                <span class="text-muted">Системное действие</span>
-                                {% endif %}
-                            </div>
-
-                            {# Отображение изменений: log.changes в формате {field: {action, new}} или {field: {action, old, new}} #}
-                            {% if log.changes %}
-                            <div class="activity-details mt-2 small">
-                                {% for field, info in log.changes.items %}
-                                <div class="mb-2 pb-1 border-bottom">
-                                    <strong>{{ field }}:</strong>
-                                    <div>
-                                        {% if info.action == "добавил" %}
-                                        <span class="text-muted">добавил — </span>
-                                        <span class="text-primary">
-                                                    {% if info.new is iterable and info.new|stringformat:"s" != info.new %}
-                                                        {# если это список/iterable показываем через запятую #}
-                                                        {{ info.new|join:", " }}
-                                                    {% else %}
-                                                        {{ info.new }}
-                                                    {% endif %}
-                                                </span>
-                                        {% elif info.action == "изменил" %}
-                                        <div>
-                                            <span class="text-muted">было:</span>
-                                            <span>{{ info.old }}</span>
-                                        </div>
-                                        <div>
-                                            <span class="text-muted">стало:</span>
-                                            <span class="text-primary">
-                                                        {% if info.new is iterable and info.new|stringformat:"s" != info.new %}
-                                                            {{ info.new|join:", " }}
-                                                        {% else %}
-                                                            {{ info.new }}
-                                                        {% endif %}
-                                                    </span>
-                                        </div>
-                                        {% else %}
-                                        {# на случай других action #}
-                                        <span>{{ info }}</span>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                                {% endfor %}
-                            </div>
-                            {% endif %}
-                        </div>
-                    </li>
-                    {% empty %}
-                    <li class="text-muted small">Действий в логе пока нет.</li>
-                    {% endfor %}
+                <ul id="activity-list" class="list-unstyled activity-list mb-0" >
+                    {% include 'moderation/partials/activity-list.html' %}
                 </ul>
+                <script>
+                    document.body.addEventListener('htmx:afterSwap', function(evt){
+                    if(evt.detail.success){
+                        var modalEl = document.getElementById('addGroupModal');
+                        if (!modalEl) return;
+                        var modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                        modal.hide();
+                    }
+                });
+
+
+                </script>
             </div>
         </div>
 
@@ -1108,100 +1210,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     <div class="small-label">Создана</div>
                     <div>{{ application.created_at|date:"d.m.Y H:i" }}</div>
                 </div>
-
-                <div class="mb-3">
-                    <div class="small-label mb-1">Финансы</div>
-
-                    <div id="application-finance">
-                        {% include 'moderation/partials/application_sidebar.html' %}
-                    </div>
-
-                </div>
-
-
-                <hr>
-
-                <div class="mb-2">
-                    <div class="small-label">Заказчик</div>
-                    {% for user in application.user.all %}
-                    {% if user.employee == 0 %}
-
-                    <div class="d-flex align-items-center mt-1">
-                        <!-- Аватар -->
-                        <div class="avatar-circle">
-                            {{ user.first_name|slice:":1" }}
-                        </div>
-                        <!-- Текст -->
-                        <div>
-                            <div>{{ user.first_name }} {{ user.last_name }}</div>
-                            <div class="text-muted small">{{ user.email }}</div>
-                        </div>
-                    </div>
-                    {%endif%}
-                    {% endfor %}
-                </div>
-
-                <div class="mb-2">
-                    <div class="small-label">Менеджер</div>
-                    {% for men in application.user_menager.all %}
-                    <div class="d-flex align-items-center mt-1">
-                        <!-- Аватар -->
-                        <div class="avatar-circle">
-                            {{ men.first_name|slice:":1" }}
-                        </div>
-
-                        <!-- Текст -->
-                        <div>
-                            <div>{{ men.first_name }} {{ men.last_name }}</div>
-                            <div class="text-muted small">{{ men.email }}</div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-
-                <div class="mb-0">
-                    <div class="small-label mb-1">Водители:</div>
-                    <div id="driver-wallets-block">
-                        {% include 'moderation/partials/driver_wallets_block.html' %}
-                    </div>
-
-
-                    <!-- ОДНА модалка на всех водителей -->
-                    <div class="modal fade" id="walletModal" tabindex="-1" aria-hidden="true">
-                        <div class="modal-dialog">
-                            <div class="modal-content" id="walletModalContent">
-                                {# сюда htmx будет подгружать форму #}
-                                <div class="modal-header">
-                                    <h5 class="modal-title">Кошелек</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                            aria-label="Закрыть"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <div class="text-muted small">
-                                        Выберите водителя, чтобы загрузить данные кошелька...
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <script>
-                        document.addEventListener("DOMContentLoaded", function () {
-                          document.body.addEventListener("htmx:afterSwap", function (event) {
-                            // Обновился контент модалки кошелька
-                            if (event.target.id === "walletModalContent") {
-                              const modalEl = document.getElementById("walletModal");
-                              if (modalEl && window.bootstrap) {
-                                const modalInstance = bootstrap.Modal.getInstance(modalEl);
-                                if (modalInstance) {
-                                  modalInstance.hide();
-                                }
-                              }
-                            }
-                          });
-                        });
-                    </script>
-
-
+                <div id="application-finance">
+                    {% include 'moderation/partials/application_sidebar.html' %}
                 </div>
             </div>
         </div>
@@ -1267,11 +1277,34 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div class="modal-content">
                     <div class="modal-body">
                         <form id="addGroupWithItemsForm"
-                              enctype="multipart/form-data"
                               hx-post="{% url 'moderation:add_gallery_group_with_items' application.id %}"
                               hx-target="#gallery-groups-wrapper"
                               hx-swap="beforeend"
-                              hx-encoding="multipart/form-data">
+                              hx-encoding="multipart/form-data"
+                              hx-on="htmx:afterRequest: refreshActivityList()">
+
+
+                            <script>
+                                function handleUpdate(evt) {
+                                    var detail = evt.detail.xhr;
+                                    if (detail.status === 200) {
+                                        var data = JSON.parse(detail.responseText);
+                                        if(data.success){
+                                            // Обновляем блок галерей
+                                            document.querySelector('#gallery-groups-wrapper').insertAdjacentHTML('beforeend', data.gallery_html);
+                                            // Обновляем список активности
+                                            document.querySelector('#activity-list').innerHTML = data.activity_html;
+
+                                            // Закрываем модалку
+                                            var modalEl = document.getElementById('addGroupModal');
+                                            if(modalEl){
+                                                var modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                                                modal.hide();
+                                            }
+                                        }
+                                    }
+                                }
+                            </script>
                             {% csrf_token %}
                             <div class="row g-4">
                                 <div class="col-md-4">
@@ -1318,6 +1351,21 @@ document.addEventListener('DOMContentLoaded', function () {
                                         class="btn btn-primary">Создать и загрузить</button>
                             </div>
                         </form>
+                        <script>
+                            document.addEventListener('htmx:afterSwap', function(evt){
+                              // если swap произошёл именно в нашем контейнере (или вы можете проверить evt.detail.target)
+                              var target = evt.detail.target || evt.target;
+                              if (!target) return;
+
+                              // проверим, что обновили #gallery-groups-wrapper (или используйте id нужного контейнера)
+                              if (target.id === 'gallery-groups-wrapper') {
+                                var modalEl = document.getElementById('addGroupModal');
+                                if (!modalEl) return;
+                                var modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                                modal.hide();
+                              }
+                            });
+                        </script>
 
                     </div>
                 </div>
@@ -1335,21 +1383,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 <button class="btn btn-outline-primary w-100 mb-3" data-bs-toggle="modal" data-bs-target="#addExpenseModal">
                     Добавить расход
                 </button>
-
-                <table class="table table-sm align-middle" id="expenses">
-                    <thead>
-                    <tr><th>Статья</th><th class="text-end">Сумма</th><th>Дата</th></tr>
-                    </thead>
-                    <tbody id="expensesList">
-                    {% for expense in application.expenses.all %}
-                    {% include "moderation/partials/_expense_item.html" with expense=expense %}
-                    {% empty %}
-                    <div class="text-muted small">Расходы ещё не добавлены.</div>
-                    {% endfor %}
-                    </tbody>
-                </table>
-
-
+               <table class="table table-sm align-middle" id="expenses">
+    {% include "moderation/partials/_expenses_table.html" %}
+</table>
 
 
 
@@ -1473,16 +1509,91 @@ document.addEventListener('DOMContentLoaded', function () {
             </div>
             <div class="modal-body">
                 <form id="add-expense-form"
-                      hx-post="{% url 'moderation:create_expense' %}"
-                      hx-target="#content-body"
-                      hx-swap="afterbegin"
-                      hx-on="htmx:afterRequest:
-        const modalEl = document.getElementById('addExpenseModal');
-        const modalInstance = bootstrap.Modal.getInstance(modalEl);
-        if (modalInstance) modalInstance.hide();
-        this.reset();">
+      hx-post="{% url 'moderation:create_expense' %}"
+      hx-target="body"
+      hx-swap="beforeend"
+      autocomplete="off"
+      method="post">
+
+
                     {% csrf_token %}
                     <input type="hidden" name="application" value="{{ application.id }}">
+                    <script>
+                        (function(){
+                          function parseExpenseLine(text){
+                            // Убираем лишние пробелы и переносы строки
+                            text = text.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+
+                            // Regex для суммы и даты
+                            const amountMatch = text.match(/(\d[\d\s\.,]*\s*\$)/);
+                            const dateMatch = text.match(/(\d{1,2}\s+января|\d{1,2}\s+февраля|\d{1,2}\s+марта|\d{1,2}\s+апреля|\d{1,2}\s+мая|\d{1,2}\s+июня|\d{1,2}\s+июля|\d{1,2}\s+августа|\d{1,2}\s+сентября|\d{1,2}\s+октября|\d{1,2}\s+ноября|\d{1,2}\s+декабря)\s+\d{4}/i);
+
+                            let title = text;
+                            let amount = '';
+                            let date = '';
+
+                            if(amountMatch){
+                              amount = amountMatch[1];
+                              title = title.replace(amount, '').trim();
+                            }
+                            if(dateMatch){
+                              date = dateMatch[0];
+                              title = title.replace(date, '').trim();
+                            }
+
+                            return {title, amount, date};
+                          }
+
+                          function normalizeExpensesList(){
+                            const tbody = document.getElementById('expensesList');
+                            if(!tbody) return;
+
+                            const nodes = Array.from(tbody.childNodes);
+                            for(const node of nodes){
+                              if(node.nodeType === Node.ELEMENT_NODE && node.tagName === 'TR') continue;
+
+                              const text = node.textContent || '';
+                              if(!text.trim()){
+                                node.remove();
+                                continue;
+                              }
+
+                              const rec = parseExpenseLine(text);
+                              const tr = document.createElement('tr');
+
+                              const td1 = document.createElement('td');
+                              td1.textContent = rec.title || '-';
+                              td1.title = rec.title || '-';
+
+                              const td2 = document.createElement('td');
+                              td2.textContent = rec.amount || '';
+                              td2.className = 'text-end';
+
+                              const td3 = document.createElement('td');
+                              td3.textContent = rec.date || '';
+
+                              tr.appendChild(td1);
+                              tr.appendChild(td2);
+                              tr.appendChild(td3);
+
+                              tbody.insertBefore(tr, node);
+                              node.remove();
+                            }
+                          }
+
+                          // Запуск один раз
+                          normalizeExpensesList();
+
+                          // Запуск после HTMX swap/request
+                          if(window.htmx){
+                            document.body.addEventListener('htmx:afterSwap', normalizeExpensesList);
+                            document.body.addEventListener('htmx:afterRequest', normalizeExpensesList);
+                          }
+
+                          window.fixExpensesList = normalizeExpensesList;
+                        })();
+                    </script>
+
 
                     <div class="mb-3">
                         <label class="form-label">Статья расходов</label>
@@ -3161,6 +3272,54 @@ function addNewPhase() {
         }
       });
     });
+</script>
+<script>
+    function refreshPathSelects() {
+        const ul = document.getElementById('pathResponsibilityListMap');
+        if (!ul) return;
+
+        // Получаем все path-marker
+        const pathItems = ul.querySelectorAll('.path-marker');
+
+        // Преобразуем в массив объектов {id, name}
+        const paths = [];
+        pathItems.forEach(li => {
+            const id = li.dataset.namePathId;
+            const name = li.dataset.name;
+            if (id && name) {
+                paths.push({id, name});
+            }
+        });
+
+        // Обновляем все select с data-paths="all"
+        const selects = document.querySelectorAll('select[data-paths="all"]');
+        selects.forEach(select => {
+            // Сохраняем текущее выбранное значение
+            const selectedValue = select.value;
+
+            // Очищаем текущие options кроме первой
+            const firstOption = select.querySelector('option[value=""]');
+            select.innerHTML = '';
+            if (firstOption) select.appendChild(firstOption);
+
+            // Добавляем новые options
+            paths.forEach(path => {
+                const option = document.createElement('option');
+                option.value = path.id;
+                option.textContent = path.name;
+                if (path.id === selectedValue) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            });
+        });
+    }
+
+    // Сразу первый раз
+    refreshPathSelects();
+
+    // Проверка каждые 5 секунд
+    setInterval(refreshPathSelects, 5000);
 </script>
 
 

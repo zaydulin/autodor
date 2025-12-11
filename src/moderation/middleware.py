@@ -2,6 +2,8 @@
 import logging
 from decimal import Decimal
 from datetime import datetime, date, time
+from django.db.models.fields.files import FieldFile
+from django.db.models import QuerySet, Model
 
 from django.apps import apps
 from django.db import transaction
@@ -11,18 +13,41 @@ logger = logging.getLogger(__name__)
 
 
 def serialize_basic(val):
-    """Сериализация простых типов для JSON (Decimal/datetime -> str)."""
+    """Сериализация простых и Django-объектов для JSON."""
     if val is None:
         return None
     if isinstance(val, Decimal):
         return str(val)
     if isinstance(val, (datetime, date, time)):
         return val.isoformat()
-    if isinstance(val, (list, tuple, set)):
+    # File/Image поля
+    if isinstance(val, FieldFile):
+        # если файл загружен — отдаём URL; иначе имя/пустую строку
+        try:
+            if val and getattr(val, 'url', None):
+                return val.url
+        except Exception:
+            pass
+        return val.name if getattr(val, 'name', None) else None
+    # Django model instance -> dict
+    if isinstance(val, Model):
+        try:
+            return model_to_dict(val)
+        except Exception:
+            return str(val)
+    # QuerySet / list / tuple -> рекурсивно сериализуем элементы
+    if isinstance(val, (QuerySet, list, tuple, set)):
         return [serialize_basic(x) for x in val]
-    if isinstance(val, dict):
-        return {k: serialize_basic(v) for k, v in val.items()}
-    return val
+    # Для других типов — попытка привести к строке в крайнем случае
+    try:
+        json_compatible = val
+        # если это примитив — оставляем
+        if isinstance(val, (str, int, float, bool)):
+            return val
+        return str(val)
+    except Exception:
+        return str(val)
+
 
 
 def dict_for_compare(instance):

@@ -1,0 +1,5 @@
+<tr id="expense-{{ expense.id }}">
+    <td title="{{ expense.id }}">{{ expense.title }}</td>
+    <td class="text-end">{{ expense.amount }} $</td>
+    <td>{{ expense.date|date:"d.m.Y" }}</td>
+</tr>

@@ -1,6 +1,8 @@
+{% load l10n user_tags %}
+
 {% for path in path_responsibilitys %}
 <div class="stage-card">
-<h5 class="text-primary fw-semibold mb-2 text-center">
+    <h5 class="text-primary fw-semibold mb-2 text-center">
         Этап {{ forloop.counter }}
     </h5>
 
@@ -42,14 +44,13 @@
     </div>
 
     <!-- 🔹 Форма смены статуса через htmx -->
-
-    {# 🔹 Форма смены статуса показываем только если prev_finished == True или это первый этап #}
     {% if not prev_finished %}
     <form
-            hx-post="{% url 'moderation:path_change_status' path.id %}"
-            hx-target="#pathr"
-            hx-swap="innerHTML"
-            class="mb-2">
+        hx-post="{% url 'moderation:path_change_status' path.id %}"
+        hx-target="#pathr"
+        hx-swap="innerHTML"
+        hx-on="htmx:afterRequest: closeAllModals()"
+        class="mb-2">
         {% csrf_token %}
         <select name="status"
                 class="form-select form-select-sm"
@@ -68,24 +69,25 @@
         <div class="d-flex justify-content-between gap-2">
             <!-- Редактировать -->
             <button type="button"
-        class="btn btn-sm btn-light border flex-fill btn-edit-stage"
-        data-bs-toggle="modal"
-        data-bs-target="#editEtapeModal"
-        data-stage-id="{{ path.id }}"
-        data-stage-path-choice-id="{{ path.path_choice.id }}"
-        data-stage-status="{{ path.status }}"
-        data-stage-participant-id="{{ path.responsible_id }}"
-        data-stage-additional="{{ path.additional|default_if_none:''|escapejs }}">
-    <i class="bi bi-pencil me-1"></i>Редактировать
-</button>
-
+                class="btn btn-sm btn-light border flex-fill btn-edit-stage"
+                data-bs-toggle="modal"
+                data-bs-target="#editsEtapeModal"
+                data-stage-id="{{ path.id }}"
+                data-stage-path-choice-id="{{ path.path_choice.id }}"
+                data-stage-status="{{ path.status }}"
+                data-stage-participant-id="{{ path.responsible_id }}"
+                data-stage-additional="{{ path.additional|default_if_none:''|escapejs }}">
+                <i class="bi bi-pencil me-1"></i>Редактировать
+            </button>
 
             <!-- Удалить -->
             <form method="post"
-                  hx-post="{% url 'moderation:delete_responsibility' path.id %}"
-                  hx-target="#pathResponsibilityList"
-                  hx-swap="innerHTML"
-                  hx-confirm="Удалить этап «{{ path.name }}»?"  class="flex-fill">
+                hx-post="{% url 'moderation:delete_responsibility' path.id %}"
+                hx-target="#pathResponsibilityList"
+                hx-swap="innerHTML"
+                hx-confirm="Удалить этап «{{ path.name }}»?"
+                hx-on="htmx:afterRequest: closeAllModals()"
+                class="flex-fill">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-sm btn-outline-danger w-100">
                     <i class="bi bi-trash3 me-1"></i>Удалить
@@ -95,17 +97,17 @@
     </div>
 </div>
 {% empty %}
-<div class="text-muted small">
+<div class="text-muted small" style="padding-left:10px">
     Этапы ещё не созданы.
 </div>
 {% endfor %}
 
 <!-- Универсальный попап -->
-<div class="modal fade" id="editEtapeModal" tabindex="-1" aria-labelledby="editEtapeModalLabel" aria-hidden="true">
+<div class="modal fade" id="editsEtapeModal" tabindex="-1" aria-labelledby="editsEtapeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editEtapeModalLabel">Редактирование этапа</h5>
+                <h5 class="modal-title" id="editsEtapeModalLabel">Редактирование этапа</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
             </div>
             <div class="modal-body">
@@ -116,19 +118,107 @@
 </div>
 
 <script>
-document.querySelectorAll('.btn-edit-stage').forEach(btn => {
-    btn.addEventListener('click', () => {
-        const modal = document.getElementById('editEtapeModal');
-        const form = modal.querySelector('form');
-
-        form.querySelector('[name="responsibility_id"]').value = btn.dataset.stageId;
-        form.querySelector('[name="path_choice_id"]').value = btn.dataset.stagePathChoiceId;
-        form.querySelector('[name="status"]').value = btn.dataset.stageStatus;
-        form.querySelector('[name="responsible_id"]').value = btn.dataset.stageParticipantId;
-        form.querySelector('[name="additional"]').value = btn.dataset.stageAdditional;
-
-        // Меняем URL формы на update
-        form.setAttribute('hx-post', `/responsibility/update/${btn.dataset.stageId}/`);
+// Функция для закрытия всех модальных окон и удаления backdrop
+function closeAllModals() {
+    // Закрываем все модальные окна Bootstrap
+    const modals = document.querySelectorAll('.modal');
+    modals.forEach(modal => {
+        const modalInstance = bootstrap.Modal.getInstance(modal);
+        if (modalInstance) {
+            modalInstance.hide();
+        }
     });
+
+    // Удаляем все backdrop элементы
+    const backdrops = document.querySelectorAll('.modal-backdrop');
+    backdrops.forEach(backdrop => {
+        backdrop.remove();
+    });
+
+    // Возвращаем стили body
+    document.body.classList.remove('modal-open');
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+}
+
+// Обработчик для кнопок редактирования
+document.addEventListener('DOMContentLoaded', function() {
+    // Делегирование событий для динамически добавляемых элементов
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('btn-edit-stage') ||
+            e.target.closest('.btn-edit-stage')) {
+            const btn = e.target.classList.contains('btn-edit-stage') ?
+                       e.target : e.target.closest('.btn-edit-stage');
+
+            // Закрываем предыдущие модальные окна
+            closeAllModals();
+
+            // Устанавливаем данные в форму
+            const modal = document.getElementById('editsEtapeModal');
+            const form = modal.querySelector('form');
+
+            if (form) {
+                // Находим поля формы
+                const responsibilityIdField = form.querySelector('[name="responsibility_id"]');
+                const pathChoiceIdField = form.querySelector('[name="path_choice_id"]');
+                const statusField = form.querySelector('[name="status"]');
+                const responsibleIdField = form.querySelector('[name="responsible_id"]');
+                const additionalField = form.querySelector('[name="additional"]');
+
+                if (responsibilityIdField) {
+                    responsibilityIdField.value = btn.dataset.stageId || '';
+                }
+                if (pathChoiceIdField) {
+                    pathChoiceIdField.value = btn.dataset.stagePathChoiceId || '';
+                }
+                if (statusField) {
+                    statusField.value = btn.dataset.stageStatus || '';
+                }
+                if (responsibleIdField) {
+                    responsibleIdField.value = btn.dataset.stageParticipantId || '';
+                }
+                if (additionalField) {
+                    additionalField.value = btn.dataset.stageAdditional || '';
+                }
+
+                // Меняем URL формы на update
+                if (btn.dataset.stageId) {
+                    form.setAttribute('hx-post', `/responsibility/update/${btn.dataset.stageId}/`);
+                }
+
+                // Добавляем обработчик для закрытия после успешного запроса
+                form.setAttribute('hx-on', 'htmx:afterRequest: closeAllModals()');
+            }
+
+            // Показываем модальное окно через setTimeout для гарантии
+            setTimeout(() => {
+                const modalInstance = new bootstrap.Modal(modal);
+                modalInstance.show();
+            }, 100);
+        }
+    });
+});
+
+// Добавляем обработчик для закрытия модальных окон при нажатии на backdrop
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('modal-backdrop')) {
+        closeAllModals();
+    }
+});
+
+// Обработчик для кнопки закрытия в модальном окне
+document.querySelectorAll('[data-bs-dismiss="modal"]').forEach(btn => {
+    btn.addEventListener('click', closeAllModals);
+});
+
+// Обрабатываем HTMX события
+document.addEventListener('htmx:afterRequest', function(event) {
+    // Проверяем, если это успешный запрос на удаление или обновление
+    if (event.detail.successful &&
+        (event.detail.target.id === 'pathResponsibilityList' ||
+         event.detail.target.id === 'pathr')) {
+        // Небольшая задержка для гарантии
+        setTimeout(closeAllModals, 50);
+    }
 });
 </script>

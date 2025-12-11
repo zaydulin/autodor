@@ -1,0 +1,81 @@
+{% comment %} Берём последние логи по дате (лучше в view сделать .order_by('-created_at') ) {% endcomment %}
+{% for log in application.logs.all|dictsortreversed:"created_at" %}
+<li class="activity-item mb-3">
+    <div class="activity-time">{{ log.created_at|date:"H:i" }}</div>
+
+    <div class="activity-content">
+        {# Заголовок #}
+        <div class="activity-title">
+            {% if log.action == "create" %}
+            Создан: <span class="text-primary">{{ log.related_model|capfirst }}</span>
+            {% elif log.action == "delete" %}
+            Удалён: <span class="text-primary">{{ log.related_model|capfirst }}</span>
+            {% elif log.action == "update" %}
+            Обновлён: <span class="text-primary">{{ log.related_model|capfirst }}</span>
+            {% else %}
+            {{ log.related_model|capfirst }} — {{ log.action|capfirst }}
+            {% endif %}
+        </div>
+
+        {# Пользователь #}
+        <div class="activity-meta text-muted small mt-1">
+            {% if log.user %}
+            {% if log.user in application.user_menager.all %}
+            Менеджер:
+            {% elif log.user in application.user_drivers.all %}
+            Водитель:
+            {% else %}
+            Пользователь:
+            {% endif %}
+            <span>{{ log.user.get_full_name|default:log.user.username }}</span>
+            {% else %}
+            <span class="text-muted">Системное действие</span>
+            {% endif %}
+        </div>
+
+        {# Отображение изменений: log.changes в формате {field: {action, new}} или {field: {action, old, new}} #}
+        {% if log.changes %}
+        <div class="activity-details mt-2 small">
+            {% for field, info in log.changes.items %}
+            <div class="mb-2 pb-1 border-bottom">
+                <strong>{{ field }}:</strong>
+                <div>
+                    {% if info.action == "добавил" %}
+                    <span class="text-muted">добавил — </span>
+                    <span class="text-primary">
+                                                    {% if info.new is iterable and info.new|stringformat:"s" != info.new %}
+                                                        {# если это список/iterable показываем через запятую #}
+                                                        {{ info.new|join:", " }}
+                                                    {% else %}
+                                                        {{ info.new }}
+                                                    {% endif %}
+                                                </span>
+                    {% elif info.action == "изменил" %}
+                    <div>
+                        <span class="text-muted">было:</span>
+                        <span>{{ info.old }}</span>
+                    </div>
+                    <div>
+                        <span class="text-muted">стало:</span>
+                        <span class="text-primary">
+                                                        {% if info.new is iterable and info.new|stringformat:"s" != info.new %}
+                                                            {{ info.new|join:", " }}
+                                                        {% else %}
+                                                            {{ info.new }}
+                                                        {% endif %}
+                                                    </span>
+                    </div>
+                    {% else %}
+                    {# на случай других action #}
+                    <span>{{ info }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</li>
+{% empty %}
+<li class="text-muted small">Действий в логе пока нет.</li>
+{% endfor %}

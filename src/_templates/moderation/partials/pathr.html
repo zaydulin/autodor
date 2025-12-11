@@ -1,4 +1,24 @@
 {% load l10n %}
+<ul id="pathResponsibilityListMap" style="display:none;">
+    {% for path in paths %}
+    <li class="path-marker"
+        data-lat="{{ path.latitude|unlocalize }}"
+        data-lng="{{ path.longitude|unlocalize }}"
+        data-name="{{ path.name|escapejs }}"
+        data-name-path-id="{{ path.id }}">
+    </li>
+    {% endfor %}
+
+    {% if current_driver and current_driver_lat and current_driver_lng %}
+    <li class="driver-marker"
+        data-lat="{{ current_driver_lat|unlocalize }}"
+        data-lng="{{ current_driver_lng|unlocalize }}"
+        data-name="{{ current_driver.get_full_name|escapejs }}"
+        data-email="{{ current_driver.email|escapejs }}"
+        data-status="{{ current_path.get_status_display|escapejs }}">
+    </li>
+    {% endif %}
+</ul>
 
 <style>
 /* Стили для прокрутки пунктов и стрелок */

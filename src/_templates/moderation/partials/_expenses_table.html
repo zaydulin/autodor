@@ -1,0 +1,19 @@
+<!-- moderation/partials/_expenses_table.html -->
+<thead>
+    <tr>
+        <th>Статья</th>
+        <th class="text-end">Сумма</th>
+        <th>Дата</th>
+    </tr>
+</thead>
+<tbody id="expensesList">
+    {% for expense in application.expenses.all %}
+        {% include "moderation/partials/_expense_row.html" with expense=expense %}
+    {% empty %}
+        <tr id="emptyExpenses">
+            <td colspan="3" class="text-muted small text-center py-3">
+                Расходы ещё не добавлены.
+            </td>
+        </tr>
+    {% endfor %}
+</tbody>
