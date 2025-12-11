@@ -637,10 +637,7 @@ document.addEventListener('DOMContentLoaded', function () {
 {% if current_driver and current_driver_lat is not None and current_driver_lng is not None %}
   var carLat = {{ current_driver_lat|unlocalize }};
   var carLng = {{ current_driver_lng|unlocalize }};
-<<<<<<< HEAD
-=======
 
->>>>>>> f266e246866645ecb0a3794131e5ff51ed9d008b
 
     // HTML с расширенной информацией о водителе
     var driverPopupHtml = `
