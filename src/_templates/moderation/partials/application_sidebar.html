@@ -1,30 +1,131 @@
-<table class="table table-sm mb-0 align-middle finance-table">
-    <tbody>
-    <tr>
-        <td class="text-muted small">Стоимость авто</td>
-        <td class="text-end fw-semibold">
-            {{ application.price }}  $
-        </td>
-    </tr>
-    <tr>
-        <td class="text-muted small">Доставка</td>
-        <td class="text-end fw-semibold">
-            {{ application.delevery_price }}  $
-        </td>
-    </tr>
+<div class="mb-3">
+    <div class="small-label mb-1">Финансы</div>
+    <table class="table table-sm mb-0 align-middle finance-table">
+        <tbody>
+        <tr>
+            <td class="text-muted small">Стоимость авто</td>
+            <td class="text-end fw-semibold">
+                {{ application.price }}  $
+            </td>
+        </tr>
+        <tr>
+            <td class="text-muted small">Доставка</td>
+            <td class="text-end fw-semibold">
+                {{ application.delevery_price }}  $
+            </td>
+        </tr>
 
-    <tr>
-        <td class="text-muted small">Баланс</td>
-        <td class="text-end fw-semibold">
-            {{ application.current_balance }} $
+        <tr>
+            <td class="text-muted small">Баланс</td>
+            <td class="text-end fw-semibold">
+                {{ application.current_balance }} $
 
-        </td>
-    </tr>
-    <tr>
-        <td class="text-muted small">Расходы</td>
-        <td class="text-end fw-semibold text-danger">
-            {{ application.expenses_total }} $
-        </td>
-    </tr>
-    </tbody>
-</table>
+            </td>
+        </tr>
+        <tr>
+            <td class="text-muted small">Расходы</td>
+            <td class="text-end fw-semibold text-danger">
+                {{ application.expenses_total }} $
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+
+<hr>
+
+<div class="mb-2">
+    <div class="small-label">Заказчик</div>
+    {% for user in application.user.all %}
+    {% if user.employee == 0 %}
+
+    <div class="d-flex align-items-center mt-1">
+        <!-- Аватар -->
+        <div class="avatar-circle">
+            {{ user.first_name|slice:":1" }}
+        </div>
+        <!-- Текст -->
+        <div>
+            <div>{{ user.first_name }} {{ user.last_name }}</div>
+            <div class="text-muted small">{{ user.email }}</div>
+        </div>
+    </div>
+    {%endif%}
+    {% endfor %}
+</div>
+
+<div class="mb-2">
+    <div class="small-label">Менеджер</div>
+    {% for men in application.user_menager.all %}
+    <div class="d-flex align-items-center mt-1">
+        <!-- Аватар -->
+        <div class="avatar-circle">
+            {{ men.first_name|slice:":1" }}
+        </div>
+
+        <!-- Текст -->
+        <div>
+            <div>{{ men.first_name }} {{ men.last_name }}</div>
+            <div class="text-muted small">{{ men.email }}</div>
+        </div>
+    </div>
+
+</div>
+
+<div class="mb-0">
+    <div class="small-label mb-1">Водители:</div>
+    <div id="driver-wallets-block">
+        {% include 'moderation/partials/driver_wallets_block.html' %}
+    </div>
+
+
+    <!-- ОДНА модалка на всех водителей -->
+    <div class="modal fade" id="walletModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content" id="walletModalContent">
+                {# сюда htmx будет подгружать форму #}
+                <div class="modal-header">
+                    <h5 class="modal-title">Кошелек</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                            aria-label="Закрыть"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-muted small">
+                        Выберите водителя, чтобы загрузить данные кошелька...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+          document.body.addEventListener("htmx:afterSwap", function (event) {
+            // Обновился контент модалки кошелька
+            if (event.target.id === "walletModalContent") {
+              const modalEl = document.getElementById("walletModal");
+              if (modalEl && window.bootstrap) {
+                const modalInstance = bootstrap.Modal.getInstance(modalEl);
+                if (modalInstance) {
+                  modalInstance.hide();
+                }
+              }
+            }
+          });
+        });
+    </script>
+
+
+</div>
+<div id="all-users">
+    {% endfor %}
+    {% for men in application.user_drivers.all %}
+    {{ men.get_full_name }} — {{ men.get_role_display }}
+    {{ men.id }}
+    {% endfor %}
+    {% for men in application.user_menager.all %}
+    {{ men.get_full_name }} — {{ men.get_role_display }}
+    {{ men.id }}
+    {% endfor %}
+
+</div>

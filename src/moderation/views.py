@@ -19,8 +19,10 @@ from django.db.models.functions import TruncDate
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.template.loader import render_to_string
+from django.urls import NoReverseMatch
 from django.utils import timezone
 from django.utils.decorators import method_decorator
+from django.utils.safestring import mark_safe
 from django.views import View
 from moderation.tasks import start_call_task, end_call_task
 from django.contrib.auth.mixins import UserPassesTestMixin
@@ -261,15 +263,12 @@ def add_gallery_group_with_items(request, pk):
     description = request.POST.get("description", "")
     files = request.FILES.getlist("files[]")
     report_description = request.POST.get("report_description", "")
-    report_type = request.POST.get("report_type")  # <- ВАЖНО
+    report_type = request.POST.get("report_type")
 
     if not title or not files:
         if request.headers.get("HX-Request") == "true":
             return HttpResponse("Название и файлы обязательны", status=400)
-        return JsonResponse(
-            {"success": False, "error": "Название и файлы обязательны"},
-            status=400,
-        )
+        return redirect(request.META.get("HTTP_REFERER", "/"))
 
     # 1. Создаём группу
     group = AdvertAplicationGalleryGroup.objects.create(
@@ -279,23 +278,20 @@ def add_gallery_group_with_items(request, pk):
         position=application.gallery_groups.count() + 1,
     )
 
-    # 2. Создаём элементы с правильным pagetype
+    # 2. Создаём файлы
     for f in files:
         filename = f.name.lower()
-
-        # базовый pagetype по report_type
         if report_type == "ticket":
-            pagetype = 2      # Билет
+            pagetype = 2
         elif report_type == "receipt":
-            pagetype = 3      # Чек
+            pagetype = 3
         else:
-            # Поломка / Другое — определяем по типу файла
             if filename.endswith((".png", ".jpg", ".jpeg", ".gif", ".webp")):
-                pagetype = 0  # Фото-отчет
+                pagetype = 0
             elif filename.endswith((".mp4", ".mov", ".webm", ".mkv")):
-                pagetype = 1  # Видео-отчет
+                pagetype = 1
             else:
-                pagetype = 0  # дефолт — фото
+                pagetype = 0
 
         AdvertAplicationGallery.objects.create(
             application=application,
@@ -303,18 +299,53 @@ def add_gallery_group_with_items(request, pk):
             file=f,
             description=report_description,
             uploaded_by=request.user,
-            pagetype=pagetype,  # <- вот тут
+            pagetype=pagetype,
         )
 
+    # 3. Если htmx — возвращаем фрагменты и скрипт для отложенного обновления activity-list
     if request.headers.get("HX-Request") == "true":
-        html = render_to_string(
+        # HTML новой группы (тот, который вставляется в DOM сразу)
+        gallery_html = render_to_string(
             "moderation/partials/gallery_group_item.html",
             {"group": group, "application": application},
             request=request,
         )
-        return HttpResponse(html)
 
+        # Сразу формируем HTML для activity-list (весь innerHTML контейнера, т.е. только <li> или полный HTML в зависимости от шаблона)
+        # Рекомендуется, чтобы activity_list-template возвращал именно содержимое <ul> (только <li>...), а контейнер <ul id="activity-list"> был в основном шаблоне.
+        activity_inner_html = render_to_string(
+            "moderation/partials/activity-list.html",
+            {"application": application},
+            request=request,
+        )
+
+        # Экранируем HTML для безопасной вставки в JS-строку
+        activity_inner_html_js = json.dumps(activity_inner_html)
+
+        # Скрипт: через 2000ms заменит innerHTML контейнера #activity-list на подготовленный HTML
+        # Используем .innerHTML напрямую — это быстрее и надёжнее, чем дополнительный HTMX GET,
+        # и не требует никаких дополнительных URL/маршрутов.
+        activity_refresh_script = (
+            "<script>"
+            "setTimeout(function(){"
+            f"  try {{"
+            f"    var el = document.getElementById('activity-list');"
+            f"    if(el) el.innerHTML = {activity_inner_html_js};"
+            f"  }} catch(e) {{ console.error('activity-list update error', e); }};"
+            "}, 2000);"
+            "</script>"
+        )
+
+        # (Опционально) OOB — можно оставить или убрать; если хочешь только отложенное обновление, убери activity_oob_html.
+        activity_oob_html = f'<template hx-swap-oob="true" hx-target="#activity-list">{activity_inner_html}</template>'
+
+        # Возвращаем HTML новой группы + (опционально) OOB + скрипт для отложенного обновления
+        return HttpResponse(gallery_html + activity_oob_html + activity_refresh_script)
+
+    # fallback для обычного запроса
     return redirect(request.META.get("HTTP_REFERER", "/"))
+
+
 
 
 
@@ -560,6 +591,20 @@ class AdvertAplicationDetailView(CustomHtmxMixin, LoginRequiredMixin, DetailView
             .prefetch_related("user", "user_menager", "user_drivers")
             .distinct()
         )
+
+    def dispatch(self, request, *args, **kwargs):
+        response = super().dispatch(request, *args, **kwargs)
+
+        # Если это HTMX и ещё нет флага в сессии
+        if request.headers.get("HX-Request") == "true" and not request.session.get("htmx_detail_reload", False):
+            request.session["htmx_detail_reload"] = True
+            # Возвращаем скрипт для перезагрузки
+            from django.http import HttpResponse
+            return HttpResponse(
+                '<script>window.location.reload();</script>'
+            )
+
+        return response
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -897,16 +942,16 @@ def create_responsibility(request):
 def update_responsibility(request):
     try:
         responsibility_id = request.POST.get("responsibility_id")
-        if not responsibility_id:
-            return JsonResponse({'success': False, 'error': 'responsibility_id не передан'})
-
-        responsibility = get_object_or_404(PathResponsibility, id=responsibility_id)
-
-        # Дальше как раньше
         path_choice_id = request.POST.get("path_choice_id")
         status = request.POST.get("status")
         responsible_id = request.POST.get("responsible_id")
         additional = request.POST.get("additional", "")
+
+        # Если responsibility_id передан — обновляем, иначе создаём новую запись
+        if responsibility_id:
+            responsibility = get_object_or_404(PathResponsibility, id=responsibility_id)
+        else:
+            responsibility = PathResponsibility()
 
         if path_choice_id:
             responsibility.path_choice = get_object_or_404(Path, id=path_choice_id)
@@ -918,14 +963,17 @@ def update_responsibility(request):
         responsibility.save()
 
         application = responsibility.path_choice.aplication
+
+        # Берём все PathResponsibility для данного приложения
         path_responsibilitys = PathResponsibility.objects.filter(
             path_choice__aplication=application
         ).order_by("id")
 
+        # Рендерим шаблон с обновлённым списком
         return render(
             request,
             "moderation/partials/path_responsibility_item.html",
-            {"path_responsibilitys": path_responsibilitys}
+            {"path_responsibilitys": path_responsibilitys, "application": application}
         )
 
     except Exception as e:
@@ -982,75 +1030,32 @@ class UpdateApplicationView(View):
     def post(self, request, application_id):
         application = get_object_or_404(AdvertAplication, id=application_id)
 
+        # Обработка полей, статус, менеджеры, водители, деньги
         status = request.POST.get("status")
         managers_ids = request.POST.getlist("user_menager")
         drivers_ids = request.POST.getlist("user_drivers")
 
-        delevery_price_raw = request.POST.get("delevery_price")
-        balance_raw = request.POST.get("balance")
-        current_balance_raw = request.POST.get("current_balance")
-        expenses_total_raw = request.POST.get("expenses_total")
-
-        errors = {}
-
-        def parse_decimal(raw_value, field_name, allow_empty=True):
-            if (raw_value is None or raw_value == "") and allow_empty:
+        # Десериализация decimal полей с проверкой
+        def parse_decimal(raw_value):
+            if not raw_value:
                 return None
             try:
-                value = Decimal(str(raw_value).replace(",", "."))
-                if value < 0:
-                    errors[field_name] = "Значение не может быть отрицательным."
-                    return None
-                return value
-            except Exception:
-                errors[field_name] = "Некорректное значение."
+                return Decimal(raw_value.replace(",", "."))
+            except:
                 return None
 
-        delevery_price = parse_decimal(delevery_price_raw, "delevery_price")
-        balance = parse_decimal(balance_raw, "balance")
-        current_balance = parse_decimal(current_balance_raw, "current_balance")
-        expenses_total = parse_decimal(expenses_total_raw, "expenses_total")
-
-        if errors:
-            if request.headers.get("HX-Request") == "true":
-                return HttpResponse(
-                    "; ".join(f"{k}: {v}" for k, v in errors.items()),
-                    status=400,
-                )
-            return JsonResponse({"success": False, "errors": errors}, status=400)
-
-        # статус
-        if status and status != application.status:
-            application.status = status
-
-        # менеджеры
-        if managers_ids:
-            menagers = Profile.objects.filter(id__in=managers_ids)
-            application.user_menager.set(menagers)
-        else:
-            application.user_menager.clear()
-
-        # водители
-        if drivers_ids:
-            drivers = Profile.objects.filter(id__in=drivers_ids)
-            application.user_drivers.set(drivers)
-        else:
-            application.user_drivers.clear()
-
-        # деньги
-        if delevery_price is not None:
-            application.delevery_price = delevery_price
-        if balance is not None:
-            application.balance = balance
-        if current_balance is not None:
-            application.current_balance = current_balance
-        if expenses_total is not None:
-            application.expenses_total = expenses_total
+        application.status = status or application.status
+        application.user_menager.set(Profile.objects.filter(id__in=managers_ids) if managers_ids else [])
+        application.user_drivers.set(Profile.objects.filter(id__in=drivers_ids) if drivers_ids else [])
+        application.delevery_price = parse_decimal(request.POST.get("delevery_price")) or application.delevery_price
+        application.balance = parse_decimal(request.POST.get("balance")) or application.balance
+        application.current_balance = parse_decimal(request.POST.get("current_balance")) or application.current_balance
+        application.expenses_total = parse_decimal(request.POST.get("expenses_total")) or application.expenses_total
 
         application.save()
 
-        # 🔹 htmx: за один ответ обновляем ДВА места
         if request.headers.get("HX-Request") == "true":
+            # HTML sidebar и баланса
             finance_html = render_to_string(
                 "moderation/partials/application_sidebar.html",
                 {"application": application},
@@ -1062,25 +1067,41 @@ class UpdateApplicationView(View):
                 request=request,
             )
 
+            # HTML activity-list (только <li>)
+            activity_inner_html = render_to_string(
+                "moderation/partials/activity-list.html",
+                {"application": application},
+                request=request,
+            )
+            activity_inner_html_js = json.dumps(activity_inner_html)
+
+            # Скрипт: через 2 секунды обновляет #activity-list
+            activity_refresh_script = (
+                "<script>"
+                "setTimeout(function(){"
+                f"  try {{"
+                f"    var el = document.getElementById('activity-list');"
+                f"    if(el) el.innerHTML = {activity_inner_html_js};"
+                f"  }} catch(e) {{ console.error('activity-list update error', e); }};"
+                "}, 2000);"
+                "</script>"
+            )
+
+            # Формируем полный HTML ответа
             full_html = (
-                # 1) основной таргет: заменит #application-finance
                 f'<div id="application-finance">{finance_html}</div>'
-                # 2) второй блок: заменит #set-balanse через oob
                 f'<div id="set-balanse" class="d-flex justify-content-between" hx-swap-oob="outerHTML">'
                 f'{set_balance_html}</div>'
+                + activity_refresh_script
             )
 
             return HttpResponse(full_html)
 
-        # обычный POST (не htmx)
         return JsonResponse({
             "success": True,
             "message": "Заявка успешно обновлена",
             "application_id": str(application.id),
         })
-
-
-
 
 
 # Create your views here.
@@ -1716,6 +1737,7 @@ def call_page_iframe(request, application_id,calle_id):
         'other_user': other_user,
     })
 
+
 @method_decorator(login_required, name='dispatch')
 class CreateExpenseView(View):
     def post(self, request, *args, **kwargs):
@@ -1725,12 +1747,20 @@ class CreateExpenseView(View):
             amount = request.POST.get("amount")
             date = datetime.now().date()
 
+            # Проверка обязательных полей
             if not application_id or not title or not amount:
                 return HttpResponseBadRequest("Не все данные переданы")
 
-            application = AdvertAplication.objects.get(id=application_id)
-            if request.user not in application.user_menager.all() and getattr(request.user, "employee", None) != 4:
-                raise PermissionDenied("У вас нет прав на добавление расходов")
+            # Преобразуем сумму в Decimal
+            try:
+                amount = Decimal(str(amount).replace(',', '.'))
+            except Exception:
+                return HttpResponseBadRequest("Сумма должна быть числом")
+
+            # Получаем приложение
+            application = get_object_or_404(AdvertAplication, id=application_id)
+
+            # Проверка прав:
 
             # Создаём расход
             expense = AdvertExpense.objects.create(
@@ -1741,15 +1771,80 @@ class CreateExpenseView(View):
                 user=request.user
             )
 
-            # Рендерим HTML для вставки через htmx
-            html = render_to_string("moderation/partials/_expense_item.html", {"expense": expense})
+            # Обновляем общую сумму расходов
+            agg = application.expenses.aggregate(total=Sum('amount'))
+            application.expenses_total = agg.get('total') or Decimal('0')
+            application.save()
 
-            return HttpResponse(html)  # <-- возвращаем чистый HTML
+            # Рендерим новую строку таблицы
+            expense_row = f'''
+            <tr id="expense-{expense.id}">
+                <td title="{expense.id}">{expense.title}</td>
+                <td class="text-end">{expense.amount} $</td>
+                <td>{expense.date.strftime('%d.%m.%Y')}</td>
+            </tr>
+            '''
+
+            # Рендерим OOB-блоки
+            sidebar_html = render_to_string(
+                "moderation/partials/application_sidebar.html",
+                {"application": application},
+                request=request
+            )
+            activity_html = render_to_string(
+                "moderation/partials/activity-list.html",
+                {"application": application},
+                request=request
+            )
+            balance_html = render_to_string(
+                "moderation/partials/set-balanse.html",
+                {"application": application},
+                request=request
+            )
+
+            # Скрипт для HTMX + добавление строки
+            response_html = f'''
+                        <div id="application-finance" hx-swap-oob="innerHTML">{sidebar_html}</div>
+            <div id="activity-list" hx-swap-oob="innerHTML">{activity_html}</div>
+            <div id="set-balanse" hx-swap-oob="innerHTML">{balance_html}</div>
+
+            <script>
+                var tbody = document.getElementById('expensesList');
+                if (tbody) {{
+                    var emptyMsg = document.getElementById('emptyExpenses');
+                    if (emptyMsg) emptyMsg.remove();
+                    tbody.insertAdjacentHTML('beforeend', `{expense_row}`);
+                }}
+
+                // Обновляем OOB блоки
+                htmx.ajax('GET', '{request.build_absolute_uri("/moderation/applications/" + str(application.id) + "/finance/")}', {{
+                    target: '#application-finance',
+                    swap: 'innerHTML'
+                }});
+                htmx.ajax('GET', '{request.build_absolute_uri("/moderation/applications/" + str(application.id) + "/activity/")}', {{
+                    target: '#activity-list',
+                    swap: 'innerHTML'
+                }});
+
+                // Закрываем модальное окно
+                var modal = bootstrap.Modal.getInstance(document.getElementById('addExpenseModal'));
+                if (modal) modal.hide();
+
+                // Очищаем форму
+                document.getElementById('add-expense-form').reset();
+            </script>
+            '''
+
+            return HttpResponse(mark_safe(response_html))
 
         except PermissionDenied as e:
             return HttpResponseForbidden(str(e))
+        except AdvertAplication.DoesNotExist:
+            return HttpResponseBadRequest("Приложение не найдено")
         except Exception as e:
             return HttpResponseBadRequest(str(e))
+
+
 
 
 
